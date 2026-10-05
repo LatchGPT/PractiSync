@@ -1,0 +1,1470 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DeploymentMode {
+  DEMO
+  INSTITUTIONAL
+}
+
+enum Role {
+  SUPER_ADMIN
+  COORDINATOR
+  SUPERVISOR
+  STUDENT
+}
+
+enum AccountStatus {
+  ACTIVE
+  DISABLED
+  INVITED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PlacementStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ConfirmationStatus {
+  CONFIRMED
+  DISPUTED
+}
+
+enum ScanStatus {
+  QUARANTINED
+  CLEAN
+  REJECTED
+}
+
+enum EvaluationKind {
+  BASELINE
+  FINAL
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  SHORTLISTED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum AudienceScope {
+  UNIVERSITY
+  DEPARTMENT
+  CLASS
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model Tenant {
+  id                             String                    @id @default(cuid())
+  createdAt                      DateTime                  @default(now())
+  updatedAt                      DateTime                  @updatedAt
+  name                           String
+  timezone                       String                    @default("Asia/Manila")
+  mode                           DeploymentMode            @default(INSTITUTIONAL)
+  allowedGoogleDomains           String[]
+  settingsVersion                Int                       @default(1)
+  userRecords                    User[]
+  accountRecords                 Account[]
+  sessionRecords                 Session[]
+  verificationTokenRecords       VerificationToken[]
+  membershipRecords              Membership[]
+  departmentRecords              Department[]
+  courseRecords                  Course[]
+  academicPeriodRecords          AcademicPeriod[]
+  studentProfileRecords          StudentProfile[]
+  supervisorProfileRecords       SupervisorProfile[]
+  companyRecords                 Company[]
+  companyMembershipRecords       CompanyMembership[]
+  coursePolicyScopeRecords       CoursePolicyScope[]
+  hoursPolicyRecords             HoursPolicy[]
+  classSpaceRecords              ClassSpace[]
+  joinCodeRecords                JoinCode[]
+  enrollmentRecords              Enrollment[]
+  placementRecords               Placement[]
+  placementSupervisorRecords     PlacementSupervisor[]
+  policyMigrationRecords         PolicyMigration[]
+  dailyEntryRecords              DailyEntry[]
+  timeIntervalRecords            TimeInterval[]
+  entryRevisionRecords           EntryRevision[]
+  intervalRevisionRecords        IntervalRevision[]
+  entryConfirmationRecords       EntryConfirmation[]
+  storageObjectRecords           StorageObject[]
+  companyRecordRecords           CompanyRecord[]
+  competencyFrameworkRecords     CompetencyFramework[]
+  competencyRecords              Competency[]
+  courseFrameworkRecords         CourseFramework[]
+  rubricDimensionRecords         RubricDimension[]
+  evaluationRecords              Evaluation[]
+  evaluationScoreRecords         EvaluationScore[]
+  evaluationRevisionRecords      EvaluationRevision[]
+  evaluationScoreRevisionRecords EvaluationScoreRevision[]
+  documentTypeRecords            DocumentType[]
+  requirementSetRecords          RequirementSet[]
+  documentRequirementRecords     DocumentRequirement[]
+  documentSubmissionRecords      DocumentSubmission[]
+  incidentCaseRecords            IncidentCase[]
+  caseHandlerRecords             CaseHandler[]
+  caseMessageRecords             CaseMessage[]
+  caseAttachmentRecords          CaseAttachment[]
+  caseEscalationRecords          CaseEscalation[]
+  sensitiveAccessRecords         SensitiveAccess[]
+  jobPostingRecords              JobPosting[]
+  jobCompetencyRecords           JobCompetency[]
+  jobEligibilityRecords          JobEligibility[]
+  applicationRecords             Application[]
+  applicationHistoryRecords      ApplicationHistory[]
+  announcementRecords            Announcement[]
+  announcementAudienceRecords    AnnouncementAudience[]
+  readReceiptRecords             ReadReceipt[]
+  directoryProfileRecords        DirectoryProfile[]
+  companyReviewRecords           CompanyReview[]
+  completionChecklistRecords     CompletionChecklist[]
+  checklistItemRecords           ChecklistItem[]
+  completionRecordRecords        CompletionRecord[]
+  completionItemRecords          CompletionItem[]
+  portfolioJobRecords            PortfolioJob[]
+  notificationRecords            Notification[]
+  outboxEventRecords             OutboxEvent[]
+  backgroundJobRecords           BackgroundJob[]
+  idempotencyKeyRecords          IdempotencyKey[]
+  auditEventRecords              AuditEvent[]
+  loginAttemptRecords            LoginAttempt[]
+}
+
+model User {
+  id                            String               @id @default(cuid())
+  tenantId                      String
+  tenant                        Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                     DateTime             @default(now())
+  updatedAt                     DateTime             @updatedAt
+  name                          String?
+  email                         String?              @unique
+  emailVerified                 DateTime?
+  image                         String?
+  username                      String               @unique
+  passwordHash                  String?
+  status                        AccountStatus        @default(ACTIVE)
+  sessionVersion                Int                  @default(1)
+  isDemo                        Boolean              @default(false)
+  account_userId                Account[]            @relation("Account_userId")
+  session_userId                Session[]            @relation("Session_userId")
+  membership_userId             Membership[]         @relation("Membership_userId")
+  studentProfile_userId         StudentProfile[]     @relation("StudentProfile_userId")
+  supervisorProfile_userId      SupervisorProfile[]  @relation("SupervisorProfile_userId")
+  hoursPolicy_authorId          HoursPolicy[]        @relation("HoursPolicy_authorId")
+  classSpace_coordinatorId      ClassSpace[]         @relation("ClassSpace_coordinatorId")
+  policyMigration_actorId       PolicyMigration[]    @relation("PolicyMigration_actorId")
+  entryRevision_actorId         EntryRevision[]      @relation("EntryRevision_actorId")
+  storageObject_ownerId         StorageObject[]      @relation("StorageObject_ownerId")
+  evaluation_evaluatorId        Evaluation[]         @relation("Evaluation_evaluatorId")
+  documentSubmission_reviewerId DocumentSubmission[] @relation("DocumentSubmission_reviewerId")
+  incidentCase_reporterId       IncidentCase[]       @relation("IncidentCase_reporterId")
+  incidentCase_coordinatorId    IncidentCase[]       @relation("IncidentCase_coordinatorId")
+  caseHandler_userId            CaseHandler[]        @relation("CaseHandler_userId")
+  caseMessage_authorId          CaseMessage[]        @relation("CaseMessage_authorId")
+  caseEscalation_actorId        CaseEscalation[]     @relation("CaseEscalation_actorId")
+  caseEscalation_recipientId    CaseEscalation[]     @relation("CaseEscalation_recipientId")
+  sensitiveAccess_actorId       SensitiveAccess[]    @relation("SensitiveAccess_actorId")
+  jobPosting_authorId           JobPosting[]         @relation("JobPosting_authorId")
+  applicationHistory_actorId    ApplicationHistory[] @relation("ApplicationHistory_actorId")
+  announcement_authorId         Announcement[]       @relation("Announcement_authorId")
+  readReceipt_userId            ReadReceipt[]        @relation("ReadReceipt_userId")
+  completionRecord_decidedById  CompletionRecord[]   @relation("CompletionRecord_decidedById")
+  portfolioJob_requestedById    PortfolioJob[]       @relation("PortfolioJob_requestedById")
+  notification_userId           Notification[]       @relation("Notification_userId")
+  idempotencyKey_actorId        IdempotencyKey[]     @relation("IdempotencyKey_actorId")
+  auditEvent_actorId            AuditEvent[]         @relation("AuditEvent_actorId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  userId            String
+  user              User     @relation("Account_userId", fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([provider, providerAccountId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sessionToken String   @unique
+  expires      DateTime
+  userId       String
+  user         User     @relation("Session_userId", fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  role      Role
+  active    Boolean  @default(true)
+  userId    String
+  user      User     @relation("Membership_userId", fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, userId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Department {
+  id                                String                 @id @default(cuid())
+  tenantId                          String
+  tenant                            Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                         DateTime               @default(now())
+  updatedAt                         DateTime               @updatedAt
+  name                              String
+  code                              String
+  archivedAt                        DateTime?
+  course_departmentId               Course[]               @relation("Course_departmentId")
+  announcementAudience_departmentId AnnouncementAudience[] @relation("AnnouncementAudience_departmentId")
+
+  @@unique([tenantId, code])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Course {
+  id                           String                @id @default(cuid())
+  tenantId                     String
+  tenant                       Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                    DateTime              @default(now())
+  updatedAt                    DateTime              @updatedAt
+  name                         String
+  code                         String
+  archivedAt                   DateTime?
+  departmentId                 String
+  department                   Department            @relation("Course_departmentId", fields: [tenantId, departmentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  studentProfile_courseId      StudentProfile[]      @relation("StudentProfile_courseId")
+  coursePolicyScope_courseId   CoursePolicyScope[]   @relation("CoursePolicyScope_courseId")
+  hoursPolicy_courseId         HoursPolicy[]         @relation("HoursPolicy_courseId")
+  classSpace_courseId          ClassSpace[]          @relation("ClassSpace_courseId")
+  courseFramework_courseId     CourseFramework[]     @relation("CourseFramework_courseId")
+  requirementSet_courseId      RequirementSet[]      @relation("RequirementSet_courseId")
+  jobEligibility_courseId      JobEligibility[]      @relation("JobEligibility_courseId")
+  completionChecklist_courseId CompletionChecklist[] @relation("CompletionChecklist_courseId")
+
+  @@unique([tenantId, code])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model AcademicPeriod {
+  id                           String                @id @default(cuid())
+  tenantId                     String
+  tenant                       Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                    DateTime              @default(now())
+  updatedAt                    DateTime              @updatedAt
+  name                         String
+  startsAt                     DateTime
+  endsAt                       DateTime
+  active                       Boolean               @default(false)
+  hoursPolicy_periodId         HoursPolicy[]         @relation("HoursPolicy_periodId")
+  classSpace_periodId          ClassSpace[]          @relation("ClassSpace_periodId")
+  placement_periodId           Placement[]           @relation("Placement_periodId")
+  requirementSet_periodId      RequirementSet[]      @relation("RequirementSet_periodId")
+  completionChecklist_periodId CompletionChecklist[] @relation("CompletionChecklist_periodId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model StudentProfile {
+  id                      String          @id @default(cuid())
+  tenantId                String
+  tenant                  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  studentNumber           String
+  userId                  String
+  courseId                String
+  user                    User            @relation("StudentProfile_userId", fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  course                  Course          @relation("StudentProfile_courseId", fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  enrollment_studentId    Enrollment[]    @relation("Enrollment_studentId")
+  placement_studentId     Placement[]     @relation("Placement_studentId")
+  application_studentId   Application[]   @relation("Application_studentId")
+  companyReview_studentId CompanyReview[] @relation("CompanyReview_studentId")
+
+  @@unique([tenantId, userId])
+  @@unique([tenantId, studentNumber])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model SupervisorProfile {
+  id                               String                @id @default(cuid())
+  tenantId                         String
+  tenant                           Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                        DateTime              @default(now())
+  updatedAt                        DateTime              @updatedAt
+  verifiedAt                       DateTime?
+  verificationStatus               ReviewStatus          @default(PENDING)
+  userId                           String
+  user                             User                  @relation("SupervisorProfile_userId", fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  companyMembership_supervisorId   CompanyMembership[]   @relation("CompanyMembership_supervisorId")
+  coursePolicyScope_supervisorId   CoursePolicyScope[]   @relation("CoursePolicyScope_supervisorId")
+  placementSupervisor_supervisorId PlacementSupervisor[] @relation("PlacementSupervisor_supervisorId")
+  entryConfirmation_supervisorId   EntryConfirmation[]   @relation("EntryConfirmation_supervisorId")
+
+  @@unique([tenantId, userId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Company {
+  id                          String              @id @default(cuid())
+  tenantId                    String
+  tenant                      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                   DateTime            @default(now())
+  updatedAt                   DateTime            @updatedAt
+  name                        String
+  industry                    String
+  address                     String?
+  verificationStatus          ReviewStatus        @default(PENDING)
+  archivedAt                  DateTime?
+  companyMembership_companyId CompanyMembership[] @relation("CompanyMembership_companyId")
+  placement_companyId         Placement[]         @relation("Placement_companyId")
+  jobPosting_companyId        JobPosting[]        @relation("JobPosting_companyId")
+  directoryProfile_companyId  DirectoryProfile[]  @relation("DirectoryProfile_companyId")
+  companyReview_companyId     CompanyReview[]     @relation("CompanyReview_companyId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CompanyMembership {
+  id           String            @id @default(cuid())
+  tenantId     String
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  active       Boolean           @default(true)
+  canPost      Boolean           @default(false)
+  companyId    String
+  supervisorId String
+  company      Company           @relation("CompanyMembership_companyId", fields: [tenantId, companyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  supervisor   SupervisorProfile @relation("CompanyMembership_supervisorId", fields: [tenantId, supervisorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, companyId, supervisorId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CoursePolicyScope {
+  id           String            @id @default(cuid())
+  tenantId     String
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  active       Boolean           @default(true)
+  supervisorId String
+  courseId     String
+  supervisor   SupervisorProfile @relation("CoursePolicyScope_supervisorId", fields: [tenantId, supervisorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  course       Course            @relation("CoursePolicyScope_courseId", fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, supervisorId, courseId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model HoursPolicy {
+  id                       String            @id @default(cuid())
+  tenantId                 String
+  tenant                   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  version                  Int
+  requiredMinutes          Int
+  isFictional              Boolean           @default(false)
+  courseId                 String
+  periodId                 String
+  authorId                 String
+  course                   Course            @relation("HoursPolicy_courseId", fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  period                   AcademicPeriod    @relation("HoursPolicy_periodId", fields: [tenantId, periodId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  author                   User              @relation("HoursPolicy_authorId", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  placement_policyId       Placement[]       @relation("Placement_policyId")
+  policyMigration_policyId PolicyMigration[] @relation("PolicyMigration_policyId")
+
+  @@unique([tenantId, courseId, periodId, version])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model ClassSpace {
+  id                           String                 @id @default(cuid())
+  tenantId                     String
+  tenant                       Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @updatedAt
+  name                         String
+  section                      String
+  archivedAt                   DateTime?
+  version                      Int                    @default(1)
+  coordinatorId                String
+  courseId                     String
+  periodId                     String
+  coordinator                  User                   @relation("ClassSpace_coordinatorId", fields: [tenantId, coordinatorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  course                       Course                 @relation("ClassSpace_courseId", fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  period                       AcademicPeriod         @relation("ClassSpace_periodId", fields: [tenantId, periodId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  joinCode_classId             JoinCode[]             @relation("JoinCode_classId")
+  enrollment_classId           Enrollment[]           @relation("Enrollment_classId")
+  placement_classId            Placement[]            @relation("Placement_classId")
+  incidentCase_classId         IncidentCase[]         @relation("IncidentCase_classId")
+  announcementAudience_classId AnnouncementAudience[] @relation("AnnouncementAudience_classId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model JoinCode {
+  id             String     @id @default(cuid())
+  tenantId       String
+  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  codeHash       String     @unique
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  maxEnrollments Int?
+  classId        String
+  class          ClassSpace @relation("JoinCode_classId", fields: [tenantId, classId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Enrollment {
+  id        String         @id @default(cuid())
+  tenantId  String
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  joinedAt  DateTime       @default(now())
+  endedAt   DateTime?
+  isPrimary Boolean        @default(true)
+  classId   String
+  studentId String
+  class     ClassSpace     @relation("Enrollment_classId", fields: [tenantId, classId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  student   StudentProfile @relation("Enrollment_studentId", fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, classId, studentId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Placement {
+  id                              String                @id @default(cuid())
+  tenantId                        String
+  tenant                          Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                       DateTime              @default(now())
+  updatedAt                       DateTime              @updatedAt
+  startsAt                        DateTime
+  endsAt                          DateTime
+  status                          PlacementStatus       @default(ACTIVE)
+  requiredMinutes                 Int?
+  policyVersion                   Int?
+  version                         Int                   @default(1)
+  studentId                       String
+  companyId                       String
+  periodId                        String
+  classId                         String
+  policyId                        String?
+  student                         StudentProfile        @relation("Placement_studentId", fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  company                         Company               @relation("Placement_companyId", fields: [tenantId, companyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  period                          AcademicPeriod        @relation("Placement_periodId", fields: [tenantId, periodId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  class                           ClassSpace            @relation("Placement_classId", fields: [tenantId, classId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  policy                          HoursPolicy?          @relation("Placement_policyId", fields: [tenantId, policyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  placementSupervisor_placementId PlacementSupervisor[] @relation("PlacementSupervisor_placementId")
+  policyMigration_placementId     PolicyMigration[]     @relation("PolicyMigration_placementId")
+  dailyEntry_placementId          DailyEntry[]          @relation("DailyEntry_placementId")
+  companyRecord_placementId       CompanyRecord[]       @relation("CompanyRecord_placementId")
+  evaluation_placementId          Evaluation[]          @relation("Evaluation_placementId")
+  documentSubmission_placementId  DocumentSubmission[]  @relation("DocumentSubmission_placementId")
+  incidentCase_placementId        IncidentCase[]        @relation("IncidentCase_placementId")
+  application_placementId         Application[]         @relation("Application_placementId")
+  companyReview_placementId       CompanyReview[]       @relation("CompanyReview_placementId")
+  completionRecord_placementId    CompletionRecord[]    @relation("CompletionRecord_placementId")
+  portfolioJob_placementId        PortfolioJob[]        @relation("PortfolioJob_placementId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model PlacementSupervisor {
+  id           String            @id @default(cuid())
+  tenantId     String
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  assignedAt   DateTime          @default(now())
+  revokedAt    DateTime?
+  placementId  String
+  supervisorId String
+  placement    Placement         @relation("PlacementSupervisor_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  supervisor   SupervisorProfile @relation("PlacementSupervisor_supervisorId", fields: [tenantId, supervisorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, placementId, supervisorId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model PolicyMigration {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  oldMinutes  Int?
+  newMinutes  Int
+  reason      String
+  placementId String
+  policyId    String
+  actorId     String
+  placement   Placement   @relation("PolicyMigration_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  policy      HoursPolicy @relation("PolicyMigration_policyId", fields: [tenantId, policyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  actor       User        @relation("PolicyMigration_actorId", fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model DailyEntry {
+  id                        String              @id @default(cuid())
+  tenantId                  String
+  tenant                    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  date                      DateTime            @db.Date
+  narrative                 String              @db.VarChar(8000)
+  submittedAt               DateTime
+  version                   Int                 @default(1)
+  placementId               String
+  placement                 Placement           @relation("DailyEntry_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  timeInterval_entryId      TimeInterval[]      @relation("TimeInterval_entryId")
+  entryRevision_entryId     EntryRevision[]     @relation("EntryRevision_entryId")
+  entryConfirmation_entryId EntryConfirmation[] @relation("EntryConfirmation_entryId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, placementId, date])
+  @@index([tenantId, createdAt])
+}
+
+model TimeInterval {
+  id             String     @id @default(cuid())
+  tenantId       String
+  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  startsAt       DateTime
+  endsAt         DateTime
+  breakMinutes   Int        @default(0)
+  elapsedMinutes Int
+  entryId        String
+  entry          DailyEntry @relation("TimeInterval_entryId", fields: [tenantId, entryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model EntryRevision {
+  id                          String             @id @default(cuid())
+  tenantId                    String
+  tenant                      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime           @updatedAt
+  version                     Int
+  oldNarrative                String
+  newNarrative                String
+  reason                      String
+  entryId                     String
+  actorId                     String
+  entry                       DailyEntry         @relation("EntryRevision_entryId", fields: [tenantId, entryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  actor                       User               @relation("EntryRevision_actorId", fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  intervalRevision_revisionId IntervalRevision[] @relation("IntervalRevision_revisionId")
+
+  @@unique([tenantId, entryId, version])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model IntervalRevision {
+  id              String        @id @default(cuid())
+  tenantId        String
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  oldStart        DateTime
+  oldEnd          DateTime
+  oldBreakMinutes Int
+  newStart        DateTime
+  newEnd          DateTime
+  newBreakMinutes Int
+  revisionId      String
+  revision        EntryRevision @relation("IntervalRevision_revisionId", fields: [tenantId, revisionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model EntryConfirmation {
+  id            String             @id @default(cuid())
+  tenantId      String
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  entryVersion  Int
+  status        ConfirmationStatus
+  reason        String?
+  invalidatedAt DateTime?
+  entryId       String
+  supervisorId  String
+  entry         DailyEntry         @relation("EntryConfirmation_entryId", fields: [tenantId, entryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  supervisor    SupervisorProfile  @relation("EntryConfirmation_supervisorId", fields: [tenantId, supervisorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, entryId, entryVersion, supervisorId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model StorageObject {
+  id                          String               @id @default(cuid())
+  tenantId                    String
+  tenant                      Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                   DateTime             @default(now())
+  updatedAt                   DateTime             @updatedAt
+  objectKey                   String               @unique
+  filename                    String
+  contentType                 String
+  byteSize                    Int
+  sha256                      String?
+  scanStatus                  ScanStatus           @default(QUARANTINED)
+  verifiedAt                  DateTime?
+  ownerId                     String
+  owner                       User                 @relation("StorageObject_ownerId", fields: [tenantId, ownerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  companyRecord_objectId      CompanyRecord[]      @relation("CompanyRecord_objectId")
+  documentSubmission_objectId DocumentSubmission[] @relation("DocumentSubmission_objectId")
+  caseAttachment_objectId     CaseAttachment[]     @relation("CaseAttachment_objectId")
+  portfolioJob_artifactId     PortfolioJob[]       @relation("PortfolioJob_artifactId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CompanyRecord {
+  id          String        @id @default(cuid())
+  tenantId    String
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  description String
+  placementId String
+  objectId    String
+  placement   Placement     @relation("CompanyRecord_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  object      StorageObject @relation("CompanyRecord_objectId", fields: [tenantId, objectId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CompetencyFramework {
+  id                          String            @id @default(cuid())
+  tenantId                    String
+  tenant                      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                   DateTime          @default(now())
+  updatedAt                   DateTime          @updatedAt
+  name                        String
+  version                     Int
+  scaleMin                    Int
+  scaleMax                    Int
+  isFictional                 Boolean           @default(false)
+  competency_frameworkId      Competency[]      @relation("Competency_frameworkId")
+  courseFramework_frameworkId CourseFramework[] @relation("CourseFramework_frameworkId")
+  evaluation_frameworkId      Evaluation[]      @relation("Evaluation_frameworkId")
+
+  @@unique([tenantId, name, version])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Competency {
+  id                           String              @id @default(cuid())
+  tenantId                     String
+  tenant                       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                    DateTime            @default(now())
+  updatedAt                    DateTime            @updatedAt
+  name                         String
+  description                  String
+  frameworkId                  String
+  framework                    CompetencyFramework @relation("Competency_frameworkId", fields: [tenantId, frameworkId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  rubricDimension_competencyId RubricDimension[]   @relation("RubricDimension_competencyId")
+  jobCompetency_competencyId   JobCompetency[]     @relation("JobCompetency_competencyId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CourseFramework {
+  id          String              @id @default(cuid())
+  tenantId    String
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  courseId    String
+  frameworkId String
+  course      Course              @relation("CourseFramework_courseId", fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  framework   CompetencyFramework @relation("CourseFramework_frameworkId", fields: [tenantId, frameworkId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, courseId, frameworkId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model RubricDimension {
+  id                                  String                    @id @default(cuid())
+  tenantId                            String
+  tenant                              Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                           DateTime                  @default(now())
+  updatedAt                           DateTime                  @updatedAt
+  name                                String
+  weight                              Int
+  competencyId                        String
+  competency                          Competency                @relation("RubricDimension_competencyId", fields: [tenantId, competencyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  evaluationScore_dimensionId         EvaluationScore[]         @relation("EvaluationScore_dimensionId")
+  evaluationScoreRevision_dimensionId EvaluationScoreRevision[] @relation("EvaluationScoreRevision_dimensionId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Evaluation {
+  id                              String               @id @default(cuid())
+  tenantId                        String
+  tenant                          Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                       DateTime             @default(now())
+  updatedAt                       DateTime             @updatedAt
+  kind                            EvaluationKind
+  status                          SubmissionStatus     @default(DRAFT)
+  submittedAt                     DateTime?
+  version                         Int                  @default(1)
+  placementId                     String
+  frameworkId                     String
+  evaluatorId                     String
+  placement                       Placement            @relation("Evaluation_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  framework                       CompetencyFramework  @relation("Evaluation_frameworkId", fields: [tenantId, frameworkId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  evaluator                       User                 @relation("Evaluation_evaluatorId", fields: [tenantId, evaluatorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  evaluationScore_evaluationId    EvaluationScore[]    @relation("EvaluationScore_evaluationId")
+  evaluationRevision_evaluationId EvaluationRevision[] @relation("EvaluationRevision_evaluationId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model EvaluationScore {
+  id           String          @id @default(cuid())
+  tenantId     String
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  score        Int
+  evaluationId String
+  dimensionId  String
+  evaluation   Evaluation      @relation("EvaluationScore_evaluationId", fields: [tenantId, evaluationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  dimension    RubricDimension @relation("EvaluationScore_dimensionId", fields: [tenantId, dimensionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, evaluationId, dimensionId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model EvaluationRevision {
+  id                                 String                    @id @default(cuid())
+  tenantId                           String
+  tenant                             Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                          DateTime                  @default(now())
+  updatedAt                          DateTime                  @updatedAt
+  version                            Int
+  reason                             String
+  evaluationId                       String
+  evaluation                         Evaluation                @relation("EvaluationRevision_evaluationId", fields: [tenantId, evaluationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  evaluationScoreRevision_revisionId EvaluationScoreRevision[] @relation("EvaluationScoreRevision_revisionId")
+
+  @@unique([tenantId, evaluationId, version])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model EvaluationScoreRevision {
+  id          String             @id @default(cuid())
+  tenantId    String
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  score       Int
+  revisionId  String
+  dimensionId String
+  revision    EvaluationRevision @relation("EvaluationScoreRevision_revisionId", fields: [tenantId, revisionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  dimension   RubricDimension    @relation("EvaluationScoreRevision_dimensionId", fields: [tenantId, dimensionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model DocumentType {
+  id                                 String                @id @default(cuid())
+  tenantId                           String
+  tenant                             Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                          DateTime              @default(now())
+  updatedAt                          DateTime              @updatedAt
+  name                               String
+  allowedTypes                       String[]
+  maxBytes                           Int
+  expiresAfterDays                   Int?
+  configured                         Boolean               @default(false)
+  documentRequirement_documentTypeId DocumentRequirement[] @relation("DocumentRequirement_documentTypeId")
+  documentSubmission_documentTypeId  DocumentSubmission[]  @relation("DocumentSubmission_documentTypeId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model RequirementSet {
+  id                                   String                @id @default(cuid())
+  tenantId                             String
+  tenant                               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                            DateTime              @default(now())
+  updatedAt                            DateTime              @updatedAt
+  name                                 String
+  version                              Int
+  isFictional                          Boolean               @default(false)
+  courseId                             String
+  periodId                             String
+  course                               Course                @relation("RequirementSet_courseId", fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  period                               AcademicPeriod        @relation("RequirementSet_periodId", fields: [tenantId, periodId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  documentRequirement_requirementSetId DocumentRequirement[] @relation("DocumentRequirement_requirementSetId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model DocumentRequirement {
+  id               String         @id @default(cuid())
+  tenantId         String
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  required         Boolean        @default(true)
+  requirementSetId String
+  documentTypeId   String
+  requirementSet   RequirementSet @relation("DocumentRequirement_requirementSetId", fields: [tenantId, requirementSetId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  documentType     DocumentType   @relation("DocumentRequirement_documentTypeId", fields: [tenantId, documentTypeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, requirementSetId, documentTypeId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model DocumentSubmission {
+  id             String        @id @default(cuid())
+  tenantId       String
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  version        Int
+  status         ReviewStatus  @default(PENDING)
+  reviewReason   String?
+  reviewedAt     DateTime?
+  expiresAt      DateTime?
+  placementId    String
+  documentTypeId String
+  objectId       String
+  reviewerId     String?
+  placement      Placement     @relation("DocumentSubmission_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  documentType   DocumentType  @relation("DocumentSubmission_documentTypeId", fields: [tenantId, documentTypeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  object         StorageObject @relation("DocumentSubmission_objectId", fields: [tenantId, objectId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  reviewer       User?         @relation("DocumentSubmission_reviewerId", fields: [tenantId, reviewerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, placementId, documentTypeId, version])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model IncidentCase {
+  id                     String            @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  subject                String            @db.VarChar(160)
+  narrative              String            @db.VarChar(8000)
+  status                 CaseStatus        @default(OPEN)
+  routingFallback        String?
+  resolution             String?
+  resolvedAt             DateTime?
+  reporterId             String
+  placementId            String
+  classId                String
+  coordinatorId          String?
+  reporter               User              @relation("IncidentCase_reporterId", fields: [tenantId, reporterId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  placement              Placement         @relation("IncidentCase_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  class                  ClassSpace        @relation("IncidentCase_classId", fields: [tenantId, classId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  coordinator            User?             @relation("IncidentCase_coordinatorId", fields: [tenantId, coordinatorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  caseHandler_caseId     CaseHandler[]     @relation("CaseHandler_caseId")
+  caseMessage_caseId     CaseMessage[]     @relation("CaseMessage_caseId")
+  caseAttachment_caseId  CaseAttachment[]  @relation("CaseAttachment_caseId")
+  caseEscalation_caseId  CaseEscalation[]  @relation("CaseEscalation_caseId")
+  sensitiveAccess_caseId SensitiveAccess[] @relation("SensitiveAccess_caseId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CaseHandler {
+  id           String       @id @default(cuid())
+  tenantId     String
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  escalated    Boolean      @default(false)
+  accessReason String
+  revokedAt    DateTime?
+  caseId       String
+  userId       String
+  case         IncidentCase @relation("CaseHandler_caseId", fields: [tenantId, caseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  user         User         @relation("CaseHandler_userId", fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, caseId, userId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CaseMessage {
+  id        String       @id @default(cuid())
+  tenantId  String
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  body      String       @db.VarChar(8000)
+  caseId    String
+  authorId  String
+  case      IncidentCase @relation("CaseMessage_caseId", fields: [tenantId, caseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  author    User         @relation("CaseMessage_authorId", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CaseAttachment {
+  id        String        @id @default(cuid())
+  tenantId  String
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  caseId    String
+  objectId  String
+  case      IncidentCase  @relation("CaseAttachment_caseId", fields: [tenantId, caseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  object    StorageObject @relation("CaseAttachment_objectId", fields: [tenantId, objectId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CaseEscalation {
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  reason      String
+  caseId      String
+  actorId     String
+  recipientId String
+  case        IncidentCase @relation("CaseEscalation_caseId", fields: [tenantId, caseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  actor       User         @relation("CaseEscalation_actorId", fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  recipient   User         @relation("CaseEscalation_recipientId", fields: [tenantId, recipientId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model SensitiveAccess {
+  id        String       @id @default(cuid())
+  tenantId  String
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  reason    String
+  action    String
+  caseId    String
+  actorId   String
+  case      IncidentCase @relation("SensitiveAccess_caseId", fields: [tenantId, caseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  actor     User         @relation("SensitiveAccess_actorId", fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model JobPosting {
+  id                   String            @id @default(cuid())
+  tenantId             String
+  tenant               Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  title                String
+  description          String            @db.VarChar(8000)
+  location             String
+  openings             Int
+  status               PublicationStatus @default(DRAFT)
+  closesAt             DateTime?
+  version              Int               @default(1)
+  companyId            String
+  authorId             String
+  company              Company           @relation("JobPosting_companyId", fields: [tenantId, companyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  author               User              @relation("JobPosting_authorId", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  jobCompetency_jobId  JobCompetency[]   @relation("JobCompetency_jobId")
+  jobEligibility_jobId JobEligibility[]  @relation("JobEligibility_jobId")
+  application_jobId    Application[]     @relation("Application_jobId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model JobCompetency {
+  id           String     @id @default(cuid())
+  tenantId     String
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  jobId        String
+  competencyId String
+  job          JobPosting @relation("JobCompetency_jobId", fields: [tenantId, jobId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  competency   Competency @relation("JobCompetency_competencyId", fields: [tenantId, competencyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, jobId, competencyId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model JobEligibility {
+  id        String     @id @default(cuid())
+  tenantId  String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  jobId     String
+  courseId  String
+  job       JobPosting @relation("JobEligibility_jobId", fields: [tenantId, jobId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  course    Course     @relation("JobEligibility_courseId", fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Application {
+  id                               String               @id @default(cuid())
+  tenantId                         String
+  tenant                           Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                        DateTime             @default(now())
+  updatedAt                        DateTime             @updatedAt
+  status                           ApplicationStatus    @default(SUBMITTED)
+  coverLetter                      String               @db.VarChar(5000)
+  version                          Int                  @default(1)
+  jobId                            String
+  studentId                        String
+  placementId                      String?
+  job                              JobPosting           @relation("Application_jobId", fields: [tenantId, jobId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  student                          StudentProfile       @relation("Application_studentId", fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  placement                        Placement?           @relation("Application_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  applicationHistory_applicationId ApplicationHistory[] @relation("ApplicationHistory_applicationId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model ApplicationHistory {
+  id            String             @id @default(cuid())
+  tenantId      String
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  reason        String?
+  applicationId String
+  actorId       String
+  application   Application        @relation("ApplicationHistory_applicationId", fields: [tenantId, applicationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  actor         User               @relation("ApplicationHistory_actorId", fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Announcement {
+  id                                  String                 @id @default(cuid())
+  tenantId                            String
+  tenant                              Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                           DateTime               @default(now())
+  updatedAt                           DateTime               @updatedAt
+  title                               String                 @db.VarChar(160)
+  body                                String                 @db.VarChar(8000)
+  status                              PublicationStatus      @default(DRAFT)
+  publishedAt                         DateTime?
+  authorId                            String
+  author                              User                   @relation("Announcement_authorId", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  announcementAudience_announcementId AnnouncementAudience[] @relation("AnnouncementAudience_announcementId")
+  readReceipt_announcementId          ReadReceipt[]          @relation("ReadReceipt_announcementId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model AnnouncementAudience {
+  id             String        @id @default(cuid())
+  tenantId       String
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  scope          AudienceScope
+  announcementId String
+  departmentId   String?
+  classId        String?
+  announcement   Announcement  @relation("AnnouncementAudience_announcementId", fields: [tenantId, announcementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  department     Department?   @relation("AnnouncementAudience_departmentId", fields: [tenantId, departmentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  class          ClassSpace?   @relation("AnnouncementAudience_classId", fields: [tenantId, classId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model ReadReceipt {
+  id             String       @id @default(cuid())
+  tenantId       String
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  readAt         DateTime     @default(now())
+  announcementId String
+  userId         String
+  announcement   Announcement @relation("ReadReceipt_announcementId", fields: [tenantId, announcementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  user           User         @relation("ReadReceipt_userId", fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, announcementId, userId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model DirectoryProfile {
+  id          String            @id @default(cuid())
+  tenantId    String
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  description String
+  website     String?
+  status      PublicationStatus @default(DRAFT)
+  companyId   String
+  company     Company           @relation("DirectoryProfile_companyId", fields: [tenantId, companyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CompanyReview {
+  id          String         @id @default(cuid())
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  rating      Int
+  body        String         @db.VarChar(5000)
+  status      ReviewStatus   @default(PENDING)
+  placementId String
+  companyId   String
+  studentId   String
+  placement   Placement      @relation("CompanyReview_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  company     Company        @relation("CompanyReview_companyId", fields: [tenantId, companyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  student     StudentProfile @relation("CompanyReview_studentId", fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, placementId, studentId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CompletionChecklist {
+  id                           String             @id @default(cuid())
+  tenantId                     String
+  tenant                       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                    DateTime           @default(now())
+  updatedAt                    DateTime           @updatedAt
+  name                         String
+  version                      Int
+  configured                   Boolean            @default(false)
+  courseId                     String
+  periodId                     String
+  course                       Course             @relation("CompletionChecklist_courseId", fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  period                       AcademicPeriod     @relation("CompletionChecklist_periodId", fields: [tenantId, periodId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  checklistItem_checklistId    ChecklistItem[]    @relation("ChecklistItem_checklistId")
+  completionRecord_checklistId CompletionRecord[] @relation("CompletionRecord_checklistId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model ChecklistItem {
+  id                    String              @id @default(cuid())
+  tenantId              String
+  tenant                Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  name                  String
+  required              Boolean             @default(true)
+  checklistId           String
+  checklist             CompletionChecklist @relation("ChecklistItem_checklistId", fields: [tenantId, checklistId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  completionItem_itemId CompletionItem[]    @relation("CompletionItem_itemId")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CompletionRecord {
+  id                          String              @id @default(cuid())
+  tenantId                    String
+  tenant                      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                   DateTime            @default(now())
+  updatedAt                   DateTime            @updatedAt
+  status                      ReviewStatus        @default(PENDING)
+  reason                      String?
+  decidedAt                   DateTime?
+  placementId                 String
+  checklistId                 String
+  decidedById                 String?
+  placement                   Placement           @relation("CompletionRecord_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  checklist                   CompletionChecklist @relation("CompletionRecord_checklistId", fields: [tenantId, checklistId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  decidedBy                   User?               @relation("CompletionRecord_decidedById", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  completionItem_completionId CompletionItem[]    @relation("CompletionItem_completionId")
+
+  @@unique([tenantId, placementId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model CompletionItem {
+  id           String           @id @default(cuid())
+  tenantId     String
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  fulfilled    Boolean          @default(false)
+  reason       String?
+  completionId String
+  itemId       String
+  completion   CompletionRecord @relation("CompletionItem_completionId", fields: [tenantId, completionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  item         ChecklistItem    @relation("CompletionItem_itemId", fields: [tenantId, itemId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, completionId, itemId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model PortfolioJob {
+  id            String         @id @default(cuid())
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  version       Int
+  status        JobStatus      @default(QUEUED)
+  missingItems  String[]
+  placementId   String
+  requestedById String
+  artifactId    String?
+  placement     Placement      @relation("PortfolioJob_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  requestedBy   User           @relation("PortfolioJob_requestedById", fields: [tenantId, requestedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  artifact      StorageObject? @relation("PortfolioJob_artifactId", fields: [tenantId, artifactId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, placementId, version])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model Notification {
+  id           String    @id @default(cuid())
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  title        String
+  readAt       DateTime?
+  resourceType String
+  resourceId   String
+  userId       String
+  user         User      @relation("Notification_userId", fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model OutboxEvent {
+  id            String    @id @default(cuid())
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  type          String
+  resourceId    String
+  status        JobStatus @default(QUEUED)
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime?
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, nextAttemptAt])
+  @@index([tenantId, createdAt])
+}
+
+model BackgroundJob {
+  id            String    @id @default(cuid())
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  type          String
+  resourceId    String
+  status        JobStatus @default(QUEUED)
+  attempts      Int       @default(0)
+  lastErrorCode String?
+  nextAttemptAt DateTime?
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, nextAttemptAt])
+  @@index([tenantId, createdAt])
+}
+
+model IdempotencyKey {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  key        String
+  action     String
+  responseId String?
+  expiresAt  DateTime
+  actorId    String
+  actor      User     @relation("IdempotencyKey_actorId", fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, actorId, action, key])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model AuditEvent {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  action       String
+  resourceType String
+  resourceId   String
+  reason       String?
+  actorId      String
+  actor        User     @relation("AuditEvent_actorId", fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
+model LoginAttempt {
+  id             String    @id @default(cuid())
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  keyHash        String
+  attempts       Int       @default(0)
+  windowStartsAt DateTime
+  blockedUntil   DateTime?
+
+  @@unique([tenantId, keyHash])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}

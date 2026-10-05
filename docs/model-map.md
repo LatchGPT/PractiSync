@@ -1,0 +1,73 @@
+# Model map
+
+PostgreSQL is the institutional reference schema. Hosted demo D1 is a separate, explicitly reduced demo adapter.
+
+- Tenant
+- User
+- Account
+- Session
+- VerificationToken
+- Membership
+- Department
+- Course
+- AcademicPeriod
+- StudentProfile
+- SupervisorProfile
+- Company
+- CompanyMembership
+- CoursePolicyScope
+- HoursPolicy
+- ClassSpace
+- JoinCode
+- Enrollment
+- Placement
+- PlacementSupervisor
+- PolicyMigration
+- DailyEntry
+- TimeInterval
+- EntryRevision
+- IntervalRevision
+- EntryConfirmation
+- StorageObject
+- CompanyRecord
+- CompetencyFramework
+- Competency
+- CourseFramework
+- RubricDimension
+- Evaluation
+- EvaluationScore
+- EvaluationRevision
+- EvaluationScoreRevision
+- DocumentType
+- RequirementSet
+- DocumentRequirement
+- DocumentSubmission
+- IncidentCase
+- CaseHandler
+- CaseMessage
+- CaseAttachment
+- CaseEscalation
+- SensitiveAccess
+- JobPosting
+- JobCompetency
+- JobEligibility
+- Application
+- ApplicationHistory
+- Announcement
+- AnnouncementAudience
+- ReadReceipt
+- DirectoryProfile
+- CompanyReview
+- CompletionChecklist
+- ChecklistItem
+- CompletionRecord
+- CompletionItem
+- PortfolioJob
+- Notification
+- OutboxEvent
+- BackgroundJob
+- IdempotencyKey
+- AuditEvent
+- LoginAttempt
+
+67 models cover identity, institution, DTR, competencies, documents, incidents, jobs, announcements, directory, completion, exports, and infrastructure.

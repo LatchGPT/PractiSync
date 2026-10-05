@@ -1,0 +1,1 @@
+{"name":"@practisync/db","private":true,"type":"module","scripts":{"validate":"prisma validate --schema prisma/schema.prisma","generate":"prisma generate --schema prisma/schema.prisma","migrate":"prisma migrate deploy --schema prisma/schema.prisma"}}

@@ -1,0 +1,166 @@
+/* RTU-inspired gold and blue. These are interface colors, not claimed official color specifications. */
+:root{
+  --background:#f3f6fb;
+  --foreground:#153456;
+  --card:#fff;
+  --primary:#124c91;
+  --muted:#edf3fb;
+  --muted-foreground:#62768e;
+  --border:#dce5f0;
+  --rtu-navy:#102f62;
+  --rtu-blue:#124c91;
+  --rtu-gold:#d7aa3e;
+  --rtu-gold-deep:#966916;
+  --rtu-ice:#eef4fc;
+}
+body{background:var(--background);color:var(--foreground)}
+button:focus-visible,a:focus-visible{outline-color:var(--rtu-gold)}
+input:focus,textarea:focus{border-color:var(--rtu-blue);box-shadow:0 0 0 3px #124c911a}
+.brand{color:var(--rtu-navy)}
+.brand-icon{background:var(--rtu-blue);box-shadow:inset 0 -4px 0 #d7aa3e}
+.primary{background:var(--rtu-blue);border-color:var(--rtu-blue)}
+.primary:hover:not(:disabled){background:#0d3e79;border-color:#0d3e79}
+.secondary:hover:not(:disabled){border-color:#a6bcd7;background:#f7faff}
+.textbutton,.role-link{color:var(--rtu-blue)}
+.chip{background:#eaf1fa;color:#345c89}
+.chip.green{background:#e8f2ef;color:#277359}
+.chip.orange{background:#fff2d6;color:#936817}
+.chip.blue{background:#e6effb;color:#225992}
+.login-brand{
+  background:radial-gradient(circle at 82% 13%,#315f9c 0,#315f9c00 38%),linear-gradient(145deg,#0e3674 0%,#153f82 57%,#092d66 100%);
+  color:#fff;
+  isolation:isolate;
+}
+.login-brand::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.42;
+  background:repeating-linear-gradient(132deg,transparent 0 190px,#e2b347 190px 197px,transparent 197px 215px,#ffffff30 215px 218px,transparent 218px 280px);
+  mask-image:linear-gradient(to bottom,#0008,transparent 83%);
+}
+.login-brand::after{
+  content:"";position:absolute;width:390px;height:390px;right:-105px;bottom:-150px;border:1px solid #ffffff3d;border-radius:50%;box-shadow:0 0 0 45px #ffffff0c,0 0 0 92px #d7aa3e18;pointer-events:none;
+}
+.login-brand .brand{color:#fff}
+.login-brand .brand-icon{background:#ffffff1d;border:1px solid #ffffff70}
+.login-story .eyebrow{color:#e6c87f}
+.login-story h1 em{color:#f2c65b}
+.login-story>p,.login-footer{color:#e4ecfa}
+.login-visual{border-color:#f4e5bc;box-shadow:0 20px 45px #031b4380;transform:rotate(-1deg)}
+.login-visual-head .avatar{background:#e7eef9;color:#164d8f}
+.progress-line{background:#e4ebf5}
+.progress-line span{background:linear-gradient(90deg,#124c91,#d7aa3e)}
+.login-visual .mini-stats strong,.login-visual .progress-label b{color:#143e7e}
+.login-main{background:#fff}
+.login-content>h2{color:var(--rtu-navy)}
+.demo-account:hover{border-color:#91afd0;background:#f5f9ff}
+.role-icon{background:#e9f1fb;color:#235a99}
+.role-icon.blue{background:#edf2fb;color:#5279ad}
+.role-icon.orange{background:#fff2dc;color:#a77521}
+.role-icon.purple{background:#ececf9;color:#6e6aaa}
+.login .demo-header .chip{background:#fff1d1;color:#8c6314}
+.login-note{color:#687c96}
+.app-sidebar{border-right-color:#d8e3f1}
+.sidebar-brand{border-bottom-color:#dce5f0}
+.sidebar-university{background:linear-gradient(135deg,#ecf3fd,#f9fbff);border-color:#d9e5f3}
+.sidebar-university strong{color:#163d77}
+.nav-section{color:#8d9db2}
+.nav-item{color:#536b89!important}
+.nav-item:hover{background:#edf3fb!important;color:#194d89!important}
+.nav-item[data-active="true"],.nav-item[aria-current="page"]{background:#e7effb!important;color:#114987!important}
+.nav-badge{background:#e3ad38;color:#172f55}
+.sidebar-help{background:linear-gradient(145deg,#eef4fd,#fff8e7);border-color:#dce7f4}
+.sidebar-help svg{color:#b5882f}
+.sidebar-help{color:#59718f}
+.sidebar-help strong,.sidebar-profile strong{color:#1d457c}
+.sidebar-profile p,.signout{color:#617995}
+.sidebar-profile .avatar,.topbar-right .avatar{background:#fff1d1;color:#7d5c1b}
+.app-topbar{background:#fff;border-bottom-color:#dce5f0}
+.topbar-trail,.topbar-right,.topbar-icon{color:#607794}
+.topbar-trail strong{color:#244c82}
+.demo-banner{background:#fff4da;color:#6e531e;border-bottom:1px solid #ebd69e}
+.demo-banner button{color:#775315}
+.page-heading .eyebrow{color:#a27a29}
+.page-heading h1{color:var(--rtu-navy)}
+.page-heading p,.panel-head p,.item-card p,.settings-row p,.activity-line p{color:#586f8b}
+.login-content>p,.demo-account p,.login-bottom,.or,.password-wrap button{color:#60758e}
+.mini-stats,.progress-label,.stat-top,.stat-bottom,.stat-value small{color:#60758e}
+.stat-card,.panel,.item-card,.role-card,.role-metric{border-color:#dce5f0;box-shadow:0 4px 16px #143d730b}
+.stat-top svg,.item-card-top svg{color:var(--rtu-blue)}
+.stat-value,.panel-head h2,.item-card h3{color:#1b447c}
+.role-dashboard{--dashboard-accent:var(--rtu-blue)}
+.coordinator-dashboard{--dashboard-accent:#195998}
+.supervisor-dashboard{--dashboard-accent:#a1761f}
+.admin-dashboard{--dashboard-accent:#244b87}
+.role-metric-top,.role-metric-detail{color:#637a95}
+.role-metric>strong,.role-card-heading h2,.role-list-row>div>strong,.role-list-end strong,.role-actions strong,.role-announcement>strong,.role-placement strong{color:#1b4073}
+.role-symbol{background:#eaf2fc;color:var(--dashboard-accent)}
+.role-symbol.soft{background:#fff5e0;color:#9a6d19}
+.role-list-row,.role-card-heading,.role-actions button,.role-announcement{border-bottom-color:#e8eef6}
+.role-progress{background:#e6edf7}
+.role-progress-label strong{color:#164b88}
+.role-note{background:#f4f7fc;border-color:#dce6f4;color:#58708f}
+.notice{background:#f5f8fd;border-color:#dce6f4;color:#4f6482}
+.notice svg{color:var(--rtu-gold-deep)}
+.avatar{background:#eaf1fb;color:#26588f}
+.avatar.tan{background:#fff1d7;color:#886319}
+.progress-wrap .chip.green{background:#eaf2fc;color:#1a568e}
+.training-summary strong,.training-info strong{color:#194d87}
+.training-summary p,.training-summary strong small,.training-info,.legend{color:#60758e}
+.ring{color:#1a568e;background:conic-gradient(#124c91 var(--percent),#e6edf7 0)}
+.ring span{color:#1a568e}
+.todo-row,.announcement-preview{border-color:#e8eef6}
+.todo-row h3,.announcement-preview h3{color:#1d457c}
+.todo-row p,.announcement-preview p,.announcement-meta{color:#60758e}
+.todo-icon{background:#fff3d9;color:#966916}
+.table-overflow th{background:#f6f9fd;color:#6d83a0}
+.table-overflow td,.record-body,.detail-meta{color:#536b89}
+.table-overflow td strong{color:#244a7f}
+.detail-meta strong,.profile-top h2{color:#1d457c}
+.settings-row h3,.activity-line strong{color:#244a7f}
+.empty,.loading{color:#60758e}
+.empty svg{color:#93a8c1}
+.class-code{background:#eaf2fc;color:#1a568e}
+.company-symbol{background:#edf3fc;color:#1d568e}
+.sample-controls,.sample-preview{background:#f5f8fd;border-color:#dce6f3;color:#5c7290}
+.legend i{background:#1b5b9f}
+.legend i.gray{background:#d7ac49}
+@media(max-width:800px){.login-brand{background:#123d7b}.login-main{background:#fff}}
+
+/* Keep the sign-in choices within a typical laptop viewport. */
+.login{min-height:100dvh}
+.login-brand{padding-block:clamp(20px,3vh,38px)}
+.login-story h1{font-size:clamp(34px,3.4vw,49px);margin:18px 0 12px}
+.login-story>p{line-height:1.5}
+.login-visual{margin:24px 0 14px;padding:17px}
+.login-visual .progress-wrap{margin:14px 0 12px}
+.login-main{padding-block:20px}
+.login-content>h2{font-size:27px;margin-top:13px}
+.login-content>p{margin:5px 0 16px}
+.signin-form{gap:10px}
+.login .field{gap:4px}
+.login .field input{padding-block:8px}
+.login .password-wrap button{top:8px}
+.login .signin-form .primary,.login .google{min-height:39px;padding-block:8px}
+.login .or{margin:12px 0 9px}
+.login-note{margin:6px 0 10px}
+.login .demo-header{margin:13px 0 7px}
+.login .demo-grid{gap:7px}
+.login .demo-account{padding:9px 10px}
+.login .login-bottom{margin-top:9px;line-height:1.35}
+@media(max-width:800px){
+  .login-brand{padding:12px 20px}
+  .login-main{padding:14px 20px 18px}
+  .login-content>h2{margin-top:9px}
+}
+@media(max-height:740px),(max-width:800px) and (max-height:800px){
+  .login-visual,.login .or,.login .google,.login-note{display:none}
+  .login-story h1{margin:12px 0 8px;font-size:clamp(30px,3vw,40px)}
+  .login-content>p{margin-bottom:11px}
+  .login .demo-header{margin-top:10px}
+  .login .demo-account p{display:none}
+  .login .login-bottom{margin-top:6px}
+}
+@media(max-height:600px){
+  .login-content>p,.login .demo-header+p,.login .login-bottom{display:none}
+  .login-content>h2{margin-bottom:10px}
+  .login .demo-account{padding-block:6px}
+}
