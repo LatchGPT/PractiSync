@@ -164,3 +164,10 @@ input:focus,textarea:focus{border-color:var(--rtu-blue);box-shadow:0 0 0 3px #12
   .login-content>h2{margin-bottom:10px}
   .login .demo-account{padding-block:6px}
 }
+
+.date-picker-trigger{width:100%;height:46px;justify-content:flex-start;border-color:#dce5f0;background:#fff;color:#153456;font-size:14px;box-shadow:none}
+.date-picker-trigger:hover{background:#f7faff;border-color:#a6bcd7}
+.date-picker-trigger[data-empty=true]{color:#62768e}
+.date-picker-trigger[aria-invalid=true]{border-color:#bd4444}
+.date-picker-error{color:#a53434;font-size:12px}
+[data-slot="calendar"] th,[data-slot="calendar"] td{padding:0;border:0;background:transparent}
