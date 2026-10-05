@@ -1,26 +1,29 @@
 import { z } from 'zod';
 export const roles=['SUPER_ADMIN','COORDINATOR','SUPERVISOR','STUDENT'] as const;
 export type Role=typeof roles[number];
+export type FeatureModule='classes'|'attendance'|'documents'|'competencies'|'incidents'|'jobs'|'announcements'|'directory'|'portfolio'|'policies';
 export type Row={id:string;tenantId:string;createdAt:string;[key:string]:string|number|null};
 export interface Identity {id:string;name:string;username:string;email:string;role:Role;status:string;sessionVersion:number;isDemo:number;courseId:string|null;companyId:string|null;tenantId:string;}
-export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];policyScopes:Row[];}
+export interface Snapshot {user:Identity;features:Record<FeatureModule,boolean>;featureSettings:Row[];revisions:Row[];users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];policyScopes:Row[];}
 const str=(max=500)=>z.string().trim().min(1).max(max);
 export const dtrInput=z.object({placementId:str(),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),startsAt:str(),endsAt:str(),breakMinutes:z.coerce.number().int().min(0),narrative:str(8000),entryId:z.string().optional(),version:z.coerce.number().int().optional(),reason:z.string().max(1000).optional()});
 export const inputs={
  dtr:dtrInput,
  confirm:z.object({entryId:str(),version:z.coerce.number().int()}),
  join:z.object({code:z.string().trim().min(4).max(16)}),
- class:z.object({name:str(100),section:str(60),courseId:str()}),
+ class:z.object({name:str(100),section:str(60),courseId:str(),coordinatorId:z.string().optional()}),
  revokeCode:z.object({classId:str()}),
  policy:z.object({courseId:str(),hours:z.coerce.number().int().min(1).max(10000),version:z.coerce.number().int()}),
  grantScope:z.object({supervisorId:str(),courseId:str()}),
  documentReview:z.object({documentId:str(),status:z.enum(['APPROVED','REJECTED']),reason:str(1000)}),
+ featureSetting:z.object({role:z.enum(['STUDENT','COORDINATOR','SUPERVISOR']),module:z.enum(['classes','attendance','documents','competencies','incidents','jobs','announcements','directory','portfolio','policies']),enabled:z.boolean()}),
  incident:z.object({subject:str(160),narrative:str(8000),placementId:str()}),
  resolveCase:z.object({caseId:str(),status:z.enum(['IN_PROGRESS','RESOLVED']),resolution:str(4000)}),
+ escalateCase:z.object({caseId:str(),note:str(2000)}),
  job:z.object({title:str(160),description:str(8000),location:str(160),courseId:str(),skills:str(400),openings:z.coerce.number().int().min(1).max(1000)}),
  application:z.object({jobId:str(),coverLetter:str(5000)}),
  applicationStatus:z.object({applicationId:str(),status:z.enum(['SHORTLISTED','ACCEPTED','REJECTED'])}),
- announcement:z.object({title:str(160),body:str(8000),classId:z.string().optional()}),
+ announcement:z.object({title:str(160),body:str(8000),classId:z.string().optional(),scope:z.enum(['CLASS','ALL_CLASSES']).optional()}),
  evaluation:z.object({placementId:str(),kind:z.enum(['BASELINE','FINAL']),technical:z.coerce.number().int().min(1).max(5),communication:z.coerce.number().int().min(1).max(5),professionalism:z.coerce.number().int().min(1).max(5),problemSolving:z.coerce.number().int().min(1).max(5)}),
  review:z.object({placementId:str(),rating:z.coerce.number().int().min(1).max(5),body:str(5000)}),
  moderateReview:z.object({reviewId:str(),status:z.enum(['APPROVED','REJECTED'])}),

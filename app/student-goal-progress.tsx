@@ -16,8 +16,6 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
   <div className="goal-donut-wrap"><svg viewBox="0 0 180 180" className="goal-donut" role="img" aria-label={`${hours(goal.reported)} reported of ${goal.target?hours(goal.target):'no configured target'}; ${hours(goal.confirmed)} company confirmed`}>
    <circle cx="90" cy="90" r="66" fill="none" stroke="#e6edf7" strokeWidth="19"/>
    {reportedFraction>0&&<circle cx="90" cy="90" r="66" fill="none" stroke="#124c91" strokeWidth="19" strokeLinecap="round" strokeDasharray={`${reportedFraction*circumference} ${circumference}`} transform="rotate(-90 90 90)"/>}
-   <circle cx="90" cy="90" r="48" fill="none" stroke="#f4eddb" strokeWidth="5"/>
-   {confirmedFraction>0&&<circle cx="90" cy="90" r="48" fill="none" stroke="#d7aa3e" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${confirmedFraction*confirmedCircumference} ${confirmedCircumference}`} transform="rotate(-90 90 90)"/>}
    <text x="90" y="85" textAnchor="middle" className="goal-donut-value">{goal.target?`${goal.percent}%`:'—'}</text>
    <text x="90" y="108" textAnchor="middle" className="goal-donut-caption">of required hours</text>
   </svg><div className="goal-donut-hours"><strong>{hours(goal.reported)}</strong><span>of {goal.target?hours(goal.target):'unconfigured target'}</span></div></div>

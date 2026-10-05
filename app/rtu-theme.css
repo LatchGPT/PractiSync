@@ -171,3 +171,21 @@ input:focus,textarea:focus{border-color:var(--rtu-blue);box-shadow:0 0 0 3px #12
 .date-picker-trigger[aria-invalid=true]{border-color:#bd4444}
 .date-picker-error{color:#a53434;font-size:12px}
 [data-slot="calendar"] th,[data-slot="calendar"] td{padding:0;border:0;background:transparent}
+
+/* Preserve the existing RTU button layouts around shadcn's button base. */
+[data-slot="button"].primary,[data-slot="button"].secondary,[data-slot="button"].textbutton,[data-slot="button"].demo-account,[data-slot="button"].role-metric,[data-slot="button"].role-list-row,[data-slot="button"].role-link,.role-actions [data-slot="button"]{height:auto;white-space:normal}
+
+.sidebar-toggle{width:34px;height:34px;flex-shrink:0;color:var(--rtu-blue)}
+.sidebar-toggle:hover{background:#edf3fb;color:#114987}
+[data-collapsible="icon"] .app-sidebar .sidebar-brand{display:flex;justify-content:center;padding:14px 4px}
+[data-collapsible="icon"] .app-sidebar .brand{gap:0;font-size:0}
+[data-collapsible="icon"] .app-sidebar .brand-icon{width:34px;height:34px}
+[data-collapsible="icon"] .app-sidebar .sidebar-university,
+[data-collapsible="icon"] .app-sidebar .nav-section,
+[data-collapsible="icon"] .app-sidebar .sidebar-help,
+[data-collapsible="icon"] .app-sidebar .nav-badge,
+[data-collapsible="icon"] .app-sidebar .sidebar-profile>div{display:none}
+[data-collapsible="icon"] .app-sidebar .nav-item{width:36px!important;height:38px!important;margin:3px auto!important;padding:10px!important;justify-content:center;font-size:0!important;gap:0!important}
+[data-collapsible="icon"] .app-sidebar .nav-item svg{width:18px;height:18px}
+[data-collapsible="icon"] .app-sidebar .sidebar-profile{flex-direction:column;gap:4px;padding:10px 3px}
+[data-collapsible="icon"] .app-sidebar .signout{width:32px;height:32px;margin:0;padding:7px}

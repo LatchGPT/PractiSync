@@ -29,6 +29,13 @@
       "when": 1791139097630,
       "tag": "0003_application_finality",
       "breakpoints": false
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791220000000,
+      "tag": "0004_role_features_and_submissions",
+      "breakpoints": true
     }
   ]
 }

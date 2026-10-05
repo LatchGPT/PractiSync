@@ -35,6 +35,17 @@ for role in ['student','coordinator','supervisor','admin']:
  print(role+': authenticated, scoped data checks passed')
 op=login(password='Demo@2026!');assert request(op,'/api/data')[0]==200
 print('Username/password form flow passed')
+admin=login('admin');student=login('student')
+status,result=request(admin,'/api/action',{'action':'featureSetting','values':{'role':'STUDENT','module':'attendance','enabled':False}})
+assert status==200,(status,result)
+try:
+ status,scoped=request(student,'/api/data');assert status==200 and scoped['features']['attendance'] is False and scoped['entries']==[],(status,scoped)
+ status,denied=request(student,'/api/action',{'action':'dtr','values':{'placementId':'placement-1','date':'2026-10-02','startsAt':'2026-10-02T08:00','endsAt':'2026-10-02T17:00','breakMinutes':60,'narrative':'Should be denied'}})
+ assert status==403 and 'disabled' in denied['error'],(status,denied)
+finally:
+ status,result=request(admin,'/api/action',{'action':'featureSetting','values':{'role':'STUDENT','module':'attendance','enabled':True}})
+ assert status==200,(status,result)
+print('Admin module toggle and action denial passed')
 csrf=request(op,'/api/auth/csrf')[1]['csrfToken'];request(op,'/api/auth/signout',{'csrfToken':csrf,'callbackUrl':base+'/'},True)
 assert request(op,'/api/data')[0]==401
 print('Sign-out and anonymous denial passed')
