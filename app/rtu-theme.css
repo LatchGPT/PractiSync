@@ -1247,3 +1247,475 @@ tr:last-child td {
   }
 }
 
+/* ==========================================================================
+   PRACTISYNC UNIVERSAL SPACING & VISUAL RHYTHM SYSTEM (PHASE 2)
+   Ensures consistent margins, paddings, gaps, and baselines across all modules
+   ========================================================================== */
+
+/* 1. Main Content Layout & Shell Spacing */
+.content {
+  padding: 28px 32px 42px !important;
+  max-width: 1540px !important;
+  margin: 0 auto !important;
+}
+
+@media (max-width: 1100px) {
+  .content {
+    padding: 24px 24px 36px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 18px 16px 30px !important;
+  }
+}
+
+/* 2. Page Heading & Subtitle Rhythm */
+.page-heading {
+  margin-bottom: 24px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  gap: 20px !important;
+}
+
+.page-heading .eyebrow {
+  display: inline-block !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: var(--rtu-gold-deep) !important;
+  margin-bottom: 6px !important;
+  line-height: 1.2 !important;
+}
+
+.page-heading h1 {
+  font-size: 27px !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.25 !important;
+  color: var(--rtu-navy) !important;
+  margin: 0 !important;
+}
+
+.page-heading p {
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+  color: #556c87 !important;
+  margin-top: 6px !important;
+}
+
+.page-heading-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+/* 3. Surface & Card Padding Harmonization */
+.stat-card {
+  padding: 20px 22px !important;
+  border-radius: var(--radius-card) !important;
+}
+
+.stat-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  color: #5a728e !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.stat-value {
+  margin-top: 12px !important;
+  font-size: 28px !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.03em !important;
+  color: #143c70 !important;
+  font-weight: 750 !important;
+}
+
+.stat-bottom {
+  margin-top: 10px !important;
+  font-size: 11.5px !important;
+  color: #69829f !important;
+}
+
+.role-metric {
+  padding: 20px 22px !important;
+  min-height: 148px !important;
+  border-radius: var(--radius-card) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+
+.role-metric>strong {
+  font-size: 28px !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.03em !important;
+  margin: 2px 0 !important;
+}
+
+.panel {
+  border-radius: var(--radius-card) !important;
+  margin-bottom: 22px !important;
+}
+
+.panel-head {
+  padding: 18px 22px !important;
+  border-bottom: 1px solid var(--border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+}
+
+.panel-head h2 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em !important;
+  color: #153d73 !important;
+  margin: 0 !important;
+}
+
+.panel-head p {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  color: #627b99 !important;
+  margin-top: 3px !important;
+}
+
+.panel-body {
+  padding: 20px 22px !important;
+}
+
+.role-card-heading {
+  padding: 18px 22px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 14px !important;
+  border-bottom: 1px solid #eef3f9 !important;
+}
+
+.role-card-heading h2 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em !important;
+  color: #153d73 !important;
+  margin: 0 !important;
+}
+
+.role-card-heading p {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  color: #627b99 !important;
+  margin-top: 3px !important;
+}
+
+.role-card-body {
+  padding: 20px 22px !important;
+}
+
+.item-card {
+  padding: 22px !important;
+  border-radius: var(--radius-card) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+.item-card h3 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #153d73 !important;
+  margin: 0 !important;
+  line-height: 1.3 !important;
+}
+
+.item-card p {
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+  color: #55708f !important;
+  margin: 0 !important;
+}
+
+.item-card-bottom {
+  margin-top: auto !important;
+  padding-top: 14px !important;
+  border-top: 1px solid var(--border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+/* 4. Grid System & Card Gaps */
+.stats-grid, .role-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+.cards-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+}
+
+.dashboard-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr) !important;
+  gap: 20px !important;
+  align-items: start !important;
+}
+
+.role-columns {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.55fr) minmax(285px, 1fr) !important;
+  gap: 20px !important;
+  align-items: start !important;
+}
+
+.role-stack {
+  display: grid !important;
+  gap: 20px !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 1100px) {
+  .stats-grid, .role-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .dashboard-grid, .role-columns {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-grid, .role-metrics {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
+
+/* 5. Toolbar & Filter Alignment */
+.toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 22px !important;
+  flex-wrap: wrap !important;
+}
+
+.toolbar input {
+  height: 44px !important;
+  padding: 0 14px 0 38px !important;
+  border-radius: var(--radius-btn) !important;
+  font-size: 13.5px !important;
+  border: 1px solid var(--border) !important;
+  background: #ffffff !important;
+  box-shadow: var(--shadow-sm) !important;
+  width: 100% !important;
+}
+
+/* 6. Form Fields & Dialog Spacing */
+.modal-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  padding-top: 8px !important;
+}
+
+.field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.field label {
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  color: #12335c !important;
+  line-height: 1.25 !important;
+}
+
+.field input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+  height: 44px !important;
+  padding: 0 14px !important;
+  font-size: 14px !important;
+  border-radius: var(--radius-btn) !important;
+  border: 1px solid var(--border) !important;
+  background: #ffffff !important;
+}
+
+.field textarea {
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  border-radius: var(--radius-btn) !important;
+  border: 1px solid var(--border) !important;
+  background: #ffffff !important;
+  min-height: 105px !important;
+}
+
+.field .small.muted {
+  font-size: 11.5px !important;
+  color: #647b97 !important;
+  margin-top: 3px !important;
+  line-height: 1.4 !important;
+}
+
+.form-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-top: 18px !important;
+  border-top: 1px solid var(--border) !important;
+  margin-top: 8px !important;
+}
+
+.sample-controls {
+  padding: 11px 14px !important;
+  gap: 10px !important;
+  border-radius: 9px !important;
+  margin-bottom: 2px !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  background: #f4f8fe !important;
+  border: 1px solid #dce8f5 !important;
+  color: #385b82 !important;
+}
+
+.sample-preview {
+  padding: 12px 14px !important;
+  border-radius: 9px !important;
+  margin-bottom: 4px !important;
+  background: #fbfdff !important;
+  border: 1px dashed #c8dbef !important;
+}
+
+/* 7. Badges, Chips, and Status Indicators */
+.chip, .role-status, .doc-status-chip, .step-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3.5px 9px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.015em !important;
+  line-height: 1.25 !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+}
+
+/* 8. Table Alignment & Cell Padding */
+th {
+  padding: 12px 18px !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  height: 42px !important;
+  vertical-align: middle !important;
+}
+
+td {
+  padding: 14px 18px !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  vertical-align: middle !important;
+}
+
+.table-actions {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+}
+
+.table-actions .textbutton {
+  padding: 2px 4px !important;
+  font-size: 12.5px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* 9. Notice & Callout Banner Alignment */
+.notice {
+  padding: 13px 18px !important;
+  border-radius: 10px !important;
+  margin-bottom: 22px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+}
+
+.notice svg {
+  flex-shrink: 0 !important;
+  margin-top: 2px !important;
+}
+
+/* 10. Settings & Detail Meta Spacing */
+.settings-row {
+  padding: 16px 22px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 16px !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.settings-row h3 {
+  font-size: 13.5px !important;
+  font-weight: 650 !important;
+  color: #153863 !important;
+  margin: 0 !important;
+}
+
+.settings-row p {
+  font-size: 12px !important;
+  color: #6a829e !important;
+  margin-top: 3px !important;
+}
+
+.detail-meta {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px 20px !important;
+  margin: 12px 0 18px !important;
+  padding: 14px 18px !important;
+  background: #f7fafe !important;
+  border: 1px solid #dce8f5 !important;
+  border-radius: 10px !important;
+}
+
+.detail-meta strong {
+  display: block !important;
+  color: #12335c !important;
+  font-weight: 650 !important;
+  margin-top: 3px !important;
+}
+
+

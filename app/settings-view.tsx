@@ -110,7 +110,6 @@ const DEFAULT_SETTINGS: PractiSyncSettings = {
 const titleRole: Record<Role, string> = {
   STUDENT: 'Student',
   COORDINATOR: 'Coordinator',
-  SUPERVISOR: 'Supervisor',
   SUPER_ADMIN: 'Super Admin'
 };
 
@@ -450,18 +449,6 @@ export default function SettingsView({
                 </div>
               )}
 
-              {role === 'SUPERVISOR' && (
-                <div className="settings-item-row">
-                  <div>
-                    <strong>Company Affiliation</strong>
-                    <p>Host establishment for endorsed intern training.</p>
-                  </div>
-                  <span className="settings-value-pill">
-                    {userCompany?.name ? String(userCompany.name) : 'Verified Partner Employer'}
-                  </span>
-                </div>
-              )}
-
               {role === 'SUPER_ADMIN' && (
                 <div className="settings-item-row">
                   <div>
@@ -524,7 +511,7 @@ export default function SettingsView({
               <strong>Philippine Standard Time (PHT, UTC+8) Mandatory Anchor</strong>
               <p>
                 To adhere to Philippine higher education internship policies, all daily training
-                records, attendance time-in/out timestamps, and supervisory confirmations are
+                records, attendance time-in/out timestamps, and coordinator confirmations are
                 calculated strictly in <strong>Asia/Manila (UTC+8)</strong>.
               </p>
             </div>
@@ -652,8 +639,8 @@ export default function SettingsView({
 
               <div className="settings-item-row">
                 <div>
-                  <strong>Highlight Supervisor Confirmations</strong>
-                  <p>Show distinct visual indicators for company-endorsed vs reported hours.</p>
+                  <strong>Highlight Coordinator Confirmations</strong>
+                  <p>Show distinct visual indicators for confirmed vs reported hours.</p>
                 </div>
                 <Switch
                   checked={settings.showConfirmedBadge}
@@ -696,7 +683,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Attendance & Hour Endorsements</strong>
-                  <p>Notify when hours are submitted, corrected, or verified by your supervisor.</p>
+                  <p>Notify when hours are submitted, corrected, or verified by your coordinator.</p>
                 </div>
                 <Switch
                   checked={settings.notifyDtr}

@@ -29,4 +29,4 @@ PostgreSQL reference commands: `pnpm db:validate`, `pnpm db:generate`, `pnpm db:
 
 ## Working demo flows
 
-Attendance and corrections, optional company confirmation, multiple coordinator classes and enrollment codes, supervisor-only versioned hour policies, fictional document review, identified coordinator-routed SOS, version-compatible competencies, verified company postings and applications, scoped announcements, company directory and eligible reviews, labeled Record of Training PDF, administrator accounts and institution structure. Forms offer separate sample preview and autofill actions with replacement/undo and manual submission.
+Attendance and corrections, coordinator confirmation, multiple coordinator classes and enrollment codes, versioned course hour policies, fictional document review, identified coordinator-routed SOS, version-compatible competencies, verified company postings and applications, scoped announcements, company directory and eligible reviews, labeled Record of Training PDF, administrator accounts and institution structure. Forms offer separate sample preview and autofill actions with replacement/undo and manual submission.

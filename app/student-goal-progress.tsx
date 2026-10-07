@@ -19,7 +19,7 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
  return <div className="goal-summary">
   {/* Left Column: Visual Donut Chart & Ring Legend */}
   <div className="goal-donut-section">
-   <svg viewBox="0 0 180 180" className={`goal-donut ${hovered?'has-hover':''}`} role="img" aria-label={`${hours(goal.reported)} reported of ${goal.target?hours(goal.target):'no configured target'}; ${hours(goal.confirmed)} company confirmed`}>
+   <svg viewBox="0 0 180 180" className={`goal-donut ${hovered?'has-hover':''}`} role="img" aria-label={`${hours(goal.reported)} reported of ${goal.target?hours(goal.target):'no configured target'}; ${hours(goal.confirmed)} coordinator confirmed`}>
     {/* Outer Ring: Self-Reported */}
     <g
      className={`goal-ring-group ring-reported ${hovered==='reported'?'is-active':''}`}
@@ -34,19 +34,19 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
      <title>{`Outer Ring · Self-Reported: ${hours(goal.reported)} of ${goal.target?hours(goal.target):'—'} (${goal.target?Math.round(reportedFraction*100):0}%). Total training time submitted from your DTR entries.`}</title>
     </g>
 
-    {/* Inner Ring: Company-Confirmed */}
+    {/* Inner Ring: Coordinator-Confirmed */}
     <g
      className={`goal-ring-group ring-confirmed ${hovered==='confirmed'?'is-active':''}`}
      onMouseEnter={()=>setHovered('confirmed')}
      onMouseLeave={()=>setHovered(null)}
      tabIndex={0}
      role="button"
-     aria-label={`Inner Ring: ${hours(goal.confirmed)} company-confirmed (${goal.target?Math.round(confirmedFraction*100):0}% of goal)`}
+     aria-label={`Inner Ring: ${hours(goal.confirmed)} coordinator-confirmed (${goal.target?Math.round(confirmedFraction*100):0}% of goal)`}
     >
      <circle cx="90" cy="90" r="48" fill="none" stroke="transparent" strokeWidth="15"/>
      <circle cx="90" cy="90" r="48" fill="none" stroke="#f4eddb" strokeWidth="5" className="ring-track"/>
      {confirmedFraction>0&&<circle cx="90" cy="90" r="48" fill="none" stroke="#d7aa3e" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${confirmedFraction*confirmedCircumference} ${confirmedCircumference}`} transform="rotate(-90 90 90)" className="ring-fill"/>}
-     <title>{`Inner Ring · Company-Confirmed: ${hours(goal.confirmed)} of ${goal.target?hours(goal.target):'—'} (${goal.target?Math.round(confirmedFraction*100):0}%). Hours officially verified and endorsed by your supervisor.`}</title>
+     <title>{`Inner Ring · Confirmed: ${hours(goal.confirmed)} of ${goal.target?hours(goal.target):'—'} (${goal.target?Math.round(confirmedFraction*100):0}%). Hours officially verified and endorsed by your coordinator.`}</title>
     </g>
 
     {/* Center Text */}
@@ -54,7 +54,7 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
      {hovered==='reported'?(goal.target?`${Math.round(reportedFraction*100)}%`:hours(goal.reported)):hovered==='confirmed'?(goal.target?`${Math.round(confirmedFraction*100)}%`:hours(goal.confirmed)):(goal.target?`${goal.percent}%`:'—')}
     </text>
     <text x="90" y={hovered?'106':'108'} textAnchor="middle" className={`goal-donut-caption ${hovered?`is-${hovered}`:''}`}>
-     {hovered==='reported'?'Self-Reported':hovered==='confirmed'?'Company-Confirmed':'of required hours'}
+     {hovered==='reported'?'Self-Reported':hovered==='confirmed'?'Coordinator-Confirmed':'of required hours'}
     </text>
    </svg>
 
@@ -79,7 +79,7 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
      onMouseLeave={()=>setHovered(null)}
      onClick={()=>setHovered(h=>(h==='confirmed'?null:'confirmed'))}
      aria-pressed={hovered==='confirmed'}
-     title="Inspect Company-Confirmed hours (Inner Ring)"
+     title="Inspect Coordinator-Confirmed hours (Inner Ring)"
     >
      <i className="legend-indicator confirmed"/>
      <span>Inner: Confirmed</span>
@@ -95,7 +95,7 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
      <div className="banner-inner">
       <div className="banner-left">
        <span className="banner-badge reported"><i className="dot"/>Outer Ring · Self-Reported Hours</span>
-       <p className="banner-desc">Total time submitted through your Daily Training Records. {hours(Math.max(0,goal.reported-goal.confirmed))} currently pending company confirmation.</p>
+       <p className="banner-desc">Total time submitted through your Daily Training Records. {hours(Math.max(0,goal.reported-goal.confirmed))} currently awaiting coordinator confirmation.</p>
       </div>
       <div className="banner-right">
        <strong className="banner-stat">{hours(goal.reported)}</strong>
@@ -105,8 +105,8 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
     ):hovered==='confirmed'?(
      <div className="banner-inner">
       <div className="banner-left">
-       <span className="banner-badge confirmed"><i className="dot"/>Inner Ring · Company-Confirmed Hours</span>
-       <p className="banner-desc">Hours officially reviewed, verified, and endorsed by your assigned company supervisor.</p>
+       <span className="banner-badge confirmed"><i className="dot"/>Inner Ring · Coordinator-Confirmed Hours</span>
+       <p className="banner-desc">Hours officially reviewed, verified, and endorsed by your practicum coordinator.</p>
       </div>
       <div className="banner-right">
        <strong className="banner-stat">{hours(goal.confirmed)}</strong>
@@ -117,7 +117,7 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
      <div className="banner-inner">
       <div className="banner-left">
        <span className="banner-badge default">Training Hours Progress</span>
-       <p className="banner-desc">Hover over or click either ring to inspect self-reported vs. company-confirmed time breakdown.</p>
+       <p className="banner-desc">Hover over or click either ring to inspect self-reported vs. coordinator-confirmed time breakdown.</p>
       </div>
       <div className="banner-right">
        <strong className="banner-stat">{hours(goal.reported)} <small>/ {goal.target?hours(goal.target):'480.0 hrs'}</small></strong>

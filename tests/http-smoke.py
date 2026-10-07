@@ -21,12 +21,12 @@ def login(role=None,password=None):
  return op
 status,config=request(client(),'/api/config');assert config['demo'] and config['authConfigured'],config
 assert request(client(),'/api/data')[0]==401
-for role in ['student','coordinator','supervisor','admin']:
+for role in ['student','coordinator','admin']:
  op=login(role);status,data=request(op,'/api/data');assert status==200,(role,status,data)
- expected={'student':'STUDENT','coordinator':'COORDINATOR','supervisor':'SUPERVISOR','admin':'SUPER_ADMIN'}[role]
+ expected={'student':'STUDENT','coordinator':'COORDINATOR','admin':'SUPER_ADMIN'}[role]
  assert data['user']['role']==expected,(role,data)
  assert 'passwordHash' not in data['user'],'Sensitive password hash leaked'
- if role in ['supervisor','admin']:assert not data['incidents']
+ if role in ['admin']:assert not data['incidents']
  if role=='student':
   assert len(data['placements'])==1
   assert request(op,'/api/action',{'action':'dtr','values':{'placementId':'placement-2','date':'2026-10-02','startsAt':'2026-10-02T08:00','endsAt':'2026-10-02T17:00','breakMinutes':60,'narrative':'Scope negative HTTP test'}})[0]==403

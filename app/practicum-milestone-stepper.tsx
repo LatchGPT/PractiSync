@@ -156,7 +156,7 @@ export default function PracticumMilestoneStepper({
         status: step3Status,
         badgeLabel: step3Complete ? 'Completed' : evaluations.length > 0 ? 'In Review' : 'Upcoming',
         kpiValue: evaluations.length > 0 ? `${evaluations.length} Rubric${evaluations.length > 1 ? 's' : ''}` : 'Pending',
-        kpiSubLabel: 'Supervisor Competency Review',
+        kpiSubLabel: 'Coordinator Competency Review',
         detail:
           evaluations.length > 0
             ? `${evaluations.map(e => e.kind).join(' & ')} evaluation on record`
@@ -249,72 +249,6 @@ export default function PracticumMilestoneStepper({
     ];
 
     currentPhaseLabel = 'Cohort Monitoring Matrix';
-  } else if (role === 'SUPERVISOR') {
-    const activeInterns = data.placements.filter(p => p.status === 'ACTIVE');
-    const totalReportedMinutes = data.entries.reduce(
-      (sum, e) => sum + Number(e.minutes ?? 0),
-      0
-    );
-    const unconfirmed = data.entries.filter(
-      e => e.confirmedVersion !== e.version
-    );
-    const companyJobs = data.jobs.filter(
-      j => j.companyId === user.companyId && j.status === 'PUBLISHED'
-    );
-    const companyName = String(data.companies.find(c => c.id === user.companyId)?.name ?? 'Host Company');
-
-    steps = [
-      {
-        id: 'sup-interns',
-        phase: 'STAGE 01',
-        title: 'Assigned Interns',
-        status: 'completed',
-        badgeLabel: 'Verified Partner',
-        kpiValue: `${activeInterns.length} Interns`,
-        kpiSubLabel: companyName,
-        detail: 'Active interns under your supervision',
-        to: 'attendance',
-        icon: Building2,
-      },
-      {
-        id: 'sup-dtr',
-        phase: 'STAGE 02',
-        title: 'Attendance Verifications',
-        status: unconfirmed.length > 0 ? 'current' : 'completed',
-        badgeLabel: unconfirmed.length > 0 ? 'Action Needed' : 'Up to Date',
-        kpiValue: `${unconfirmed.length} Entries`,
-        kpiSubLabel: 'Awaiting Accuracy Check',
-        detail: `${hours(totalReportedMinutes)} total reported by interns`,
-        to: 'attendance',
-        icon: Clock,
-      },
-      {
-        id: 'sup-appraisals',
-        phase: 'STAGE 03',
-        title: 'Performance Rubrics',
-        status: 'current',
-        badgeLabel: 'Rubric v1',
-        kpiValue: `${data.evaluations.length} Evaluated`,
-        kpiSubLabel: 'Competency Assessments',
-        detail: 'Appraise student growth on 5 key dimensions',
-        to: 'competencies',
-        icon: Award,
-      },
-      {
-        id: 'sup-postings',
-        phase: 'STAGE 04',
-        title: 'Internship Board',
-        status: 'completed',
-        badgeLabel: 'Published',
-        kpiValue: `${companyJobs.length} Openings`,
-        kpiSubLabel: 'Verified Company Listings',
-        detail: `${data.applications.length} student applications in view`,
-        to: 'jobs',
-        icon: BriefcaseBusiness,
-      },
-    ];
-
-    currentPhaseLabel = 'Host Mentorship Operations';
   } else {
     // Super Admin view
     const disabledUsers = data.users.filter(u => u.status === 'DISABLED').length;
