@@ -231,7 +231,7 @@ export default function SettingsView({
     } catch {
       // ignore
     }
-    toast.info('Preferences reset to Greenfield University defaults.');
+    toast.info('Preferences reset to Rizal Technological University defaults.');
   };
 
   // Change password submission handler
@@ -272,7 +272,7 @@ export default function SettingsView({
 
     const exportPayload = {
       exportDate: new Date().toISOString(),
-      institution: 'Greenfield University (RTU-Inspired)',
+      institution: 'Rizal Technological University',
       account: {
         id: user.id,
         name: user.name,
@@ -322,8 +322,8 @@ export default function SettingsView({
               </span>
             </div>
             <p className="settings-subtext">
-              {settings.maskSensitiveData ? '••••••••@greenfield.edu' : user.email} ·{' '}
-              <strong>Greenfield University</strong> · RTU-Inspired Practicum System
+              {settings.maskSensitiveData ? '••••••••@rtu.edu.ph' : user.email} ·{' '}
+              <strong>Rizal Technological University</strong> · RTU Practicum System
             </p>
           </div>
         </div>
@@ -405,7 +405,7 @@ export default function SettingsView({
                   <p>Official university communication address.</p>
                 </div>
                 <span className="settings-value-pill">
-                  {settings.maskSensitiveData ? '••••••••@greenfield.edu' : user.email}
+                  {settings.maskSensitiveData ? '••••••••@rtu.edu.ph' : user.email}
                 </span>
               </div>
 
@@ -468,7 +468,7 @@ export default function SettingsView({
                     <strong>Tenant Authority</strong>
                     <p>Full institutional administration access.</p>
                   </div>
-                  <span className="chip green">Greenfield University (Root Admin)</span>
+                  <span className="chip green">Rizal Technological University (Root Admin)</span>
                 </div>
               )}
             </div>

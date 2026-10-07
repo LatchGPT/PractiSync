@@ -352,7 +352,7 @@ export default function OverviewGreetingBanner({
       <div className="banner-content">
         <div className="banner-eyebrow">
           <Sparkles size={13} className="banner-sparkle-icon" />
-          <span>INSTITUTIONAL ADMINISTRATION · GREENFIELD UNIVERSITY</span>
+          <span>INSTITUTIONAL ADMINISTRATION · RIZAL TECHNOLOGICAL UNIVERSITY</span>
         </div>
 
         <h1 className="banner-title">
@@ -362,7 +362,7 @@ export default function OverviewGreetingBanner({
         <p className="banner-subtitle">
           <ShieldCheck size={15} />
           <span>
-            Greenfield University OJT Portal · <strong>{data.users.length}</strong> accounts · <strong>{departments.length}</strong> departments · <strong>{activePlacements.length}</strong> active placements
+            Rizal Technological University OJT Portal · <strong>{data.users.length}</strong> accounts · <strong>{departments.length}</strong> departments · <strong>{activePlacements.length}</strong> active placements
           </span>
         </p>
 

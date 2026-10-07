@@ -2,7 +2,7 @@
 
 ## Visual theme
 
-The demo uses a blue-and-gold palette and diagonal band motif inspired by Rizal Technological University's public [gold-and-blue language](https://www.rtu.edu.ph/wp-content/uploads/2025/07/APRIL-2025-Diario-Rizalia.pdf), [Pandayang Rizalia ethos](https://www.rtu.edu.ph/about/), and [academic sablay](https://www.rtu.edu.ph/rtu-debuts-sablay-in-its-52nd-commencement-exercises/). The interface colors are design approximations; no official color specifications or seal usage is claimed. Greenfield University, its people, policies, and records remain fictional demo content.
+The demo uses a blue-and-gold palette and diagonal band motif inspired by Rizal Technological University's public [gold-and-blue language](https://www.rtu.edu.ph/wp-content/uploads/2025/07/APRIL-2025-Diario-Rizalia.pdf), [Pandayang Rizalia ethos](https://www.rtu.edu.ph/about/), and [academic sablay](https://www.rtu.edu.ph/rtu-debuts-sablay-in-its-52nd-commencement-exercises/). The interface colors are design approximations; no official color specifications or seal usage is claimed. Rizal Technological University, its people, policies, and records remain fictional demo content.
 
 Confirmed product requirements remain in build-brief.md. One university is a tenant; departments and courses are separate. Classes are section/period scoped. Student progress is self-reported unless optionally confirmed; completion is a separate decision. Supervisor policy scope is explicit and company verification does not confer global access. Policy targets are placement snapshots. Identified SOS cases are visible only to their reporter and class coordinator; Super Admin and supervisors cannot read narratives.
 

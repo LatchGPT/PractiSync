@@ -17,6 +17,8 @@ export default async function Page(){
   const protocol=secureSession||!localHost?'https':'http';
   const user=await identity(new Request(`${protocol}://${host}/`,{headers:h}));
   initial=await snapshot(user);
- }catch{}
+ }catch(e){
+  console.error('Page error:', e);
+ }
  return <PractiSync initial={initial} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} authConfigured={!!cfg.AUTH_SECRET}/>;
 }

@@ -1,4 +1,4 @@
-﻿# PractiSync Design System
+# PractiSync Design System
 
 PractiSync is a login-first cooperative education and on-the-job training workspace for a university with multiple departments. Its interface helps students track training, coordinators manage classes and reviews, supervisors support interns, and administrators manage institutional structure.
 
@@ -6,7 +6,7 @@ This document describes the current visual system and gives conventions for exte
 
 ## 1. Design direction
 
-The visual identity is inspired by Rizal Technological University's blue and gold. The product is a fictional demonstration, and the visual inspiration does not imply institutional endorsement. Demo content currently uses Greenfield University and fictional people, companies, policies, and records.
+The visual identity is inspired by Rizal Technological University's blue and gold. The product is a fictional demonstration, and the visual inspiration does not imply institutional endorsement. Demo content currently uses Rizal Technological University and fictional people, companies, policies, and records.
 
 The interface should feel orderly, reassuring, and focused on practical work:
 

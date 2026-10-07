@@ -341,7 +341,7 @@ export default function PracticumMilestoneStepper({
         badgeLabel: 'Academic',
         kpiValue: `${data.departments.length} Depts`,
         kpiSubLabel: `${data.courses.length} accredited courses`,
-        detail: 'Greenfield University departments & curricula',
+        detail: 'Rizal Technological University departments & curricula',
         to: 'institution',
         icon: GraduationCap,
       },
