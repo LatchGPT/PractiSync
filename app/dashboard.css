@@ -2267,7 +2267,205 @@ body.high-contrast .item-card {
   }
 }
 
+/* Google Classroom-style Student Class View */
+.student-classroom-container {
+  max-width: 860px;
+  margin: 0 auto 30px;
+}
 
+.classroom-banner-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(18, 76, 145, 0.08);
+  margin-bottom: 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
+.classroom-banner-card:hover {
+  box-shadow: 0 6px 24px rgba(18, 76, 145, 0.12);
+}
 
+.classroom-banner-header {
+  position: relative;
+  background: linear-gradient(135deg, #124c91 0%, #1b62b7 55%, #183e73 100%);
+  color: white;
+  padding: 28px 30px 24px;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
+.classroom-banner-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 35%;
+  background: radial-gradient(circle at top right, rgba(215, 170, 62, 0.35) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.classroom-banner-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.classroom-banner-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0;
+  color: white;
+}
+
+.classroom-banner-sub {
+  font-size: 14px;
+  color: #dbe7f7;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.classroom-banner-coordinator {
+  font-size: 13px;
+  color: #fffaea;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+}
+
+.classroom-banner-body {
+  padding: 22px 28px;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+  background: white;
+}
+
+@media (max-width: 680px) {
+  .classroom-banner-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.classroom-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.classroom-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #556982;
+}
+
+.classroom-info-row strong {
+  color: #12345d;
+  font-weight: 600;
+}
+
+.classroom-actions-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  padding-left: 20px;
+  border-left: 1px solid var(--border);
+}
+
+@media (max-width: 680px) {
+  .classroom-actions-block {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+}
+
+.classroom-join-empty {
+  background: white;
+  border: 1px dashed #c8d8ec;
+  border-radius: 14px;
+  padding: 44px 28px;
+  text-align: center;
+  max-width: 580px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.classroom-join-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #edf4fc;
+  color: var(--rtu-blue);
+  display: grid;
+  place-items: center;
+}
+
+.classroom-join-empty h3 {
+  font-size: 20px;
+  color: #12345d;
+  margin: 0;
+}
+
+.classroom-join-empty p {
+  font-size: 13px;
+  color: #6c829e;
+  max-width: 420px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+html.dark .classroom-banner-card {
+  background: #182232;
+  border-color: #273852;
+}
+
+html.dark .classroom-banner-body {
+  background: #182232;
+}
+
+html.dark .classroom-info-row {
+  color: #9bb1cb;
+}
+
+html.dark .classroom-info-row strong {
+  color: #f0f4f9;
+}
+
+html.dark .classroom-actions-block {
+  border-color: #273852;
+}
+
+html.dark .classroom-join-empty {
+  background: #182232;
+  border-color: #2a3c54;
+}
+
+html.dark .classroom-join-empty-icon {
+  background: #202e42;
+  color: #62a3f5;
+}
+
+html.dark .classroom-join-empty h3 {
+  color: #f0f4f9;
+}
+
+html.dark .classroom-join-empty p {
+  color: #9bb1cb;
+}
