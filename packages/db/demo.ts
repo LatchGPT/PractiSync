@@ -12,7 +12,7 @@ export function insert(table:string,values:Record<string,string|number|null>,id=
 }
 export function auditStatement(actorId:string,action:string,resourceId:string,reason:string|null=null){return insert('audit',{actor_id:actorId,action,resource_id:resourceId,reason});}
 export async function seed(){
- const db=database();if(await db.prepare("SELECT value FROM seed_state WHERE key='seed-v3'").first())return;
+ const db=database();if(await db.prepare("SELECT value FROM seed_state WHERE key='seed-v4'").first())return;
  const now='2026-10-01T00:00:00Z';const stmts:D1PreparedStatement[]=[];
  const add=(table:string,id:string,values:Record<string,string|number|null>)=>{const r={id,tenant_id:TENANT,created_at:now,...values};stmts.push(statement(`INSERT OR IGNORE INTO ${table} (${Object.keys(r).join(',')}) VALUES (${Object.keys(r).map(()=>'?').join(',')})`,...Object.values(r)));};
  const digest=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');
@@ -38,6 +38,14 @@ export async function seed(){
  add('announcements','announcement-2',{author_id:'demo-admin',class_id:null,title:'Welcome to your practicum semester',body:'This fictional demo brings your attendance, documents, and training progress into one place.',audience:'UNIVERSITY'});
  add('reviews','review-1',{company_id:'company-northstar',student_id:'student-completed',placement_id:'placement-completed',rating:4,body:'Sample: Thoughtful mentoring, practical project experience, and a welcoming team.',status:'APPROVED'});
  add('join_requests','req-1',{class_id:'class-it',student_id:'student-5',status:'PENDING',note:'Requesting to join section BSIT 4-A'});
- stmts.push(statement("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v3','20261007')"));
+ add('notifications','notif-1',{user_id:'demo-student',title:'Attendance Confirmed',message:'Coordinator Andrea Santos verified and confirmed your attendance record.',type:'DTR',resource_type:'entry',resource_id:'entry-placement-1-14',link_page:'attendance',read_at:null});
+ add('notifications','notif-2',{user_id:'demo-student',title:'Document Clearance Approved',message:'Your Training agreement sample submission has been marked as approved.',type:'DOCUMENT',resource_type:'document',resource_id:'doc-placement-1-1',link_page:'documents',read_at:null});
+ add('notifications','notif-3',{user_id:'demo-student',title:'Welcome to BSIT 4-A',message:'You are enrolled in OJT Practicum · BSIT 4-A with coordinator Andrea Santos.',type:'CLASS',resource_type:'class',resource_id:'class-it',link_page:'classes',read_at:'2026-10-02T08:00:00Z'});
+ add('notifications','notif-4',{user_id:'demo-student',title:'Class Announcement',message:'Your October check-in is scheduled for Friday. Bring your latest narratives.',type:'ANNOUNCEMENT',resource_type:'announcement',resource_id:'announcement-1',link_page:'announcements',read_at:null});
+ add('notifications','notif-5',{user_id:'demo-coordinator',title:'New Class Join Request',message:'Luca Tan requested to join practicum section BSIT 4-A.',type:'CLASS',resource_type:'join_request',resource_id:'req-1',link_page:'classes',read_at:null});
+ add('notifications','notif-6',{user_id:'demo-coordinator',title:'Confidential Support Inquiry',message:'Jamie Reyes submitted a request for coordinator guidance.',type:'SUPPORT',resource_type:'incident',resource_id:'case-1',link_page:'incidents',read_at:null});
+ add('notifications','notif-7',{user_id:'demo-coordinator',title:'Document Awaiting Review',message:'Parent / guardian consent form was submitted in BSIT 4-A.',type:'DOCUMENT',resource_type:'document',resource_id:'doc-placement-1-2',link_page:'documents',read_at:'2026-10-02T08:00:00Z'});
+ add('notifications','notif-8',{user_id:'demo-admin',title:'Policy Baseline Active',message:'Course policy v1 active for Computing & Technology (480 required hours).',type:'POLICY',resource_type:'policy',resource_id:'policy-course-it',link_page:'policies',read_at:'2026-10-01T00:00:00Z'});
+ stmts.push(statement("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v4','20261008')"));
  for(let i=0;i<stmts.length;i+=80)await db.batch(stmts.slice(i,i+80));
 }

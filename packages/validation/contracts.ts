@@ -3,7 +3,7 @@ export const roles=['SUPER_ADMIN','COORDINATOR','STUDENT'] as const;
 export type Role=typeof roles[number];
 export type Row={id:string;tenantId:string;createdAt:string;[key:string]:string|number|null};
 export interface Identity {id:string;name:string;username:string;email:string;role:Role;status:string;sessionVersion:number;isDemo:number;courseId:string|null;companyId:string|null;tenantId:string;}
-export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];}
+export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];}
 const str=(max=500)=>z.string().trim().min(1).max(max);
 export const dtrInput=z.object({placementId:str(),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),startsAt:str(),endsAt:str(),breakMinutes:z.coerce.number().int().min(0),narrative:str(8000),entryId:z.string().optional(),version:z.coerce.number().int().optional(),reason:z.string().max(1000).optional()});
 export const inputs={
@@ -30,6 +30,8 @@ export const inputs={
  role:z.object({userId:str(),role:z.enum(roles),status:z.enum(['ACTIVE','DISABLED'])}),
  profile:z.object({name:str(120)}),
  structure:z.object({kind:z.enum(['DEPARTMENT','COURSE']),name:str(120),code:str(20),departmentId:z.string().optional()}),
+ markNotificationRead:z.object({notificationId:str()}),
+ markAllNotificationsRead:z.object({}),
 };
 export type Action=keyof typeof inputs;
 export function camelRows(rows:Record<string,unknown>[]):Row[]{return rows.map(row=>Object.fromEntries(Object.entries(row).map(([k,v])=>[k.replace(/_([a-z])/g,(_,c:string)=>c.toUpperCase()),v])) as Row);}
