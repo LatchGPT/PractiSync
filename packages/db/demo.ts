@@ -12,7 +12,9 @@ export function insert(table:string,values:Record<string,string|number|null>,id=
 }
 export function auditStatement(actorId:string,action:string,resourceId:string,reason:string|null=null){return insert('audit',{actor_id:actorId,action,resource_id:resourceId,reason});}
 export async function seed(){
- const db=database();if(await db.prepare("SELECT value FROM seed_state WHERE key='seed-v4'").first())return;
+ const db=database();
+ await db.prepare("CREATE TABLE IF NOT EXISTS notifications (id text PRIMARY KEY NOT NULL, tenant_id text NOT NULL, created_at text NOT NULL, user_id text NOT NULL, title text NOT NULL, message text NOT NULL, type text NOT NULL, resource_type text DEFAULT '', resource_id text DEFAULT '', link_page text DEFAULT '', read_at text)").run();
+ if(await db.prepare("SELECT value FROM seed_state WHERE key='seed-v4'").first())return;
  const now='2026-10-01T00:00:00Z';const stmts:D1PreparedStatement[]=[];
  const add=(table:string,id:string,values:Record<string,string|number|null>)=>{const r={id,tenant_id:TENANT,created_at:now,...values};stmts.push(statement(`INSERT OR IGNORE INTO ${table} (${Object.keys(r).join(',')}) VALUES (${Object.keys(r).map(()=>'?').join(',')})`,...Object.values(r)));};
  const digest=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');
