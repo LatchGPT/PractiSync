@@ -52,6 +52,8 @@ enum ScanStatus {
 enum EvaluationKind {
   BASELINE
   FINAL
+  WEEKLY
+  MONTHLY
 }
 
 enum SubmissionStatus {
@@ -312,6 +314,7 @@ model Course {
   updatedAt                    DateTime              @updatedAt
   name                         String
   code                         String
+  assessmentCadence            String                @default("BOTH")
   archivedAt                   DateTime?
   departmentId                 String
   department                   Department            @relation("Course_departmentId", fields: [tenantId, departmentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
@@ -823,7 +826,9 @@ model Evaluation {
   createdAt                       DateTime             @default(now())
   updatedAt                       DateTime             @updatedAt
   kind                            EvaluationKind
+  period                          String?
   status                          SubmissionStatus     @default(DRAFT)
+  reason                          String?
   submittedAt                     DateTime?
   version                         Int                  @default(1)
   placementId                     String

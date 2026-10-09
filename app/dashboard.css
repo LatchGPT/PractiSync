@@ -18,10 +18,11 @@
 .role-link{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;border:0;background:transparent;padding:3px 0;color:var(--dashboard-accent);font-weight:650;font-size:12px;white-space:nowrap}
 .role-link:hover{text-decoration:underline}
 .role-card-body{padding:21px 22px}
-.role-placement{display:flex;align-items:center;gap:12px}
-.role-placement>div{display:grid;gap:3px;min-width:0;flex:1}
+.role-placement{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;background:#f8fbff;border:1px solid #dce8f6;border-radius:10px;margin-bottom:16px;box-sizing:border-box;width:100%}
+.role-placement>div{display:grid;gap:3px;min-width:0;flex:1 1 180px}
 .role-placement strong{font-size:15px;color:#163e75}
 .role-placement span:not(.role-status){font-size:12px;color:#637996}
+.role-placement .role-status{flex-shrink:0;margin-left:auto}
 .role-symbol{display:grid;place-items:center;flex-shrink:0;width:38px;height:38px;border-radius:9px;background:#eaf2fc;color:var(--dashboard-accent)}
 .role-symbol.soft{background:#fff5e0;color:#9a6d19}
 .role-status{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;text-transform:capitalize;white-space:nowrap}
@@ -410,7 +411,9 @@ button.banner-pill.clickable:hover {
 .step-card-top {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .step-node {
@@ -1088,7 +1091,8 @@ button.banner-pill.clickable:hover {
   display: flex;
   flex-direction: column;
   gap: 22px;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Overview Header Card */
@@ -2266,6 +2270,310 @@ body.high-contrast .item-card {
     min-width: unset;
   }
 }
+
+/* ==========================================================================
+   PSS-3: Weekly & Monthly Competency Assessments
+   ========================================================================== */
+
+.assessment-dialog-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+@media (max-width: 860px) {
+  .assessment-dialog-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.assessment-form-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.assessment-context-pane {
+  background: #f8fafc;
+  border: 1px solid #e1ebf6;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.assessment-context-header {
+  border-bottom: 1px solid #e5edf5;
+  padding-bottom: 12px;
+}
+
+.assessment-context-header h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #143e74;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.assessment-context-header p {
+  font-size: 11px;
+  color: #607997;
+  margin: 4px 0 0;
+}
+
+.assessment-context-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.assessment-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #dbe6f3;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1c528f;
+}
+
+.assessment-dtr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.assessment-dtr-item {
+  background: #ffffff;
+  border: 1px solid #e4ecf5;
+  border-radius: 8px;
+  padding: 12px 14px;
+  transition: all 0.15s ease;
+}
+
+.assessment-dtr-item:hover {
+  border-color: #c7dcf1;
+  box-shadow: 0 2px 8px rgba(28, 82, 143, 0.05);
+}
+
+.assessment-dtr-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.assessment-dtr-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1b4478;
+}
+
+.assessment-dtr-hours {
+  font-size: 11px;
+  font-weight: 600;
+  color: #124c91;
+  background: #edf4fc;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.assessment-dtr-narrative {
+  font-size: 12px;
+  color: #3b506a;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.assessment-dimension-card {
+  background: #ffffff;
+  border: 1px solid #dce6f2;
+  border-radius: 10px;
+  padding: 16px 18px;
+  transition: all 0.15s ease;
+}
+
+.assessment-dimension-card:hover {
+  border-color: #bcd5f0;
+  box-shadow: 0 2px 10px rgba(18, 76, 145, 0.04);
+}
+
+.assessment-dimension-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.assessment-dimension-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #143e74;
+}
+
+.assessment-score-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1c528f;
+  background: #eef5fc;
+  padding: 3px 9px;
+  border-radius: 12px;
+}
+
+.assessment-rating-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.rating-score-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  border: 1.5px solid #dce6f2;
+  background: #fbfdff;
+  color: #4b6482;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rating-score-btn:hover {
+  border-color: #1c528f;
+  background: #f0f6fd;
+  color: #1c528f;
+}
+
+.rating-score-btn.active {
+  border-color: #1c528f;
+  background: #1c528f;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(28, 82, 143, 0.25);
+}
+
+.rating-num {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.rating-desc {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.85;
+}
+
+.revision-callout-banner {
+  background: #fef8ec;
+  border: 1px solid #f9de9e;
+  border-left: 4px solid #d7aa3e;
+  border-radius: 8px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.revision-callout-banner .icon {
+  color: #b58117;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.revision-callout-banner strong {
+  color: #8c600b;
+  font-size: 13px;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.revision-callout-banner p {
+  color: #5c4210;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.cadence-admin-card {
+  background: #ffffff;
+  border: 1px solid #dce6f2;
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.cadence-admin-info h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #143e74;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cadence-admin-info p {
+  font-size: 12px;
+  color: #607997;
+  margin: 4px 0 0;
+}
+
+.cadence-tags-list {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cadence-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #eef5fc;
+  color: #184c8a;
+  font-size: 11px;
+  font-weight: 650;
+  border: 1px solid #d3e4f7;
+}
+
+.badge-weekly {
+  background: #e8f4fd;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badge-monthly {
+  background: #f0f0ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
 
 
 

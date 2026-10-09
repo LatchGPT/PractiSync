@@ -35,6 +35,47 @@ describe('foundations and isolation',()=>{
  it('reviews require formal completion, not a reported hours total',async()=>{await expect(mutate(users.student,'review',{placementId:'placement-1',rating:5,body:'Sample'})).rejects.toThrow('formal placement completion');});
  it('validates overnight minutes, ordering, future and placement boundary',()=>{expect(calculateMinutes('2026-09-25T22:00+08:00','2026-09-26T06:00+08:00',30,'2026-08-01','2026-12-20')).toBe(450);expect(()=>calculateMinutes('2026-09-25T22:00','2026-09-25T06:00',0,'2026-08-01','2026-12-20')).toThrow();expect(()=>calculateMinutes('2027-01-01','2027-01-02',0,'2026-08-01','2026-12-20')).toThrow();});
  it('generating sample values does not persist or submit',async()=>{const before=(await list('SELECT id FROM entries')).length;expect(sampleFor('dtr',{placementId:'placement-1'}).narrative).toContain('Sample');expect((await list('SELECT id FROM entries')).length).toBe(before);});
+ it('coordinators configure course assessment cadence and unauthorized users are denied',async()=>{
+  await expect(mutate(users.student,'courseAssessmentCadence',{courseId:'course-it',cadence:'WEEKLY'})).rejects.toThrow('permission');
+  await mutate(users.coordinator,'courseAssessmentCadence',{courseId:'course-it',cadence:'WEEKLY'});
+  const updated=await one('SELECT assessment_cadence FROM courses WHERE id=?','course-it');
+  expect(updated?.assessmentCadence).toBe('WEEKLY');
+  await expect(mutate(users.student,'evaluation',{placementId:'placement-1',kind:'MONTHLY',period:'2026-08',technical:4,communication:4,professionalism:4,problemSolving:4})).rejects.toThrow('Monthly assessments are not configured');
+  await mutate(users.coordinator,'courseAssessmentCadence',{courseId:'course-it',cadence:'BOTH'});
+ });
+ it('students submit weekly and monthly assessments with period validation and uniqueness constraint',async()=>{
+  const res=await mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W35',technical:4,communication:5,professionalism:5,problemSolving:4});
+  expect(res.message).toContain('Assessment submitted');
+  const ev=await one('SELECT * FROM evaluations WHERE id=?',res.id!);
+  expect(ev?.kind).toBe('WEEKLY');
+  expect(ev?.period).toBe('2026-W35');
+  expect(ev?.status).toBe('SUBMITTED');
+  await expect(mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W35',technical:5,communication:5,professionalism:5,problemSolving:5})).rejects.toThrow('already been submitted');
+  await expect(mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W50',technical:4,communication:4,professionalism:4,problemSolving:4})).rejects.toThrow('future');
+  const mRes=await mutate(users.student,'evaluation',{placementId:'placement-1',kind:'MONTHLY',period:'2026-08',technical:4,communication:4,professionalism:4,problemSolving:4});
+  expect(mRes.message).toContain('Assessment submitted');
+ });
+ it('coordinators review assessments with approval or revision request, and students can resubmit',async()=>{
+  const res=await mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W34',technical:3,communication:3,professionalism:3,problemSolving:3});
+  await expect(mutate(users.coordinator,'evaluationReview',{evaluationId:res.id!,status:'REVISION_REQUESTED',reason:''})).rejects.toThrow('reason');
+  await mutate(users.coordinator,'evaluationReview',{evaluationId:res.id!,status:'REVISION_REQUESTED',reason:'Please elaborate on problem solving.'});
+  const rev=await one('SELECT * FROM evaluations WHERE id=?',res.id!);
+  expect(rev?.status).toBe('REVISION_REQUESTED');
+  expect(rev?.reason).toBe('Please elaborate on problem solving.');
+  const resub=await mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W34',technical:4,communication:4,professionalism:4,problemSolving:4});
+  expect(resub.message).toContain('resubmitted');
+  const afterResub=await one('SELECT * FROM evaluations WHERE id=?',res.id!);
+  expect(afterResub?.status).toBe('SUBMITTED');
+  expect(afterResub?.reason).toBe(null);
+  await mutate(users.coordinator,'evaluationReview',{evaluationId:res.id!,status:'APPROVED'});
+  const app=await one('SELECT * FROM evaluations WHERE id=?',res.id!);
+  expect(app?.status).toBe('APPROVED');
+ });
+ it('legacy baseline and final evaluations remain in snapshot as read-only history',async()=>{
+  const snap=await snapshot(users.student);
+  const legacy=snap.evaluations.filter(e=>e.placementId==='placement-1'&&['BASELINE','FINAL'].includes(String(e.kind)));
+  expect(legacy.length).toBeGreaterThanOrEqual(2);
+ });
 });
 
 describe('Auth.js Request/Response smoke checks',()=>{

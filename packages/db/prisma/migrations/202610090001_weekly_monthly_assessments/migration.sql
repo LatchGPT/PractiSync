@@ -1,0 +1,10 @@
+-- AlterEnum
+ALTER TYPE "EvaluationKind" ADD VALUE IF NOT EXISTS 'WEEKLY';
+ALTER TYPE "EvaluationKind" ADD VALUE IF NOT EXISTS 'MONTHLY';
+
+-- AlterTable
+ALTER TABLE "Course" ADD COLUMN IF NOT EXISTS "assessmentCadence" TEXT NOT NULL DEFAULT 'BOTH';
+
+-- AlterTable
+ALTER TABLE "Evaluation" ADD COLUMN IF NOT EXISTS "period" TEXT;
+ALTER TABLE "Evaluation" ADD COLUMN IF NOT EXISTS "reason" TEXT;

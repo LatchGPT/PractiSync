@@ -159,7 +159,7 @@ export default function PracticumMilestoneStepper({
         kpiSubLabel: 'Coordinator Competency Review',
         detail:
           evaluations.length > 0
-            ? `${evaluations.map(e => e.kind).join(' & ')} evaluation on record`
+            ? `${Array.from(new Set(evaluations.map(e => String(e.kind ?? '')).filter(Boolean))).map(k => k.toLowerCase()).join(' & ')} assessment${evaluations.length > 1 ? 's' : ''} on record`
             : 'Scheduled after midterm hours',
         to: 'competencies',
         icon: Award,

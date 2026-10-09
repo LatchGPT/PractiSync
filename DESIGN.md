@@ -161,7 +161,7 @@ Reuse primitives from `components/ui` and application patterns before introducin
 | Supervisor | Assigned interns, optional attendance confirmation, evaluations, authorized hour policies, and company internship postings |
 | Super Admin | Account administration, institution structure, assignments, and configured permissions |
 
-Module navigation includes overview, attendance/training records, document clearance, competency insights, internship board, announcements, company directory, and portfolio. Classes, support, accounts, and institution management depend on role and scope.
+Module navigation includes overview, attendance/training records, document clearance, competency insights, internship board (including merged company directory and application tracking), announcements, and portfolio. Classes, support, accounts, and institution management depend on role and scope.
 
 Role-specific summaries may use different accents, but should preserve the same card, typography, status, and action conventions. UI visibility follows permissions; server checks remain authoritative. Follow [docs/permissions.md](docs/permissions.md) when exposing a new action or record.
 

@@ -73,8 +73,8 @@
 .metric-icon.gold{color:#c99824}
 .metric-icon.green{color:#2e7d52}
 .metric-val{font-size:15px;font-weight:700;color:#143e74;line-height:1.25}
-.metric-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
-.metric-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap}
+.metric-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;min-width:0;max-width:100%}
+.metric-pill{display:inline-flex;align-items:center;gap:3px;padding:2.5px 6px;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap;flex-shrink:0;box-sizing:border-box}
 .metric-pill.confirmed{background:#fdf6e6;color:#926a11;border:1px solid #fae6b8}
 .metric-pill.pending{background:#f2f5f9;color:#556c87;border:1px solid #e0e7f1}
 .metric-desc{font-size:10.5px;line-height:1.4;color:#637a96}
