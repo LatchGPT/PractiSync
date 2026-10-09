@@ -1,4 +1,4 @@
-CREATE TABLE `notifications` (
+CREATE TABLE IF NOT EXISTS `notifications` (
 	`id` text PRIMARY KEY NOT NULL,
 	`tenant_id` text NOT NULL,
 	`created_at` text NOT NULL,
@@ -11,5 +11,5 @@ CREATE TABLE `notifications` (
 	`link_page` text DEFAULT '',
 	`read_at` text
 );--> statement-breakpoint
-CREATE INDEX `notifications_user` ON `notifications` (`tenant_id`,`user_id`,`created_at`);--> statement-breakpoint
-CREATE INDEX `notifications_unread` ON `notifications` (`tenant_id`,`user_id`,`read_at`);
+CREATE INDEX IF NOT EXISTS `notifications_user` ON `notifications` (`tenant_id`,`user_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `notifications_unread` ON `notifications` (`tenant_id`,`user_id`,`read_at`);

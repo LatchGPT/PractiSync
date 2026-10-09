@@ -14,7 +14,8 @@ export function auditStatement(actorId:string,action:string,resourceId:string,re
 export async function seed(){
  const db=database();
  await db.prepare("CREATE TABLE IF NOT EXISTS notifications (id text PRIMARY KEY NOT NULL, tenant_id text NOT NULL, created_at text NOT NULL, user_id text NOT NULL, title text NOT NULL, message text NOT NULL, type text NOT NULL, resource_type text DEFAULT '', resource_id text DEFAULT '', link_page text DEFAULT '', read_at text)").run();
- if(await db.prepare("SELECT value FROM seed_state WHERE key='seed-v4'").first())return;
+ const ensureSchedules=()=>db.prepare("INSERT OR IGNORE INTO assessment_schedules (id,tenant_id,created_at,course_id,cadence,updated_at,version) SELECT 'schedule-' || id,tenant_id,datetime('now'),id,'WEEKLY',datetime('now'),1 FROM courses").run();
+ if(await db.prepare("SELECT value FROM seed_state WHERE key='seed-v4'").first()){await ensureSchedules();return;}
  const now='2026-10-01T00:00:00Z';const stmts:D1PreparedStatement[]=[];
  const add=(table:string,id:string,values:Record<string,string|number|null>)=>{const r={id,tenant_id:TENANT,created_at:now,...values};stmts.push(statement(`INSERT OR IGNORE INTO ${table} (${Object.keys(r).join(',')}) VALUES (${Object.keys(r).map(()=>'?').join(',')})`,...Object.values(r)));};
  const digest=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');
@@ -50,4 +51,5 @@ export async function seed(){
  add('notifications','notif-8',{user_id:'demo-admin',title:'Policy Baseline Active',message:'Course policy v1 active for Computing & Technology (480 required hours).',type:'POLICY',resource_type:'policy',resource_id:'policy-course-it',link_page:'policies',read_at:'2026-10-01T00:00:00Z'});
  stmts.push(statement("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v4','20261008')"));
  for(let i=0;i<stmts.length;i+=80)await db.batch(stmts.slice(i,i+80));
+ await ensureSchedules();
 }

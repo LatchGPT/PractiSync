@@ -79,8 +79,9 @@ export default function PracticumMilestoneStepper({
     const pendingDocs = documents.filter(d => d.status !== 'APPROVED');
 
     const evaluations = placement
-      ? data.evaluations.filter(e => e.placementId === placement.id)
+      ? data.evaluations.filter(e => e.placementId === placement.id && (e.kind === 'WEEKLY' || e.kind === 'MONTHLY'))
       : [];
+    const approvedEvaluations = evaluations.filter(e => e.status === 'APPROVED');
 
     const completion = placement
       ? data.completion.find(c => c.placementId === placement.id)
@@ -104,8 +105,8 @@ export default function PracticumMilestoneStepper({
       ? 'current'
       : 'upcoming';
 
-    // Step 3: Midterm & Skills Evaluation
-    const step3Complete = evaluations.length >= 2;
+    // Step 3: Period competency assessment
+    const step3Complete = approvedEvaluations.length > 0;
     const step3Status: StepStatus = step3Complete
       ? 'completed'
       : step2Complete || evaluations.length > 0 || percent >= 45
@@ -156,11 +157,11 @@ export default function PracticumMilestoneStepper({
         status: step3Status,
         badgeLabel: step3Complete ? 'Completed' : evaluations.length > 0 ? 'In Review' : 'Upcoming',
         kpiValue: evaluations.length > 0 ? `${evaluations.length} Rubric${evaluations.length > 1 ? 's' : ''}` : 'Pending',
-        kpiSubLabel: 'Coordinator Competency Review',
+        kpiSubLabel: 'Weekly / Monthly Review',
         detail:
           evaluations.length > 0
-            ? `${evaluations.map(e => e.kind).join(' & ')} evaluation on record`
-            : 'Scheduled after midterm hours',
+            ? `${approvedEvaluations.length} approved · ${evaluations.length - approvedEvaluations.length} awaiting review or revision`
+            : 'Choose a period in Competency Insights',
         to: 'competencies',
         icon: Award,
       },
@@ -228,9 +229,9 @@ export default function PracticumMilestoneStepper({
         title: 'Competency Reviews',
         status: 'current',
         badgeLabel: 'Active Framework',
-        kpiValue: `${data.evaluations.length} Assessments`,
-        kpiSubLabel: 'Submitted Mentor Rubrics',
-        detail: 'Rubric comparisons across sections',
+        kpiValue: `${data.evaluations.filter(e => e.kind === 'WEEKLY' || e.kind === 'MONTHLY').length} Assessments`,
+        kpiSubLabel: 'Weekly / Monthly Rubrics',
+        detail: 'Student self-assessments for coordinator review',
         to: 'competencies',
         icon: Award,
       },
