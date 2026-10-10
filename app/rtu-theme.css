@@ -7,7 +7,7 @@
   --primary-hover: #0e3f79;
   --primary-active: #092e59;
   --muted: #edf3fb;
-  --muted-foreground: #5e7490;
+  --muted-foreground: #476282;
   --border: #dbe5f2;
   --border-focus: #124c91;
   --rtu-navy: #0e2a57;
@@ -31,13 +31,24 @@ body {
 }
 
 /* Accessibility & Focus Rings */
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex="0"]:focus-visible,
+[role="button"]:focus-visible,
+[data-slot="select-trigger"]:focus-visible,
+[data-slot="tabs-trigger"]:focus-visible,
+[data-slot="switch"]:focus-visible,
+.date-picker-trigger:focus-visible {
   outline: 2px solid var(--rtu-gold) !important;
   outline-offset: 2px !important;
+  box-shadow: 0 0 0 3.5px rgba(215, 170, 62, 0.28) !important;
 }
 
-/* Inputs, Textareas, Selects */
-input, textarea, select {
+/* Inputs, Textareas, Selects & Form Controls */
+input, textarea, select, .date-picker-trigger {
   transition: var(--transition-smooth);
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-btn) !important;
@@ -46,9 +57,65 @@ input, textarea, select {
   box-shadow: var(--shadow-sm);
 }
 
-input:focus, textarea:focus, select:focus {
+input:hover, textarea:hover, select:hover, .date-picker-trigger:hover {
+  border-color: #9cb8db !important;
+}
+
+input:focus, textarea:focus, select:focus, .date-picker-trigger:focus-visible {
   border-color: var(--rtu-blue) !important;
   box-shadow: 0 0 0 3.5px rgba(18, 76, 145, 0.13), var(--shadow-sm) !important;
+}
+
+input:disabled, textarea:disabled, select:disabled, button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.65 !important;
+}
+
+/* Form Labels & Accessibility Indicators */
+.field label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 13.5px !important;
+  font-weight: 650 !important;
+  color: var(--rtu-navy) !important;
+  margin-bottom: 3px !important;
+}
+
+.field-required-star {
+  color: #c53030 !important;
+  font-weight: 700 !important;
+  margin-left: 2px !important;
+}
+
+.date-picker-trigger[aria-invalid="true"] {
+  border-color: #e53e3e !important;
+  background: #fffafa !important;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15) !important;
+}
+
+.date-picker-error {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: #c53030 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  margin-top: 5px !important;
+}
+
+.alert {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  padding: 12px 16px !important;
+  border: 1px solid #fed7d7 !important;
+  background: #fff5f5 !important;
+  color: #9b2c2c !important;
+  border-radius: 8px !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
 }
 
 /* Typography & Brand */

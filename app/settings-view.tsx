@@ -461,7 +461,7 @@ export default function SettingsView({
                   value={settings.language}
                   onValueChange={(v) => updateSetting('language', v as 'en-PH' | 'fil-PH', 'Language preference saved.')}
                 >
-                  <SelectTrigger className="w-52 h-10">
+                  <SelectTrigger className="w-52 h-10" aria-label="Select interface language">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -546,7 +546,7 @@ export default function SettingsView({
                       value={settings.reminderTime}
                       onValueChange={(v) => updateSetting('reminderTime', v, `Reminder set for ${v}.`)}
                     >
-                      <SelectTrigger className="w-36 h-9">
+                      <SelectTrigger className="w-36 h-9" aria-label="Daily reminder time">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -560,6 +560,7 @@ export default function SettingsView({
                   <Switch
                     checked={settings.dailyReminder}
                     onCheckedChange={(c) => updateSetting('dailyReminder', c, c ? 'DTR reminder enabled.' : 'DTR reminder disabled.')}
+                    aria-label="Daily DTR reminder prompt"
                   />
                 </div>
               </div>
@@ -573,7 +574,7 @@ export default function SettingsView({
                   value={String(settings.defaultBreakMinutes)}
                   onValueChange={(v) => updateSetting('defaultBreakMinutes', Number(v), `Default break set to ${v} mins.`)}
                 >
-                  <SelectTrigger className="w-48 h-10">
+                  <SelectTrigger className="w-48 h-10" aria-label="Default lunch break duration">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -593,6 +594,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.autoSaveNarratives}
                   onCheckedChange={(c) => updateSetting('autoSaveNarratives', c, c ? 'Auto-save enabled.' : 'Auto-save disabled.')}
+                  aria-label="Auto-save daily narratives"
                 />
               </div>
 
@@ -627,6 +629,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.showConfirmedBadge}
                   onCheckedChange={(c) => updateSetting('showConfirmedBadge', c, 'Confirmation badge setting saved.')}
+                  aria-label="Highlight coordinator confirmations"
                 />
               </div>
             </div>
@@ -659,6 +662,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.toastsEnabled}
                   onCheckedChange={(c) => updateSetting('toastsEnabled', c, c ? 'Toasts enabled.' : 'Toasts muted.')}
+                  aria-label="In-app toast alerts"
                 />
               </div>
 
@@ -670,6 +674,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.notifyDtr}
                   onCheckedChange={(c) => updateSetting('notifyDtr', c, 'Attendance alerts updated.')}
+                  aria-label="Attendance & hour endorsements alerts"
                 />
               </div>
 
@@ -681,6 +686,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.notifyClearance}
                   onCheckedChange={(c) => updateSetting('notifyClearance', c, 'Clearance alerts updated.')}
+                  aria-label="Document clearance workflow alerts"
                 />
               </div>
 
@@ -695,6 +701,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.notifySupport}
                   onCheckedChange={(c) => updateSetting('notifySupport', c, 'Support alerts updated.')}
+                  aria-label="Support & urgent SOS cases alerts"
                 />
               </div>
 
@@ -706,6 +713,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.notifyAnnouncements}
                   onCheckedChange={(c) => updateSetting('notifyAnnouncements', c, 'Announcement alerts updated.')}
+                  aria-label="Campus & class announcements alerts"
                 />
               </div>
 
@@ -717,6 +725,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.notifyJobs}
                   onCheckedChange={(c) => updateSetting('notifyJobs', c, 'Job board alerts updated.')}
+                  aria-label="Internship board & job matches alerts"
                 />
               </div>
 
@@ -729,7 +738,7 @@ export default function SettingsView({
                   value={settings.emailDigest}
                   onValueChange={(v) => updateSetting('emailDigest', v as PractiSyncSettings['emailDigest'], 'Email digest preference saved.')}
                 >
-                  <SelectTrigger className="w-56 h-10">
+                  <SelectTrigger className="w-56 h-10" aria-label="Institutional email digest frequency">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -749,6 +758,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.soundEffects}
                   onCheckedChange={(c) => updateSetting('soundEffects', c, c ? 'Audio effects enabled.' : 'Audio effects muted.')}
+                  aria-label="Sound & audio effects"
                 />
               </div>
             </div>
@@ -874,6 +884,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.highContrast}
                   onCheckedChange={(c) => updateSetting('highContrast', c, c ? 'High contrast enabled.' : 'Standard contrast.')}
+                  aria-label="High contrast borders"
                 />
               </div>
 
@@ -885,6 +896,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.animations}
                   onCheckedChange={(c) => updateSetting('animations', c, c ? 'Animations enabled.' : 'Reduced motion mode active.')}
+                  aria-label="Micro-animations & smooth transitions"
                 />
               </div>
             </div>
@@ -931,6 +943,7 @@ export default function SettingsView({
                   <Switch
                     checked={settings.twoFactorEnabled}
                     onCheckedChange={(c) => updateSetting('twoFactorEnabled', c, c ? '2FA enabled.' : '2FA disabled.')}
+                    aria-label="Two-factor authentication (2FA)"
                   />
                 </div>
               </div>
@@ -943,6 +956,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.maskSensitiveData}
                   onCheckedChange={(c) => updateSetting('maskSensitiveData', c, c ? 'Privacy mode enabled.' : 'Privacy mode disabled.')}
+                  aria-label="Presentation shield privacy mode"
                 />
               </div>
             </div>
