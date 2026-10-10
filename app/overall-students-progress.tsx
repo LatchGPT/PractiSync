@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import {
-  Star,
-  ShieldCheck,
   ArrowRight,
   UserCheck,
   Eye,
@@ -164,12 +162,12 @@ export default function OverallStudentsProgress({
                       <div className="student-rep-tags">
                         {isClassRep && (
                           <span className="badge-class-rep" title="Class Representative">
-                            <Star size={10.5} />Class Rep
+                            Class Rep
                           </span>
                         )}
                         {isViceRep && (
                           <span className="badge-vice-rep" title="Vice Class Representative">
-                            <ShieldCheck size={11} />Vice Rep
+                            Vice Rep
                           </span>
                         )}
                       </div>
