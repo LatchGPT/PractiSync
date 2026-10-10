@@ -164,7 +164,7 @@ export default function OverallStudentsProgress({
                       <div className="student-rep-tags">
                         {isClassRep && (
                           <span className="badge-class-rep" title="Class Representative">
-                            <Star size={11} fill="#d7aa3e" />Class Rep
+                            <Star size={10.5} />Class Rep
                           </span>
                         )}
                         {isViceRep && (
