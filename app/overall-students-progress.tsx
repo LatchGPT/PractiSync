@@ -160,12 +160,12 @@ export default function OverallStudentsProgress({
                       <strong>{s(placement, 'studentName')}</strong>
                       {isClassRep && (
                         <span className="badge-class-rep" title="Class Representative">
-                          <Star size={11} fill="#d7aa3e" /> Class Rep
+                          <Star size={11} fill="#d7aa3e" />Class Rep
                         </span>
                       )}
                       {isViceRep && (
                         <span className="badge-vice-rep" title="Vice Class Representative">
-                          <ShieldCheck size={11} /> Vice Rep
+                          <ShieldCheck size={11} />Vice Rep
                         </span>
                       )}
                     </div>
