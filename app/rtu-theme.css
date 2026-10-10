@@ -249,18 +249,22 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 
 .stat-card {
   position: relative;
+  background: #ffffff !important;
+  border: 1px solid #dce5f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 3px 12px rgba(18, 76, 145, 0.045) !important;
   overflow: hidden;
+  transition: var(--transition-smooth);
+}
+
+.stat-card:hover {
+  border-color: #b9d0ec !important;
+  box-shadow: 0 6px 18px rgba(18, 76, 145, 0.075) !important;
+  transform: translateY(-2px);
 }
 
 .stat-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #124c91 0%, #d7aa3e 100%);
-  opacity: 0.95;
+  display: none !important;
 }
 
 .stat-value {
@@ -1583,8 +1587,8 @@ tr:last-child td {
 
 /* 3. Surface & Card Padding Harmonization */
 .stat-card {
-  padding: 20px 22px !important;
-  border-radius: var(--radius-card) !important;
+  padding: 18px 20px !important;
+  border-radius: 12px !important;
 }
 
 .stat-top {
@@ -1592,24 +1596,32 @@ tr:last-child td {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 8px !important;
-  color: #5a728e !important;
-  font-size: 12px !important;
-  font-weight: 650 !important;
+  color: #3d5875 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+.stat-top svg {
+  color: var(--primary, #124c91) !important;
+  opacity: 0.9;
 }
 
 .stat-value {
-  margin-top: 12px !important;
-  font-size: 28px !important;
+  margin-top: 10px !important;
+  font-size: 26px !important;
   line-height: 1.15 !important;
   letter-spacing: -0.03em !important;
-  color: #143c70 !important;
+  color: #102f62 !important;
   font-weight: 750 !important;
 }
 
 .stat-bottom {
-  margin-top: 10px !important;
-  font-size: 11.5px !important;
-  color: #69829f !important;
+  margin-top: 8px !important;
+  font-size: 11px !important;
+  color: #637b95 !important;
+  font-weight: 500 !important;
 }
 
 .role-metric {
