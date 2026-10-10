@@ -5,15 +5,11 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  ExternalLink,
   FileCheck,
-  FileText,
   FileWarning,
-  ShieldAlert,
   ShieldCheck,
-  Upload,
 } from 'lucide-react';
-import type {Row, Snapshot} from '@/packages/validation/contracts';
+import type {Snapshot} from '@/packages/validation/contracts';
 
 interface DocumentReadinessChecklistProps {
   data: Snapshot;
@@ -35,7 +31,6 @@ export default function DocumentReadinessChecklist({
 
   const approvedDocs = documents.filter(d => d.status === 'APPROVED');
   const rejectedDocs = documents.filter(d => d.status === 'REJECTED');
-  const pendingDocs = documents.filter(d => d.status === 'PENDING');
 
   const totalCount = documents.length || 3;
   const approvedCount = approvedDocs.length;
@@ -105,7 +100,6 @@ export default function DocumentReadinessChecklist({
               const statusLower = status.toLowerCase();
               const isApproved = status === 'APPROVED';
               const isRejected = status === 'REJECTED';
-              const isPending = status === 'PENDING';
 
               return (
                 <div

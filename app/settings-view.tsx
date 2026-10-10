@@ -9,38 +9,23 @@ import {
   ShieldCheck,
   Database,
   Laptop,
-  Check,
-  AlertCircle,
   RefreshCw,
   Key,
-  Shield,
   Download,
   Moon,
   Sun,
-  Smartphone,
-  Sliders,
-  ChevronRight,
   CheckCircle2,
-  LockKeyhole,
-  Info,
-  Building2,
-  GraduationCap,
-  BriefcaseBusiness,
   Globe,
-  Volume2,
   Eye,
   EyeOff,
   RotateCcw,
-  Sparkles,
-  Target,
-  FileText
 } from 'lucide-react';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
 import {Switch} from '@/components/ui/switch';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '@/components/ui/select';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from '@/components/ui/dialog';
 import {toast} from 'sonner';
-import type {Snapshot, Identity, Role, Row} from '@/packages/validation/contracts';
+import type {Snapshot, Identity, Role} from '@/packages/validation/contracts';
 
 export interface PractiSyncSettings {
   // DTR & Practicum
@@ -119,7 +104,7 @@ interface SettingsViewProps {
   role: Role;
   onEditProfile: () => void;
   onRefresh: () => Promise<void>;
-  navigate: (page: string) => void;
+  navigate?: (page: string) => void;
 }
 
 export default function SettingsView({
@@ -128,7 +113,6 @@ export default function SettingsView({
   role,
   onEditProfile,
   onRefresh,
-  navigate
 }: SettingsViewProps) {
   const [settings, setSettings] = useState<PractiSyncSettings>(() => {
     if (typeof window === 'undefined') return DEFAULT_SETTINGS;
@@ -301,8 +285,6 @@ export default function SettingsView({
 
   // Student specific details
   const ownPlacement = data.placements.find((p) => p.studentId === user.id) ?? data.placements[0];
-  const userCourse = data.courses.find((c) => c.id === user.courseId);
-  const userCompany = data.companies.find((c) => c.id === user.companyId);
 
   return (
     <div className="settings-module">

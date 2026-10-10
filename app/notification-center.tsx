@@ -12,7 +12,6 @@ import {
   Settings,
   Check,
   CheckCircle2,
-  Sparkles,
 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import type { Row, Action } from '@/packages/validation/contracts';
