@@ -156,22 +156,24 @@ export default function OverallStudentsProgress({
                     {initials(s(placement, 'studentName'))}
                   </span>
                   <div className="student-meta-details">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <strong>{s(placement, 'studentName')}</strong>
-                      {isClassRep && (
-                        <span className="badge-class-rep" title="Class Representative">
-                          <Star size={11} fill="#d7aa3e" />Class Rep
-                        </span>
-                      )}
-                      {isViceRep && (
-                        <span className="badge-vice-rep" title="Vice Class Representative">
-                          <ShieldCheck size={11} />Vice Rep
-                        </span>
-                      )}
-                    </div>
+                    <strong>{s(placement, 'studentName')}</strong>
                     <span>
                       {s(placement, 'section')} · {s(placement, 'companyName')}
                     </span>
+                    {(isClassRep || isViceRep) && (
+                      <div className="student-rep-tags">
+                        {isClassRep && (
+                          <span className="badge-class-rep" title="Class Representative">
+                            <Star size={11} fill="#d7aa3e" />Class Rep
+                          </span>
+                        )}
+                        {isViceRep && (
+                          <span className="badge-vice-rep" title="Vice Class Representative">
+                            <ShieldCheck size={11} />Vice Rep
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
