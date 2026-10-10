@@ -708,9 +708,8 @@ input:focus, textarea:focus, select:focus {
 }
 
 .page-heading .eyebrow {
-  color: #a47b25;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
 }
 
 .page-heading p {
@@ -1331,14 +1330,28 @@ tr:last-child td {
 }
 
 .page-heading .eyebrow {
-  display: inline-block !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
   font-size: 11px !important;
   font-weight: 750 !important;
-  letter-spacing: 0.12em !important;
-  text-transform: uppercase !important;
-  color: var(--rtu-gold-deep) !important;
+  letter-spacing: 0.1em !important;
   margin-bottom: 6px !important;
   line-height: 1.2 !important;
+}
+
+.page-heading .eyebrow .eyebrow-brand {
+  color: var(--rtu-gold-deep, #966916) !important;
+}
+
+.page-heading .eyebrow .eyebrow-sep {
+  color: #8fa0b5 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+.page-heading .eyebrow .eyebrow-module {
+  color: var(--rtu-blue, #124c91) !important;
 }
 
 .page-heading h1 {
