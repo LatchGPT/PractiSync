@@ -1254,6 +1254,8 @@ tr:last-child td {
 
 /* 1. Main Content Layout & Shell Spacing */
 .content {
+  width: 100%;
+  min-width: 0;
   padding: 28px 32px 42px !important;
   max-width: 1540px !important;
   margin: 0 auto !important;
@@ -1280,6 +1282,42 @@ tr:last-child td {
 @media (max-width: 768px) {
   .content {
     padding: 18px 16px 30px !important;
+  }
+}
+
+.internship-applications-tab .table-overflow table {
+  min-width: 720px;
+}
+
+.internship-applications-tab .section-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 24px;
+  margin-bottom: 0;
+}
+
+.internship-applications-tab .section-pill {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 1100px) {
+  .internship-applications-tab .section-filter-bar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .internship-applications-tab .section-filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 14px 16px;
+  }
+
+  .internship-applications-tab .section-pill:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: calc(50% - 6px);
+    justify-self: center;
   }
 }
 

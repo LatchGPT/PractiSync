@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
+html{scrollbar-gutter:stable}
 @custom-variant dark (&:is(.dark *));
 @theme inline {--color-background:var(--background);--color-foreground:var(--foreground);--color-card:var(--card);--color-card-foreground:var(--foreground);--color-popover:var(--card);--color-popover-foreground:var(--foreground);--color-primary:var(--primary);--color-primary-foreground:#fff;--color-secondary:#edf3fb;--color-secondary-foreground:var(--foreground);--color-muted:var(--muted);--color-muted-foreground:var(--muted-foreground);--color-accent:#eaf1fa;--color-accent-foreground:var(--primary);--color-destructive:#bd4444;--color-border:var(--border);--color-input:var(--border);--color-ring:var(--primary);--color-sidebar:var(--card);--color-sidebar-foreground:var(--foreground);--color-sidebar-primary:var(--primary);--color-sidebar-primary-foreground:#fff;--color-sidebar-accent:#edf3fb;--color-sidebar-accent-foreground:var(--primary);--color-sidebar-border:var(--border);--color-sidebar-ring:var(--primary);--radius-sm:.4rem;--radius-md:.6rem;--radius-lg:.85rem;--radius-xl:1rem;}
 :root {--background:#f3f6fb;--foreground:#153456;--card:#fff;--primary:#124c91;--muted:#edf3fb;--muted-foreground:#62768e;--border:#dce5f0;--rtu-navy:#102f62;--rtu-blue:#124c91;--rtu-gold:#d7aa3e;--rtu-gold-deep:#966916;--rtu-ice:#eef4fc;}
