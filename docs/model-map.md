@@ -35,6 +35,7 @@ PostgreSQL is the institutional reference schema. Hosted demo D1 is a separate, 
 - CourseFramework
 - RubricDimension
 - Evaluation
+- AssessmentSchedule
 - EvaluationScore
 - EvaluationRevision
 - EvaluationScoreRevision
@@ -70,4 +71,4 @@ PostgreSQL is the institutional reference schema. Hosted demo D1 is a separate, 
 - AuditEvent
 - LoginAttempt
 
-67 models cover identity, institution, DTR, competencies, documents, incidents, jobs, announcements, directory, completion, exports, and infrastructure.
+68 models cover identity, institution, DTR, competencies, documents, incidents, jobs, announcements, directory, completion, exports, and infrastructure.

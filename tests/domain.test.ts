@@ -17,7 +17,7 @@ beforeAll(async()=>{sql=new DatabaseSync(':memory:');for(const file of readdirSy
 describe('foundations and isolation',()=>{
  it('seeds all three accounts idempotently',async()=>{const before=await list('SELECT * FROM entries');await seed();expect((await list('SELECT * FROM users WHERE is_demo=1')).length).toBe(3);expect((await list('SELECT * FROM entries')).length).toBe(before.length);});
  it('fails closed outside isolated demo',()=>{expect(demoAllowed('institutional','true')).toBe(false);expect(demoAllowed('demo','false')).toBe(false);});
- it('student cannot see another placement or private case',async()=>{const s=await snapshot(users.student);expect(s.placements.every(p=>p.studentId===users.student.id)).toBe(true);expect(s.incidents.map(i=>i.id)).toEqual(['case-1']);await expect(mutate(users.student,'dtr',{placementId:'placement-2',date:'2026-10-01',startsAt:'2026-10-01T08:00',endsAt:'2026-10-01T17:00',breakMinutes:60,narrative:'Scope-negative test'})).rejects.toThrow('access denied');});
+ it('student cannot see another placement or private case',async()=>{const s=await snapshot(users.student);expect(s.placements.every(p=>p.studentId===users.student.id)).toBe(true);expect(s.incidents.map(i=>i.id)).toEqual(['case-1']);expect(s.classes.length).toBe(1);expect(s.classes[0]?.coordinatorName).toBe('Andrea Santos');await expect(mutate(users.student,'dtr',{placementId:'placement-2',date:'2026-10-01',startsAt:'2026-10-01T08:00',endsAt:'2026-10-01T17:00',breakMinutes:60,narrative:'Scope-negative test'})).rejects.toThrow('access denied');});
  it('coordinator sees assigned class placements and routed SOS cases',async()=>{const s=await snapshot(users.coordinator);expect(s.placements.length).toBeGreaterThan(0);expect(s.incidents.length).toBeGreaterThan(0);});
  it('coordinator manages several classes but unrelated cases are hidden',async()=>{const s=await snapshot(users.coordinator);expect(s.classes.length).toBeGreaterThan(2);expect(s.incidents.map(i=>i.id)).not.toContain('case-private');await expect(mutate(users.coordinator,'announcement',{title:'Scope-negative',body:'Do not publish this',classId:'class-ed'})).rejects.toThrow('own classes');});
  it('coordinator can assign class reps, remove students, and decide join requests',async()=>{await mutate(users.coordinator,'assignClassReps',{classId:'class-it',classRepId:'demo-student',viceClassRepId:'student-5'});const cls=await one('SELECT * FROM classes WHERE id=?','class-it');expect(cls?.classRepId).toBe('demo-student');expect(cls?.viceClassRepId).toBe('student-5');const snap=await snapshot(users.coordinator);expect(snap.joinRequests.length).toBeGreaterThan(0);const req=snap.joinRequests.find(r=>r.id==='req-1')!;await mutate(users.coordinator,'joinRequestDecision',{requestId:req.id,decision:'APPROVE'});const decided=await one('SELECT * FROM join_requests WHERE id=?',req.id);expect(decided?.status).toBe('APPROVED');await mutate(users.coordinator,'removeStudent',{classId:'class-it',studentId:'student-5'});const en=await one('SELECT * FROM enrollments WHERE class_id=? AND student_id=?','class-it','student-5');expect(en?.active).toBe(0);});
@@ -27,55 +27,41 @@ describe('foundations and isolation',()=>{
  it('manual DTR contributes immediately, coordinator confirmation is recorded and corrections invalidate it',async()=>{const d={placementId:'placement-1',date:'2026-10-01',startsAt:'2026-10-01T08:00',endsAt:'2026-10-01T17:00',breakMinutes:60,narrative:'Test completed work'};const r=await mutate(users.student,'dtr',d);const e=await one('SELECT * FROM entries WHERE id=?',r.id!);expect(e?.confirmedVersion).toBe(null);expect((await one('SELECT minutes FROM intervals WHERE entry_id=?',r.id!))?.minutes).toBe(480);await mutate(users.coordinator,'confirm',{entryId:r.id,version:1});await mutate(users.coordinator,'confirm',{entryId:r.id,version:1});expect((await one('SELECT confirmed_version FROM entries WHERE id=?',r.id!))?.confirmedVersion).toBe(1);await mutate(users.student,'dtr',{...d,entryId:r.id,version:1,endsAt:'2026-10-01T16:00',reason:'Corrected end time'});const changed=await one('SELECT * FROM entries WHERE id=?',r.id!);expect(changed?.version).toBe(2);expect(changed?.confirmedVersion).toBe(null);expect((await one('SELECT minutes FROM intervals WHERE entry_id=?',r.id!))?.minutes).toBe(420);await expect(mutate(users.student,'dtr',d)).rejects.toThrow('overlaps');});
  it('cross-tenant relationships are rejected by database',()=>{expect(()=>sql.prepare('INSERT INTO entries (id,tenant_id,created_at,placement_id,date,narrative) VALUES (?,?,?,?,?,?)').run('tenant-negative','another-tenant','2026-10-01','placement-1','2026-10-01','Denied')).toThrow('scoped relationship');});
  it('accounts are bounded and demo identities cannot be changed',async()=>{await expect(mutate(users.admin,'role',{userId:'demo-student',role:'SUPER_ADMIN',status:'ACTIVE'})).rejects.toThrow('preserved');});
- it('students cannot write final evaluations or publish jobs',async()=>{await expect(mutate(users.student,'job',{title:'x',description:'x',location:'x',courseId:'course-it',skills:'x',openings:1})).rejects.toThrow('permission');await expect(mutate(users.student,'evaluation',{placementId:'placement-1',kind:'FINAL',technical:4,communication:4,professionalism:5,problemSolving:4})).rejects.toThrow('assessment type');});
- it('coordinator can conduct final evaluations and post jobs for approved companies only',async()=>{await expect(mutate(users.coordinator,'job',{companyId:'company-pending',title:'Frontend Intern',description:'Work with React',location:'Mandaluyong',courseId:'course-it',skills:'React, TypeScript',openings:2})).rejects.toThrow('An approved partner company is required');const job=await mutate(users.coordinator,'job',{companyId:'company-northstar',title:'Frontend Intern',description:'Work with React',location:'Mandaluyong',courseId:'course-it',skills:'React, TypeScript',openings:2});expect(job.message).toContain('Internship opening published');const sampleJob=sampleFor('job',{});const postedSample=await mutate(users.coordinator,'job',sampleJob);expect(postedSample.message).toContain('Internship opening published');const evalResult=await mutate(users.coordinator,'evaluation',{placementId:'placement-1',kind:'FINAL',technical:5,communication:4,professionalism:5,problemSolving:4});expect(evalResult.message).toContain('Assessment submitted');});
+ it('students cannot write legacy evaluations or publish jobs',async()=>{await expect(mutate(users.student,'job',{title:'x',description:'x',location:'x',courseId:'course-it',skills:'x',openings:1})).rejects.toThrow('permission');await expect(mutate(users.student,'evaluation',{placementId:'placement-1',kind:'FINAL',date:'2026-10-02',technical:4,communication:4,professionalism:5,problemSolving:4})).rejects.toThrow();});
+ it('coordinator can post jobs for approved companies only',async()=>{await expect(mutate(users.coordinator,'job',{companyId:'company-pending',title:'Frontend Intern',description:'Work with React',location:'Mandaluyong',courseId:'course-it',skills:'React, TypeScript',openings:2})).rejects.toThrow('An approved partner company is required');const job=await mutate(users.coordinator,'job',{companyId:'company-northstar',title:'Frontend Intern',description:'Work with React',location:'Mandaluyong',courseId:'course-it',skills:'React, TypeScript',openings:2});expect(job.message).toContain('Internship opening published');const sampleJob=sampleFor('job',{});const postedSample=await mutate(users.coordinator,'job',sampleJob);expect(postedSample.message).toContain('Internship opening published');await expect(mutate(users.coordinator,'evaluation',{placementId:'placement-1',kind:'WEEKLY',date:'2026-10-02',technical:5,communication:4,professionalism:5,problemSolving:4})).rejects.toThrow('permission');});
+ it('supports course cadence, one student assessment per period, and coordinator revision review',async()=>{
+  const base={placementId:'placement-1',date:'2026-10-02',technical:4,communication:4,professionalism:5,problemSolving:3};
+  await expect(mutate(users.student,'assessmentSchedule',{courseId:'course-it',cadence:'MONTHLY',version:1})).rejects.toThrow('permission');
+  await expect(mutate(users.coordinator,'assessmentSchedule',{courseId:'course-education',cadence:'MONTHLY',version:1})).rejects.toThrow('your classes');
+  await mutate(users.coordinator,'assessmentSchedule',{courseId:'course-it',cadence:'MONTHLY',version:1});
+  await expect(mutate(users.student,'evaluation',{...base,kind:'WEEKLY'})).rejects.toThrow('not enabled');
+  await expect(mutate(users.student,'evaluation',{...base,kind:'MONTHLY',date:'2099-01-01'})).rejects.toThrow('current or past');
+  const submitted=await mutate(users.student,'evaluation',{...base,kind:'MONTHLY'});
+  const row=await one('SELECT * FROM evaluations WHERE id=?',submitted.id!);
+  expect(row).toMatchObject({kind:'MONTHLY',periodStart:'2026-10-01',periodEnd:'2026-10-31',status:'SUBMITTED'});
+  await expect(mutate(users.student,'evaluation',{...base,kind:'MONTHLY',date:'2026-10-04'})).rejects.toThrow('already been submitted');
+  await expect(mutate(users.coordinator,'evaluationReview',{evaluationId:submitted.id,decision:'REVISION_REQUESTED'})).rejects.toThrow('Explain');
+  await mutate(users.coordinator,'evaluationReview',{evaluationId:submitted.id,decision:'REVISION_REQUESTED',note:'Review the technical rating.'});
+  await expect(mutate(users.student,'evaluation',{...base,kind:'MONTHLY',version:2})).rejects.toThrow('changed');
+  await mutate(users.student,'evaluation',{...base,kind:'MONTHLY',version:1,technical:5});
+  expect((await one('SELECT * FROM evaluations WHERE id=?',submitted.id!))?.version).toBe(2);
+  expect((await one('SELECT score FROM scores WHERE evaluation_id=? AND dimension=?',submitted.id!,'Technical skills'))?.score).toBe(5);
+  expect((await list('SELECT * FROM evaluation_revisions WHERE evaluation_id=?',submitted.id!))).toHaveLength(1);
+  await mutate(users.coordinator,'evaluationReview',{evaluationId:submitted.id,decision:'APPROVED'});
+  await expect(mutate(users.student,'evaluation',{...base,kind:'MONTHLY',version:2})).rejects.toThrow('already been submitted');
+  await mutate(users.coordinator,'assessmentSchedule',{courseId:'course-it',cadence:'BOTH',version:2});
+  const weekly=await mutate(users.student,'evaluation',{...base,kind:'WEEKLY'});
+  expect(await one('SELECT period_start,period_end FROM evaluations WHERE id=?',weekly.id!)).toMatchObject({periodStart:'2026-09-28',periodEnd:'2026-10-04'});
+  expect((await snapshot(users.student)).assessmentSchedules.find(schedule=>schedule.courseId==='course-it')?.cadence).toBe('BOTH');
+ });
  it('applications require eligible course and cannot duplicate',async()=>{await expect(mutate(users.student,'application',{jobId:'job-2',coverLetter:'Sample'})).rejects.toThrow('course');await expect(mutate(users.student,'application',{jobId:'job-1',coverLetter:'Duplicate'})).rejects.toThrow('already applied');});
  it('coordinator can review applications and update status',async()=>{await mutate(users.coordinator,'applicationStatus',{applicationId:'app-1',status:'SHORTLISTED'});expect((await one('SELECT status FROM applications WHERE id=?','app-1'))?.status).toBe('SHORTLISTED');});
  it('database keeps a final application decision immutable',()=>{sql.prepare('UPDATE applications SET status=? WHERE id=?').run('ACCEPTED','app-1');expect(()=>sql.prepare('UPDATE applications SET status=? WHERE id=?').run('REJECTED','app-1')).toThrow('immutable');expect(sql.prepare('SELECT status FROM applications WHERE id=?').get('app-1')).toMatchObject({status:'ACCEPTED'});});
  it('reviews require formal completion, not a reported hours total',async()=>{await expect(mutate(users.student,'review',{placementId:'placement-1',rating:5,body:'Sample'})).rejects.toThrow('formal placement completion');});
  it('validates overnight minutes, ordering, future and placement boundary',()=>{expect(calculateMinutes('2026-09-25T22:00+08:00','2026-09-26T06:00+08:00',30,'2026-08-01','2026-12-20')).toBe(450);expect(()=>calculateMinutes('2026-09-25T22:00','2026-09-25T06:00',0,'2026-08-01','2026-12-20')).toThrow();expect(()=>calculateMinutes('2027-01-01','2027-01-02',0,'2026-08-01','2026-12-20')).toThrow();});
  it('generating sample values does not persist or submit',async()=>{const before=(await list('SELECT id FROM entries')).length;expect(sampleFor('dtr',{placementId:'placement-1'}).narrative).toContain('Sample');expect((await list('SELECT id FROM entries')).length).toBe(before);});
- it('coordinators configure course assessment cadence and unauthorized users are denied',async()=>{
-  await expect(mutate(users.student,'courseAssessmentCadence',{courseId:'course-it',cadence:'WEEKLY'})).rejects.toThrow('permission');
-  await mutate(users.coordinator,'courseAssessmentCadence',{courseId:'course-it',cadence:'WEEKLY'});
-  const updated=await one('SELECT assessment_cadence FROM courses WHERE id=?','course-it');
-  expect(updated?.assessmentCadence).toBe('WEEKLY');
-  await expect(mutate(users.student,'evaluation',{placementId:'placement-1',kind:'MONTHLY',period:'2026-08',technical:4,communication:4,professionalism:4,problemSolving:4})).rejects.toThrow('Monthly assessments are not configured');
-  await mutate(users.coordinator,'courseAssessmentCadence',{courseId:'course-it',cadence:'BOTH'});
- });
- it('students submit weekly and monthly assessments with period validation and uniqueness constraint',async()=>{
-  const res=await mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W35',technical:4,communication:5,professionalism:5,problemSolving:4});
-  expect(res.message).toContain('Assessment submitted');
-  const ev=await one('SELECT * FROM evaluations WHERE id=?',res.id!);
-  expect(ev?.kind).toBe('WEEKLY');
-  expect(ev?.period).toBe('2026-W35');
-  expect(ev?.status).toBe('SUBMITTED');
-  await expect(mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W35',technical:5,communication:5,professionalism:5,problemSolving:5})).rejects.toThrow('already been submitted');
-  await expect(mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W50',technical:4,communication:4,professionalism:4,problemSolving:4})).rejects.toThrow('future');
-  const mRes=await mutate(users.student,'evaluation',{placementId:'placement-1',kind:'MONTHLY',period:'2026-08',technical:4,communication:4,professionalism:4,problemSolving:4});
-  expect(mRes.message).toContain('Assessment submitted');
- });
- it('coordinators review assessments with approval or revision request, and students can resubmit',async()=>{
-  const res=await mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W34',technical:3,communication:3,professionalism:3,problemSolving:3});
-  await expect(mutate(users.coordinator,'evaluationReview',{evaluationId:res.id!,status:'REVISION_REQUESTED',reason:''})).rejects.toThrow('reason');
-  await mutate(users.coordinator,'evaluationReview',{evaluationId:res.id!,status:'REVISION_REQUESTED',reason:'Please elaborate on problem solving.'});
-  const rev=await one('SELECT * FROM evaluations WHERE id=?',res.id!);
-  expect(rev?.status).toBe('REVISION_REQUESTED');
-  expect(rev?.reason).toBe('Please elaborate on problem solving.');
-  const resub=await mutate(users.student,'evaluation',{placementId:'placement-1',kind:'WEEKLY',period:'2026-W34',technical:4,communication:4,professionalism:4,problemSolving:4});
-  expect(resub.message).toContain('resubmitted');
-  const afterResub=await one('SELECT * FROM evaluations WHERE id=?',res.id!);
-  expect(afterResub?.status).toBe('SUBMITTED');
-  expect(afterResub?.reason).toBe(null);
-  await mutate(users.coordinator,'evaluationReview',{evaluationId:res.id!,status:'APPROVED'});
-  const app=await one('SELECT * FROM evaluations WHERE id=?',res.id!);
-  expect(app?.status).toBe('APPROVED');
- });
- it('legacy baseline and final evaluations remain in snapshot as read-only history',async()=>{
-  const snap=await snapshot(users.student);
-  const legacy=snap.evaluations.filter(e=>e.placementId==='placement-1'&&['BASELINE','FINAL'].includes(String(e.kind)));
-  expect(legacy.length).toBeGreaterThanOrEqual(2);
- });
+ it('isolates notifications by user and provides unread tracking',async()=>{const studentSnap=await snapshot(users.student);expect(studentSnap.notifications.length).toBeGreaterThan(0);expect(studentSnap.notifications.every(n=>n.userId===users.student.id)).toBe(true);const unreadBefore=studentSnap.notifications.filter(n=>!n.readAt).length;expect(unreadBefore).toBeGreaterThan(0);await mutate(users.student,'markNotificationRead',{notificationId:'notif-1'});const updatedSnap=await snapshot(users.student);expect(updatedSnap.notifications.find(n=>n.id==='notif-1')?.readAt).not.toBeNull();await mutate(users.student,'markAllNotificationsRead',{});const clearedSnap=await snapshot(users.student);expect(clearedSnap.notifications.every(n=>n.readAt!==null)).toBe(true);});
+ it('triggers notifications for document review, attendance confirmation, support cases, and announcements',async()=>{await mutate(users.coordinator,'documentReview',{documentId:'doc-placement-1-2',status:'APPROVED',reason:'All requirements verified.'});const docNotif=await one('SELECT * FROM notifications WHERE user_id=? AND resource_id=? AND type=\'DOCUMENT\'',users.student.id,'doc-placement-1-2');expect(docNotif).not.toBeNull();expect(docNotif?.title).toBe('Document Clearance Approved');await mutate(users.student,'incident',{placementId:'placement-1',subject:'Urgent schedule question',narrative:'Need to clarify company shift changes.'});const caseNotif=await one('SELECT * FROM notifications WHERE user_id=? AND type=\'SUPPORT\' ORDER BY created_at DESC LIMIT 1',users.coordinator.id);expect(caseNotif).not.toBeNull();expect(caseNotif?.title).toBe('New Student Support Inquiry');await mutate(users.coordinator,'announcement',{title:'Midterm Checklist Released',body:'Review all DTRs before Friday.',classId:'class-it'});const annNotif=await one('SELECT * FROM notifications WHERE user_id=? AND type=\'ANNOUNCEMENT\' AND title=?','demo-student','New Class Announcement');expect(annNotif).not.toBeNull();});
 });
 
 describe('Auth.js Request/Response smoke checks',()=>{

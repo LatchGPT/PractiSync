@@ -29,20 +29,6 @@
       "when": 1791139097630,
       "tag": "0003_application_finality",
       "breakpoints": false
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1791140000000,
-      "tag": "0004_coordinator_features",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1791150000000,
-      "tag": "0005_weekly_monthly_assessments",
-      "breakpoints": true
     }
   ]
 }

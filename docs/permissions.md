@@ -15,7 +15,7 @@ Every request obtains identity from the Auth.js encrypted JWT, reloads the curre
 | Job publish/update | Denied | Denied | Verified own company + posting permission | Read |
 | Application | Own eligible course | Read own class | Own company's postings | Read institution |
 | Announcement publish | Denied | Own class | Denied | University |
-| Evaluation | Own baseline | Read own class | Assigned final | Read |
+| Period competency assessment | Submit/revise own weekly or monthly assessment according to course cadence | Configure cadence for own courses; approve or request revision for own class | Denied in hosted demo | Read |
 | Review | Formally completed own placement | Moderate own class | Read approved | Read approved |
 | Portfolio | Own | Own class | Assigned scope | Institution scope |
 | Accounts/structure | Own profile | Own profile | Own profile | Provision and assign non-demo accounts |

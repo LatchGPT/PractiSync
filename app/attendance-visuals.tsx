@@ -49,7 +49,7 @@ export default function AttendanceVisuals({entries,detail=false}:{entries:Row[];
  const confirmed=days.reduce((sum,day)=>sum+day.confirmed,0);
  const range=days.length?`${label(days[0].date)}–${label(days.at(-1)!.date)}`:'';
  return <div className={`attendance-visuals${detail?' attendance-visuals-detail':''}`}>
-  <section className="attendance-chart-card"><div className="attendance-chart-head"><div><h2>Daily training hours</h2><p>{days.length?`${range} · Based on visible DTR records`:'Submit a DTR to see your daily hours.'}</p></div>{days.length>0&&<strong>{hours(reported)}</strong>}</div>
+  <section className="attendance-chart-card"><div className="attendance-chart-head"><div><h2>Daily training hours</h2><p>{days.length?`${range} · Based on visible DTR records`:'Submit a DTR to see your daily hours.'}</p></div>{detail&&days.length>0&&<strong>{hours(reported)}</strong>}</div>
    {days.length?<><div className="attendance-plot-scroll"><DailyBars days={days}/></div><div className="attendance-chart-legend"><span><i className="reported"/>Reported</span><span><i className="confirmed"/>Coordinator confirmed</span></div></>:<p className="attendance-chart-empty">No attendance records to chart yet.</p>}
   </section>
   {detail&&<section className="attendance-chart-card"><div className="attendance-chart-head"><div><h2>Hours over time</h2><p>{days.length?`${range} · Cumulative within this window`:'A trend appears after the first DTR.'}</p></div>{days.length>0&&<strong>{hours(confirmed)} confirmed</strong>}</div>

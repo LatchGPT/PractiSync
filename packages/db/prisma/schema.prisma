@@ -59,6 +59,14 @@ enum EvaluationKind {
 enum SubmissionStatus {
   DRAFT
   SUBMITTED
+  APPROVED
+  REVISION_REQUESTED
+}
+
+enum AssessmentCadence {
+  WEEKLY
+  MONTHLY
+  BOTH
 }
 
 enum CaseStatus {
@@ -135,6 +143,7 @@ model Tenant {
   courseFrameworkRecords         CourseFramework[]
   rubricDimensionRecords         RubricDimension[]
   evaluationRecords              Evaluation[]
+  assessmentScheduleRecords      AssessmentSchedule[]
   evaluationScoreRecords         EvaluationScore[]
   evaluationRevisionRecords      EvaluationRevision[]
   evaluationScoreRevisionRecords EvaluationScoreRevision[]
@@ -197,6 +206,8 @@ model User {
   entryRevision_actorId         EntryRevision[]      @relation("EntryRevision_actorId")
   storageObject_ownerId         StorageObject[]      @relation("StorageObject_ownerId")
   evaluation_evaluatorId        Evaluation[]         @relation("Evaluation_evaluatorId")
+  evaluation_reviewerId         Evaluation[]         @relation("Evaluation_reviewerId")
+  assessmentSchedule_configuredById AssessmentSchedule[] @relation("AssessmentSchedule_configuredById")
   documentSubmission_reviewerId DocumentSubmission[] @relation("DocumentSubmission_reviewerId")
   incidentCase_reporterId       IncidentCase[]       @relation("IncidentCase_reporterId")
   incidentCase_coordinatorId    IncidentCase[]       @relation("IncidentCase_coordinatorId")
@@ -326,6 +337,7 @@ model Course {
   requirementSet_courseId      RequirementSet[]      @relation("RequirementSet_courseId")
   jobEligibility_courseId      JobEligibility[]      @relation("JobEligibility_courseId")
   completionChecklist_courseId CompletionChecklist[] @relation("CompletionChecklist_courseId")
+  assessmentSchedule           AssessmentSchedule?
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -819,6 +831,24 @@ model RubricDimension {
   @@index([tenantId, createdAt])
 }
 
+model AssessmentSchedule {
+  id             String            @id @default(cuid())
+  tenantId       String
+  tenant         Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  courseId       String
+  course         Course            @relation(fields: [tenantId, courseId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  cadence        AssessmentCadence
+  version        Int               @default(1)
+  configuredById String?
+  configuredBy   User?             @relation("AssessmentSchedule_configuredById", fields: [tenantId, configuredById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, courseId])
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt])
+}
+
 model Evaluation {
   id                              String               @id @default(cuid())
   tenantId                        String
@@ -834,13 +864,20 @@ model Evaluation {
   placementId                     String
   frameworkId                     String
   evaluatorId                     String
+  periodStart                     DateTime?            @db.Date
+  periodEnd                       DateTime?            @db.Date
+  reviewNote                      String?
+  reviewedById                    String?
+  reviewedAt                      DateTime?
   placement                       Placement            @relation("Evaluation_placementId", fields: [tenantId, placementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   framework                       CompetencyFramework  @relation("Evaluation_frameworkId", fields: [tenantId, frameworkId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   evaluator                       User                 @relation("Evaluation_evaluatorId", fields: [tenantId, evaluatorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  reviewer                        User?                @relation("Evaluation_reviewerId", fields: [tenantId, reviewedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   evaluationScore_evaluationId    EvaluationScore[]    @relation("EvaluationScore_evaluationId")
   evaluationRevision_evaluationId EvaluationRevision[] @relation("EvaluationRevision_evaluationId")
 
   @@unique([tenantId, id])
+  @@unique([tenantId, placementId, kind, periodStart])
   @@index([tenantId, createdAt])
 }
 

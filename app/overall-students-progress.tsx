@@ -2,15 +2,10 @@
 
 import { useState } from 'react';
 import {
-  Users,
-  GraduationCap,
   Star,
   ShieldCheck,
-  CheckCircle2,
-  Clock,
   ArrowRight,
   UserCheck,
-  AlertCircle,
   Eye,
 } from 'lucide-react';
 import type { Row, Snapshot } from '@/packages/validation/contracts';
@@ -64,28 +59,6 @@ export default function OverallStudentsProgress({
     studentEntries(placementId)
       .filter(e => e.confirmedVersion === e.version)
       .reduce((sum, e) => sum + n(e, 'minutes'), 0);
-
-  // Aggregates for filtered placements
-  const totalStudents = filteredPlacements.length;
-  const totalReportedMinutes = filteredPlacements.reduce(
-    (sum, p) => sum + reportedMinutes(p.id),
-    0
-  );
-  const totalConfirmedMinutes = filteredPlacements.reduce(
-    (sum, p) => sum + confirmedMinutes(p.id),
-    0
-  );
-
-  const avgCompletion = totalStudents > 0
-    ? Math.round(
-        filteredPlacements.reduce((sum, p) => {
-          const target = n(p, 'requiredMinutes');
-          const m = reportedMinutes(p.id);
-          const pct = target > 0 ? Math.min(100, (m / target) * 100) : 0;
-          return sum + pct;
-        }, 0) / totalStudents
-      )
-    : 0;
 
   return (
     <section className="overall-students-card">
@@ -159,30 +132,6 @@ export default function OverallStudentsProgress({
             </button>
           );
         })}
-      </div>
-
-      {/* Summary KPI Cards */}
-      <div className="overall-stats-grid">
-        <div className="overall-stat-box">
-          <span>Active Students</span>
-          <strong>{totalStudents}</strong>
-          <small>{selectedSection === 'ALL' ? 'Across all sections' : selectedSection}</small>
-        </div>
-        <div className="overall-stat-box">
-          <span>Average Completion</span>
-          <strong>{avgCompletion}%</strong>
-          <small>Toward target hours</small>
-        </div>
-        <div className="overall-stat-box">
-          <span>Reported Hours</span>
-          <strong>{hours(totalReportedMinutes)}</strong>
-          <small>Self-reported DTRs</small>
-        </div>
-        <div className="overall-stat-box">
-          <span>Confirmed Hours</span>
-          <strong>{hours(totalConfirmedMinutes)}</strong>
-          <small>Company-verified</small>
-        </div>
       </div>
 
       {/* Student Progress Roster */}

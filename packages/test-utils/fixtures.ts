@@ -10,7 +10,7 @@ export function sampleFor(action:string,context:Record<string,string>):FormValue
  job:{companyId:common.companyId,title:'Frontend Development Intern',description:'Sample: Work with our product team on accessible interfaces, component testing, and design implementation. Mentorship and a structured training plan are included.',location:'Mandaluyong · Hybrid',courseId:common.courseId,skills:'React, TypeScript, CSS',openings:'3'},
  application:{jobId:common.jobId,coverLetter:'Sample: I am an IT student interested in accessible frontend development. My coursework includes React, database design, and collaborative projects. I would welcome the opportunity to learn with your team.'},
  announcement:{title:'Weekly check-in: October 9',body:'Sample: Bring your latest narrative and any questions to our Friday class check-in. Please review your document status before the session.',classId:common.classId},
- evaluation:{...common,kind:context.kind??'BASELINE',technical:'4',communication:'4',professionalism:'5',problemSolving:'3'},
+ evaluation:{...common,kind:context.kind??'WEEKLY',date,technical:'4',communication:'4',professionalism:'5',problemSolving:'3'},
  review:{...common,rating:'4',body:'Sample: The team provided useful mentoring and regular feedback. A clearer onboarding checklist would make the first week easier.'},
  profile:{name:'Jamie Reyes'},
  };
