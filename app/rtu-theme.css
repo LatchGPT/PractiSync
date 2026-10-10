@@ -1329,29 +1329,38 @@ tr:last-child td {
   gap: 20px !important;
 }
 
-.page-heading .eyebrow {
+.page-heading-title {
   display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  font-size: 11px !important;
+  align-items: baseline !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  font-size: 27px !important;
   font-weight: 750 !important;
-  letter-spacing: 0.1em !important;
-  margin-bottom: 6px !important;
-  line-height: 1.2 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
 }
 
-.page-heading .eyebrow .eyebrow-brand {
+.page-heading-title .page-heading-brand {
   color: var(--rtu-gold-deep, #966916) !important;
+  font-weight: 800 !important;
+  font-size: 27px !important;
+  letter-spacing: -0.02em !important;
 }
 
-.page-heading .eyebrow .eyebrow-sep {
-  color: #8fa0b5 !important;
-  font-weight: 600 !important;
-  letter-spacing: 0 !important;
+.page-heading-title .page-heading-sep {
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+  font-size: 23px !important;
+  margin: 0 1px !important;
+  user-select: none !important;
 }
 
-.page-heading .eyebrow .eyebrow-module {
+.page-heading-title .page-heading-module {
   color: var(--rtu-blue, #124c91) !important;
+  font-weight: 750 !important;
+  font-size: 27px !important;
+  letter-spacing: -0.025em !important;
 }
 
 .page-heading h1 {
