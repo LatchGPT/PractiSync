@@ -1,12 +1,12 @@
 'use client';
 
+import {useEffect, useRef, useState} from 'react';
 import type {LucideIcon} from 'lucide-react';
 import {
   ArrowRight,
   Award,
   BookOpen,
   BriefcaseBusiness,
-  Building2,
   Check,
   Clock,
   Compass,
@@ -17,14 +17,16 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
+import {Popover, PopoverTrigger, PopoverContent} from '@/components/ui/popover';
 import type {Snapshot} from '@/packages/validation/contracts';
+import {studentGoal} from './student-goal';
 
 interface MilestoneStepperProps {
   data: Snapshot;
   navigate: (page: string) => void;
 }
 
-type StepStatus = 'completed' | 'current' | 'upcoming';
+type StepStatus = 'completed' | 'current' | 'upcoming' | 'clear' | 'attention' | 'empty';
 
 interface Step {
   id: string;
@@ -38,9 +40,18 @@ interface Step {
   to: string;
   icon: LucideIcon;
   progressPercent?: number;
+  metrics?: {label: string; value: string}[];
 }
 
 const hours = (minutes: number) => `${Number((minutes / 60).toFixed(1))} hrs`;
+const formatLogDate = (value: string) => {
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+  return year && month && day
+    ? new Intl.DateTimeFormat('en-PH', {month: 'short', day: 'numeric', year: 'numeric'}).format(
+        new Date(year, month - 1, day)
+      )
+    : value;
+};
 
 export default function PracticumMilestoneStepper({
   data,
@@ -58,25 +69,17 @@ export default function PracticumMilestoneStepper({
       data.placements.find(p => p.studentId === user.id);
 
     const ownEntries = data.entries.filter(e => e.placementId === placement?.id);
-    const reportedMinutes = ownEntries.reduce(
-      (sum, e) => sum + Number(e.minutes ?? 0),
-      0
-    );
-    const confirmedMinutes = ownEntries
-      .filter(e => e.confirmedVersion === e.version)
-      .reduce((sum, e) => sum + Number(e.minutes ?? 0), 0);
-
     const targetMinutes = Number(placement?.requiredMinutes ?? 0);
-    const percent =
-      targetMinutes > 0
-        ? Math.min(100, Math.round((reportedMinutes / targetMinutes) * 100))
-        : 0;
+    const goal = studentGoal(ownEntries, targetMinutes);
+    const reportedMinutes = goal.reported;
+    const percent = goal.percent;
 
     const documents = placement
       ? data.documents.filter(d => d.placementId === placement.id)
       : [];
     const approvedDocs = documents.filter(d => d.status === 'APPROVED');
-    const pendingDocs = documents.filter(d => d.status !== 'APPROVED');
+    const pendingDocs = documents.filter(d => d.status === 'PENDING');
+    const rejectedDocs = documents.filter(d => d.status === 'REJECTED');
 
     const evaluations = placement
       ? data.evaluations.filter(e => e.placementId === placement.id && (e.kind === 'WEEKLY' || e.kind === 'MONTHLY'))
@@ -87,18 +90,31 @@ export default function PracticumMilestoneStepper({
       ? data.completion.find(c => c.placementId === placement.id)
       : undefined;
 
-    const daysOnRecord = new Set(ownEntries.map(e => e.date)).size;
+    const daysOnRecord = goal.daysOnRecord;
+    const pendingEntries = ownEntries.filter(e => e.confirmedVersion !== e.version);
+    const pendingMinutes = pendingEntries.reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
+    const latestLogValue = ownEntries.map(e => String(e.date ?? '')).filter(Boolean).sort().at(-1);
+    const latestLog = latestLogValue ? formatLogDate(latestLogValue) : 'No entries yet';
+    const estimate = !goal.target
+      ? 'Target not set'
+      : goal.remaining === 0
+      ? 'Hours target met'
+      : goal.daysOnRecord < 3
+      ? 'After 3 logged days'
+      : goal.predictedDays
+      ? `About ${goal.predictedDays} more logged days`
+      : 'Not available yet';
 
     // Step 1: Pre-Deployment & Prerequisite Clearances
     const step1Complete =
       Boolean(placement) &&
-      (documents.length === 0 || approvedDocs.length >= documents.length);
+      documents.length > 0 && approvedDocs.length === documents.length;
     const step1Status: StepStatus = step1Complete
       ? 'completed'
-      : 'current';
+      : placement ? 'current' : 'empty';
 
     // Step 2: Active Training & DTR Hours
-    const step2Complete = percent >= 100;
+    const step2Complete = targetMinutes > 0 && reportedMinutes >= targetMinutes;
     const step2Status: StepStatus = step2Complete
       ? 'completed'
       : step1Complete || reportedMinutes > 0
@@ -109,15 +125,13 @@ export default function PracticumMilestoneStepper({
     const step3Complete = approvedEvaluations.length > 0;
     const step3Status: StepStatus = step3Complete
       ? 'completed'
-      : step2Complete || evaluations.length > 0 || percent >= 45
-      ? 'current'
-      : 'upcoming';
+      : evaluations.length > 0 ? 'current' : 'upcoming';
 
     // Step 4: Final Clearance & Portfolio
     const step4Complete = completion?.status === 'APPROVED';
     const step4Status: StepStatus = step4Complete
       ? 'completed'
-      : step2Complete && step3Complete
+      : step1Complete && step2Complete && step3Complete
       ? 'current'
       : 'upcoming';
 
@@ -127,28 +141,49 @@ export default function PracticumMilestoneStepper({
         phase: 'PHASE 01',
         title: 'Pre-Deployment',
         status: step1Status,
-        badgeLabel: step1Complete ? 'Completed' : 'In Progress',
-        kpiValue: `${approvedDocs.length} / ${documents.length || 1}`,
+        badgeLabel: step1Complete ? 'Completed' : placement ? 'Needs clearance' : 'Awaiting placement',
+        kpiValue: `${approvedDocs.length} / ${documents.length}`,
         kpiSubLabel: 'Prerequisite Clearances',
         detail:
-          pendingDocs.length > 0
-            ? `${pendingDocs.length} record${pendingDocs.length > 1 ? 's' : ''} awaiting approval`
-            : 'All required clearances approved',
+          !placement
+            ? 'A placement must be assigned before required clearances are available.'
+            : documents.length === 0
+            ? 'No clearance records yet; this phase is not complete.'
+            : pendingDocs.length || rejectedDocs.length
+            ? `${pendingDocs.length} awaiting review · ${rejectedDocs.length} need correction`
+            : 'All recorded clearances are approved.',
         to: 'documents',
         icon: FileCheck2,
+        metrics: [
+          {label: 'Approved', value: String(approvedDocs.length)},
+          {label: 'Awaiting review', value: String(pendingDocs.length)},
+          {label: 'Need correction', value: String(rejectedDocs.length)},
+          {label: 'Total records', value: String(documents.length)},
+        ],
       },
       {
         id: 'hours',
         phase: 'PHASE 02',
         title: 'Active Training',
         status: step2Status,
-        badgeLabel: step2Complete ? 'Goal Met' : 'Active Phase',
+        badgeLabel: step2Complete ? 'Hours target met' : targetMinutes > 0 ? 'In progress' : 'Target not set',
         kpiValue: hours(reportedMinutes),
         kpiSubLabel: targetMinutes > 0 ? `${percent}% of ${hours(targetMinutes)} goal` : 'Hours on record',
-        detail: `${hours(confirmedMinutes)} confirmed · ${hours(Math.max(0, reportedMinutes - confirmedMinutes))} pending`,
+        detail: 'Reported hours count toward the target. Hours alone do not certify academic completion.',
         to: 'attendance',
         icon: Clock,
         progressPercent: percent,
+        metrics: [
+          {label: 'Reported', value: hours(goal.reported)},
+          {label: 'Required', value: goal.target ? hours(goal.target) : 'Not set'},
+          {label: 'Remaining', value: goal.target ? hours(goal.remaining) : '—'},
+          {label: 'Awaiting review', value: `${hours(pendingMinutes)} · ${pendingEntries.length} DTRs`},
+          {label: 'Submitted DTRs', value: String(ownEntries.length)},
+          {label: 'Days on record', value: String(daysOnRecord)},
+          {label: 'Average per day', value: daysOnRecord ? hours(goal.averagePerDay) : '—'},
+          {label: 'Latest log', value: latestLog},
+          {label: 'Estimate', value: estimate},
+        ],
       },
       {
         id: 'eval',
@@ -164,22 +199,28 @@ export default function PracticumMilestoneStepper({
             : 'Choose a period in Competency Insights',
         to: 'competencies',
         icon: Award,
+        metrics: [
+          {label: 'Approved', value: String(approvedEvaluations.length)},
+          {label: 'Awaiting review or revision', value: String(evaluations.length - approvedEvaluations.length)},
+          {label: 'Total appraisals', value: String(evaluations.length)},
+        ],
       },
       {
         id: 'clearance',
         phase: 'PHASE 04',
         title: 'Final Clearance',
         status: step4Status,
-        badgeLabel: step4Complete ? 'Cleared' : step2Complete ? 'Ready' : 'Upcoming',
-        kpiValue: step4Complete ? 'Cleared' : `${daysOnRecord} Days`,
-        kpiSubLabel: step4Complete ? 'Formal completion approved' : 'Submitted DTR days on record',
+        badgeLabel: step4Complete ? 'Cleared' : step4Status === 'current' ? 'Awaiting approval' : 'Not cleared',
+        kpiValue: step4Complete ? 'Cleared' : 'Not cleared',
+        kpiSubLabel: 'Formal completion record',
         detail: step4Complete
-          ? 'Institutional endorsement granted'
-          : percent >= 100
-          ? 'Eligible for final exit clearance'
-          : `${hours(Math.max(0, targetMinutes - reportedMinutes))} remaining to clearance`,
+          ? 'Formal completion is recorded as approved.'
+          : 'Only an approved formal completion record clears this phase. Hours alone are not sufficient.',
         to: 'portfolio',
         icon: GraduationCap,
+        metrics: [
+          {label: 'Formal record', value: String(completion?.status ?? 'Not recorded').replaceAll('_', ' ')},
+        ],
       },
     ];
 
@@ -190,6 +231,8 @@ export default function PracticumMilestoneStepper({
         ? 'Stage 4 of 4 · Final Sign-Off'
         : step3Status === 'current'
         ? 'Stage 3 of 4 · Skills Appraisal'
+        : !step1Complete
+        ? 'Next milestone · Pre-Deployment'
         : 'Stage 2 of 4 · Active Training';
   } else if (role === 'COORDINATOR') {
     const classes = data.classes.filter(c => !Number(c.revoked));
@@ -197,55 +240,88 @@ export default function PracticumMilestoneStepper({
     const pendingDocuments = data.documents.filter(d => d.status === 'PENDING');
     const approvedDocs = data.documents.filter(d => d.status === 'APPROVED');
     const openCases = data.incidents.filter(i => i.status !== 'RESOLVED');
+    const periodReviews = data.evaluations.filter(e => e.kind === 'WEEKLY' || e.kind === 'MONTHLY');
+    const submittedReviews = periodReviews.filter(e => e.status === 'SUBMITTED');
+    const confirmedMinutes = data.entries.filter(e => e.confirmedVersion === e.version)
+      .reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
+    const reportedMinutes = data.entries.reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
+    const dtrsToConfirm = data.entries.filter(e => e.confirmedVersion !== e.version).length;
+    const averageProgress = data.placements.length
+      ? Math.round(data.placements.reduce((sum, placement) => {
+          const entries = data.entries.filter(entry => entry.placementId === placement.id);
+          const progress = studentGoal(entries, Math.max(0, Number(placement.requiredMinutes) || 0)).percent;
+          return sum + Math.min(100, progress);
+        }, 0) / data.placements.length)
+      : 0;
 
     steps = [
       {
         id: 'coor-docs',
         phase: 'STAGE 01',
         title: 'Document Clearances',
-        status: pendingDocuments.length === 0 ? 'completed' : 'current',
-        badgeLabel: pendingDocuments.length === 0 ? 'All Cleared' : `${pendingDocuments.length} To Review`,
+        status: pendingDocuments.length ? 'attention' : data.documents.length ? 'clear' : 'empty',
+        badgeLabel: pendingDocuments.length ? 'Needs review' : data.documents.length ? 'Queue clear' : 'No records',
         kpiValue: `${approvedDocs.length} / ${data.documents.length}`,
         kpiSubLabel: 'Approved Submissions',
         detail: `${pendingDocuments.length} pending review queue`,
         to: 'documents',
         icon: FileCheck2,
+        metrics: [
+          {label: 'Approved', value: String(approvedDocs.length)},
+          {label: 'Awaiting review', value: String(pendingDocuments.length)},
+          {label: 'Total submissions', value: String(data.documents.length)},
+        ],
       },
       {
         id: 'coor-classes',
         phase: 'STAGE 02',
         title: 'Active Internships',
-        status: 'current',
-        badgeLabel: `${classes.length} Sections`,
+        status: activePlacements.length ? 'current' : 'empty',
+        badgeLabel: activePlacements.length ? 'Active' : 'No placements',
         kpiValue: `${activePlacements.length} Interns`,
         kpiSubLabel: 'Across Verified Placements',
         detail: `${classes.length} coordinator-led class spaces`,
         to: 'classes',
         icon: Users,
+        metrics: [
+          {label: 'Students in roster', value: String(data.placements.length)},
+          {label: 'Active placements', value: String(activePlacements.length)},
+          {label: 'Class spaces', value: String(classes.length)},
+          {label: 'Average reported progress', value: `${averageProgress}%`},
+          {label: 'Reported hours · all records', value: hours(reportedMinutes)},
+          {label: 'Confirmed hours · all records', value: hours(confirmedMinutes)},
+          {label: 'DTRs to confirm', value: String(dtrsToConfirm)},
+        ],
       },
       {
         id: 'coor-evals',
         phase: 'STAGE 03',
         title: 'Competency Reviews',
-        status: 'current',
-        badgeLabel: 'Active Framework',
-        kpiValue: `${data.evaluations.filter(e => e.kind === 'WEEKLY' || e.kind === 'MONTHLY').length} Assessments`,
+        status: submittedReviews.length ? 'attention' : periodReviews.length ? 'clear' : 'empty',
+        badgeLabel: submittedReviews.length ? 'Needs review' : periodReviews.length ? 'Queue clear' : 'No appraisals',
+        kpiValue: `${periodReviews.length} Assessments`,
         kpiSubLabel: 'Weekly / Monthly Rubrics',
         detail: 'Student self-assessments for coordinator review',
         to: 'competencies',
         icon: Award,
+        metrics: [
+          {label: 'Awaiting review', value: String(submittedReviews.length)},
+          {label: 'Approved', value: String(periodReviews.filter(e => e.status === 'APPROVED').length)},
+          {label: 'Total appraisals', value: String(periodReviews.length)},
+        ],
       },
       {
         id: 'coor-support',
         phase: 'STAGE 04',
         title: 'Student Support & Exit',
-        status: openCases.length === 0 ? 'completed' : 'current',
-        badgeLabel: openCases.length === 0 ? 'No Tickets' : 'Action Needed',
+        status: openCases.length ? 'attention' : 'clear',
+        badgeLabel: openCases.length ? 'Needs attention' : 'Queue clear',
         kpiValue: `${openCases.length} Cases`,
         kpiSubLabel: 'Private SOS / Support Reports',
-        detail: openCases.length === 0 ? 'All support cases resolved' : 'Requires coordinator response',
+        detail: openCases.length === 0 ? 'No student support cases are currently open' : 'Requires coordinator response',
         to: 'incidents',
         icon: LifeBuoy,
+        metrics: [{label: 'Open support cases', value: String(openCases.length)}],
       },
     ];
 
@@ -254,144 +330,231 @@ export default function PracticumMilestoneStepper({
     // Super Admin view
     const disabledUsers = data.users.filter(u => u.status === 'DISABLED').length;
     const activePlacements = data.placements.filter(p => p.status === 'ACTIVE');
+    const classes = data.classes.filter(c => !Number(c.revoked));
+    const reportedMinutes = data.entries.reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
+    const confirmedMinutes = data.entries.filter(e => e.confirmedVersion === e.version)
+      .reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
 
     steps = [
       {
         id: 'adm-accounts',
         phase: 'SYSTEM 01',
         title: 'Accounts & Access',
-        status: 'completed',
-        badgeLabel: 'Synced',
+        status: data.users.length ? 'current' : 'empty',
+        badgeLabel: data.users.length ? 'Active' : 'No accounts',
         kpiValue: `${data.users.length} Users`,
         kpiSubLabel: `${disabledUsers} disabled accounts`,
         detail: 'Provision sample accounts and manage roles',
         to: 'accounts',
         icon: ShieldCheck,
+        metrics: [
+          {label: 'Accounts', value: String(data.users.length)},
+          {label: 'Disabled', value: String(disabledUsers)},
+        ],
       },
       {
         id: 'adm-academics',
         phase: 'SYSTEM 02',
         title: 'University Structure',
-        status: 'completed',
-        badgeLabel: 'Academic',
+        status: data.departments.length || data.courses.length ? 'current' : 'empty',
+        badgeLabel: data.departments.length || data.courses.length ? 'Active' : 'No structure',
         kpiValue: `${data.departments.length} Depts`,
         kpiSubLabel: `${data.courses.length} accredited courses`,
         detail: 'Rizal Technological University departments & curricula',
         to: 'institution',
         icon: GraduationCap,
+        metrics: [
+          {label: 'Departments', value: String(data.departments.length)},
+          {label: 'Courses', value: String(data.courses.length)},
+        ],
       },
       {
         id: 'adm-classes',
         phase: 'SYSTEM 03',
         title: 'Sections & Cohorts',
-        status: 'current',
-        badgeLabel: 'Active Sections',
-        kpiValue: `${data.classes.length} Classes`,
+        status: classes.length ? 'current' : 'empty',
+        badgeLabel: classes.length ? 'Active' : 'No sections',
+        kpiValue: `${classes.length} Classes`,
         kpiSubLabel: 'Coordinator-led spaces',
         detail: 'Enrollment codes & student memberships',
         to: 'classes',
         icon: BookOpen,
+        metrics: [{label: 'Class spaces', value: String(classes.length)}],
       },
       {
         id: 'adm-placements',
         phase: 'SYSTEM 04',
         title: 'Active Placements',
-        status: 'current',
-        badgeLabel: 'Fieldwork',
+        status: activePlacements.length ? 'current' : 'empty',
+        badgeLabel: activePlacements.length ? 'Active' : 'No placements',
         kpiValue: `${activePlacements.length} Placements`,
         kpiSubLabel: 'Institutional records in view',
         detail: `${data.companies.length} verified partner establishments`,
         to: 'attendance',
         icon: BriefcaseBusiness,
+        metrics: [
+          {label: 'Active placements', value: String(activePlacements.length)},
+          {label: 'Partner companies', value: String(data.companies.length)},
+          {label: 'Reported hours · all records', value: hours(reportedMinutes)},
+          {label: 'Confirmed hours · all records', value: hours(confirmedMinutes)},
+        ],
       },
     ];
 
     currentPhaseLabel = 'Institutional Operations Matrix';
   }
 
+  const [active, setActive] = useState<{id: string; pinned: boolean} | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isStudent = role === 'STUDENT';
+  const completedCount = isStudent ? steps.filter(step => step.status === 'completed').length : 0;
+  let completedPrefix = 0;
+  while (isStudent && steps[completedPrefix]?.status === 'completed') completedPrefix++;
+  const nextStep = isStudent ? steps.find(step => step.status !== 'completed') : undefined;
+
+  useEffect(() => () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }, []);
+
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  };
+  const preview = (id: string) => {
+    cancelClose();
+    setActive(current => current?.pinned && current.id === id ? current : {id, pinned: false});
+  };
+  const scheduleClose = (id: string) => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => {
+      setActive(current => current?.id === id && !current.pinned ? null : current);
+    }, 180);
+  };
+  const togglePinned = (id: string) => {
+    cancelClose();
+    setActive(current => current?.id === id && current.pinned ? null : {id, pinned: true});
+  };
+
   return (
-    <section className="practicum-stepper-card" aria-label="Unified OJT Lifecycle & Metrics">
+    <section className="practicum-stepper-card" aria-label="Practicum lifecycle and key metrics">
       <div className="stepper-header">
         <div className="stepper-header-left">
           <div className="stepper-eyebrow">
             <Compass size={13} className="stepper-eyebrow-icon" />
             <span>PRACTICUM LIFECYCLE &amp; KEY METRICS</span>
           </div>
-          <h2 className="stepper-title">OJT Progression Overview</h2>
+          <h2 className="stepper-title">{isStudent ? 'Your practicum phases' : 'Areas in your practicum workspace'}</h2>
+          <p className="stepper-subtitle">
+            {isStudent
+              ? nextStep ? `Next milestone: ${nextStep.title}` : 'Formal clearance recorded'
+              : 'Select an area to see its current details.'}
+          </p>
         </div>
-
         <div className="stepper-badge">
           <Sparkles size={12} className="stepper-badge-icon" />
-          <span>{currentPhaseLabel}</span>
+          <span>{isStudent ? `${completedCount} of 4 milestones recorded` : currentPhaseLabel}</span>
         </div>
       </div>
 
-      <div className="stepper-track">
-        {steps.map(step => {
+      <div className="phase-track" role="list" aria-label={isStudent ? 'Student practicum phases' : 'Practicum operations areas'}>
+        {steps.map((step, index) => {
           const Icon = step.icon;
-          const isCompleted = step.status === 'completed';
-          const isCurrent = step.status === 'current';
-
+          const isOpen = active?.id === step.id;
           return (
             <div
+              role="listitem"
               key={step.id}
-              className={`stepper-step step-${step.status}`}
-              onClick={() => navigate(step.to)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  navigate(step.to);
-                }
-              }}
-              title={`Click to open ${step.title}`}
+              className={`phase-item phase-${step.status}${isStudent && index < completedPrefix - 1 ? ' phase-connector-complete' : ''}`}
             >
-              {/* Card Top: Node icon + Phase label + Status badge */}
-              <div className="step-card-top">
-                <div className="step-node">
-                  {isCompleted ? (
-                    <Check size={14} strokeWidth={3} />
-                  ) : (
-                    <Icon size={14} />
-                  )}
-                </div>
-                <div className="step-meta">
-                  <span className="step-phase">{step.phase}</span>
-                  <strong className="step-title">{step.title}</strong>
-                </div>
-                <span className={`step-chip chip-${step.status}`}>
-                  {step.badgeLabel}
-                </span>
-              </div>
-
-              {/* Card Middle: Big KPI Value & Sub-label */}
-              <div className="step-kpi-wrap">
-                <div className="step-kpi-val">{step.kpiValue}</div>
-                <div className="step-kpi-sub">{step.kpiSubLabel}</div>
-              </div>
-
-              {/* Progress bar if present (e.g. for training hours) */}
-              {typeof step.progressPercent === 'number' && (
-                <div className="step-progress-bar" title={`${step.progressPercent}% target logged`}>
-                  <div
-                    className="step-progress-fill"
-                    style={{width: `${step.progressPercent}%`} as React.CSSProperties}
-                  />
-                </div>
-              )}
-
-              {/* Card Bottom: Secondary detail + navigation prompt */}
-              <div className="step-card-bottom">
-                <span className="step-detail">{step.detail}</span>
-                <span className="step-action-hint">
-                  <ArrowRight size={13} />
-                </span>
-              </div>
+              <Popover
+                open={isOpen}
+                onOpenChange={open => {
+                  if (!open) setActive(current => current?.id === step.id ? null : current);
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    id={`phase-trigger-${step.id}`}
+                    type="button"
+                    className="phase-trigger"
+                    aria-label={`${step.phase}, ${step.title}, ${step.badgeLabel}. Press Enter for details.`}
+                    aria-expanded={isOpen}
+                    aria-controls={`phase-detail-${step.id}`}
+                    onPointerEnter={event => {if (event.pointerType !== 'touch') preview(step.id);}}
+                    onPointerLeave={event => {if (event.pointerType !== 'touch') scheduleClose(step.id);}}
+                    onFocus={() => preview(step.id)}
+                    onBlur={() => scheduleClose(step.id)}
+                    onClick={event => {
+                      event.preventDefault();
+                      togglePinned(step.id);
+                      if (event.detail === 0) {
+                        requestAnimationFrame(() => document.getElementById(`phase-link-${step.id}`)?.focus());
+                      }
+                    }}
+                    onKeyDown={event => {if (event.key === 'Escape') setActive(null);}}
+                  >
+                    <span className="phase-node" aria-hidden="true">
+                      {isStudent
+                        ? step.status === 'completed' ? <Check size={20} strokeWidth={3} /> : <span>{index + 1}</span>
+                        : <span className="phase-state-dot" />}
+                    </span>
+                    <span className="phase-text">
+                      <span className="phase-number">{step.phase}</span>
+                      <strong className="phase-title">{step.title}</strong>
+                      <span className="phase-status">{step.badgeLabel}</span>
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  id={`phase-detail-${step.id}`}
+                  className="phase-detail-card"
+                  side="bottom"
+                  align="center"
+                  sideOffset={12}
+                  collisionPadding={12}
+                  onOpenAutoFocus={event => event.preventDefault()}
+                  onCloseAutoFocus={event => event.preventDefault()}
+                  onPointerEnter={cancelClose}
+                  onPointerLeave={() => scheduleClose(step.id)}
+                  onPointerDownOutside={event => {
+                    const target = event.target;
+                    if (target instanceof Element && target.closest('.phase-trigger')) event.preventDefault();
+                  }}
+                  onEscapeKeyDown={() => {
+                    setActive(null);
+                    requestAnimationFrame(() => document.getElementById(`phase-trigger-${step.id}`)?.focus());
+                  }}
+                  onFocus={cancelClose}
+                  onBlur={() => scheduleClose(step.id)}
+                >
+                  <div className="phase-detail-header">
+                    <span className={`phase-detail-icon phase-${step.status}`}><Icon size={17} /></span>
+                    <div><span>{step.phase}</span><h3>{step.title}</h3></div>
+                    <span className={`phase-detail-status phase-${step.status}`}>{step.badgeLabel}</span>
+                  </div>
+                  <p className="phase-detail-description">{step.detail}</p>
+                  <dl className="phase-detail-metrics">
+                    {(step.metrics ?? [
+                      {label: step.kpiSubLabel, value: step.kpiValue},
+                    ]).map(metric => (
+                      <div key={metric.label}><dt>{metric.label}</dt><dd>{metric.value}</dd></div>
+                    ))}
+                  </dl>
+                  <button
+                    id={`phase-link-${step.id}`}
+                    type="button"
+                    className="phase-detail-link"
+                    onClick={() => {setActive(null); navigate(step.to);}}
+                  >
+                    Open {step.title}<ArrowRight size={15} />
+                  </button>
+                </PopoverContent>
+              </Popover>
             </div>
           );
         })}
       </div>
+      {isStudent && <p className="phase-disclaimer">Hours progress and estimates do not certify formal completion.</p>}
     </section>
   );
 }

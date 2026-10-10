@@ -3,8 +3,6 @@
 import {
   AlertCircle,
   BookOpen,
-  BriefcaseBusiness,
-  Building2,
   CheckCircle2,
   Clock,
   Download,
@@ -63,10 +61,6 @@ export default function OverviewGreetingBanner({
       data.placements.find(p => p.studentId === user.id);
 
     const course = data.courses.find(c => c.id === user.courseId);
-    const company = placement
-      ? data.companies.find(c => c.id === placement.companyId)
-      : undefined;
-
     const hasLoggedToday = data.entries.some(
       e => e.placementId === placement?.id && e.date === todayManila
     );
@@ -181,8 +175,6 @@ export default function OverviewGreetingBanner({
 
   // Coordinator specific data
   if (role === 'COORDINATOR') {
-    const classes = data.classes.filter(c => !Number(c.revoked));
-    const activePlacements = data.placements.filter(p => p.status === 'ACTIVE');
     const pendingDocuments = data.documents.filter(d => d.status === 'PENDING');
     const openCases = data.incidents.filter(i => i.status !== 'RESOLVED');
 
@@ -200,9 +192,7 @@ export default function OverviewGreetingBanner({
 
           <p className="banner-subtitle">
             <BookOpen size={15} />
-            <span>
-              OJT Practicum Coordinator · <strong>{classes.length}</strong> active section{classes.length !== 1 ? 's' : ''} · <strong>{activePlacements.length}</strong> placed student{activePlacements.length !== 1 ? 's' : ''}
-            </span>
+            <span>OJT Practicum Coordinator</span>
           </p>
 
           <div className="banner-pills">
@@ -270,9 +260,6 @@ export default function OverviewGreetingBanner({
   }
 
   // Super Admin view
-  const departments = data.departments;
-  const activePlacements = data.placements.filter(p => p.status === 'ACTIVE');
-
   return (
     <section className="overview-greeting-banner" aria-label="Personalized welcome and status">
       <div className="banner-content">
@@ -287,9 +274,7 @@ export default function OverviewGreetingBanner({
 
         <p className="banner-subtitle">
           <ShieldCheck size={15} />
-          <span>
-            Rizal Technological University OJT Portal · <strong>{data.users.length}</strong> accounts · <strong>{departments.length}</strong> departments · <strong>{activePlacements.length}</strong> active placements
-          </span>
+          <span>Rizal Technological University OJT Portal</span>
         </p>
 
         <div className="banner-pills">
@@ -298,15 +283,6 @@ export default function OverviewGreetingBanner({
             Portal Active & Synced
           </span>
 
-          <span className="banner-pill pill-glass">
-            <Users size={13} style={{color: '#60a5fa'}} />
-            <span>{data.users.length} provisioned accounts</span>
-          </span>
-
-          <span className="banner-pill pill-glass">
-            <GraduationCap size={13} style={{color: '#facc15'}} />
-            <span>{data.courses.length} accredited courses</span>
-          </span>
         </div>
       </div>
 

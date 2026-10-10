@@ -56,4 +56,4 @@ The institutional reference schema is `packages/db/prisma/schema.prisma`. It con
 
 The hosted app currently uses a separate D1 demo adapter and the Vinext runtime. Institutional PostgreSQL repository integration, Google sign-in, actual private file storage/scanning, email, recovery and durable export jobs are unfinished. No PostgreSQL runtime or concurrency pass is claimed. See `docs/checklist.md`, `docs/assumptions.md`, and `docs/runbook.md` before planning production usage.
 
-The `.openai/hosting.json` file identifies your existing hosted Site and contains no secrets. This download does not alter the published Site.
+The `.openai/hosting.json` file keeps local Sites binding settings and contains no secrets. The previous hosted Site has been retired.

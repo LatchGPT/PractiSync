@@ -1,7 +1,6 @@
 'use client';
 
-import {useState} from 'react';
-import {CalendarDays, CheckCircle2, Clock, Info, TrendingUp} from 'lucide-react';
+import {CalendarDays, CheckCircle2, ClipboardList, Clock3, Info, Target, TrendingUp} from 'lucide-react';
 import type {Row} from '@/packages/validation/contracts';
 import {studentGoal} from './student-goal';
 
@@ -9,127 +8,81 @@ const hours=(minutes:number)=>`${Number((minutes/60).toFixed(1))} hrs`;
 const circumference=2*Math.PI*66;
 
 export default function StudentGoalProgress({entries,requiredMinutes}:{entries:Row[];requiredMinutes:number}){
- const [hovered,setHovered]=useState(false);
  const goal=studentGoal(entries,requiredMinutes);
  const reportedFraction=goal.target?Math.min(goal.reported,goal.target)/goal.target:0;
- const forecast=!goal.target?'Required hours not configured':goal.remaining===0?'Hours target reached':goal.daysOnRecord<3?'Available after 3 logged days':goal.predictedDays?`About ${goal.predictedDays} more logged days`:'Log attendance to estimate';
+ const pendingMinutes=Math.max(0,goal.reported-goal.confirmed);
+ const pendingEntries=entries.filter(entry=>entry.confirmedVersion!==entry.version).length;
+ const latestEntry=entries.map(entry=>String(entry.date??'')).filter(Boolean).sort((a,b)=>b.localeCompare(a))[0];
+ const latestDate=latestEntry?formatLogDate(latestEntry):'No entries yet';
+ const forecast=!goal.target?'Set a required-hours target to see an estimate':goal.remaining===0?'Hours target reached':goal.daysOnRecord<3?'Available after 3 logged days':goal.predictedDays?`About ${goal.predictedDays} more logged days`:'Log attendance to estimate';
+ const forecastDetail=!goal.target?'A required-hours target is needed before an estimate is available.':goal.predictedDays?`Based on your average of ${hours(goal.averagePerDay)} per logged day.`:goal.remaining===0?'Reported hours have reached the configured target.':'Log more attendance to estimate remaining days.';
+ const status=!goal.target?'Target not set':goal.remaining===0?'Target reached':goal.reported===0?'Not started':'In progress';
+ const statusTone=!goal.target?'neutral':goal.remaining===0?'reached':goal.reported===0?'neutral':'active';
 
  return <div className="goal-summary">
-  {/* Left Column: Visual Donut Chart & Ring Legend */}
-  <div className="goal-donut-section">
-   <svg viewBox="0 0 180 180" className={`goal-donut ${hovered?'has-hover':''}`} role="img" aria-label={`${hours(goal.reported)} reported of ${goal.target?hours(goal.target):'no configured target'}`}>
-    {/* Progress Ring: Self-Reported */}
-    <g
-     className={`goal-ring-group ring-reported ${hovered?'is-active':''}`}
-     onMouseEnter={()=>setHovered(true)}
-     onMouseLeave={()=>setHovered(false)}
-     tabIndex={0}
-     role="button"
-     aria-label={`Reported Hours: ${hours(goal.reported)} (${goal.target?Math.round(reportedFraction*100):0}% of goal)`}
-    >
-     <circle cx="90" cy="90" r="66" fill="none" stroke="#e6edf7" strokeWidth="19" className="ring-track"/>
-     {reportedFraction>0&&<circle cx="90" cy="90" r="66" fill="none" stroke="#124c91" strokeWidth="19" strokeLinecap="round" strokeDasharray={`${reportedFraction*circumference} ${circumference}`} transform="rotate(-90 90 90)" className="ring-fill"/>}
-     <title>{`Reported Hours: ${hours(goal.reported)} of ${goal.target?hours(goal.target):'—'} (${goal.target?Math.round(reportedFraction*100):0}%). Total training time submitted from your DTR entries.`}</title>
-    </g>
-
-    {/* Center Text */}
-    <text x="90" y={hovered?'82':'85'} textAnchor="middle" className={`goal-donut-value ${hovered?'is-reported':''}`}>
-     {hovered?(goal.target?`${Math.round(reportedFraction*100)}%`:hours(goal.reported)):(goal.target?`${goal.percent}%`:'—')}
-    </text>
-    <text x="90" y={hovered?'106':'108'} textAnchor="middle" className={`goal-donut-caption ${hovered?'is-reported':''}`}>
-     {hovered?'Self-Reported':'of required hours'}
-    </text>
+  <section className="goal-hero-card" aria-label="Goal progress">
+   <div className="goal-card-eyebrow"><span className="goal-eyebrow-dot"/>Goal progress</div>
+   <svg viewBox="0 0 180 180" className="goal-donut" role="img" aria-label={`${hours(goal.reported)} reported of ${goal.target?hours(goal.target):'no configured target'}${goal.target?`, ${goal.percent}% of goal`:''}`}>
+    <circle cx="90" cy="90" r="66" fill="none" stroke="#e8eef6" strokeWidth="12"/>
+    {reportedFraction>0&&<circle cx="90" cy="90" r="66" fill="none" stroke="var(--primary, #124c91)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${reportedFraction*circumference} ${circumference}`} transform="rotate(-90 90 90)"/>}
+    <text x="90" y="86" textAnchor="middle" className="goal-donut-value">{goal.target?`${goal.percent}%`:'—'}</text>
+    <text x="90" y="110" textAnchor="middle" className="goal-donut-caption">of goal</text>
    </svg>
+   <div className="goal-hero-metrics">
+    <div className="goal-hero-metric logged"><strong>{hours(goal.reported)}</strong><span>Logged</span></div>
+    <div className="goal-hero-metric remaining"><strong>{goal.target?hours(goal.remaining):'—'}</strong><span>Remaining</span></div>
+    <div className="goal-hero-metric pending"><strong>{pendingEntries}</strong><span>Pending DTRs</span></div>
+   </div>
+  </section>
 
-   {/* Compact Legend Pill */}
-   <div className="goal-donut-legend">
-    <button
-     type="button"
-     className={`legend-pill reported ${hovered?'active':''}`}
-     onMouseEnter={()=>setHovered(true)}
-     onMouseLeave={()=>setHovered(false)}
-     onClick={()=>setHovered(h=>!h)}
-     aria-pressed={hovered}
-     title="Inspect Self-Reported training hours"
-    >
-     <i className="legend-indicator reported"/>
-     <span>Reported Hours</span>
-    </button>
+  <div className="goal-detail-grid">
+   <div className="goal-top-metrics">
+    <div className="goal-info-card target-card">
+     <div className="goal-info-label"><Target size={15}/> Goal</div>
+     <strong>{goal.target?hours(goal.target):'Not set'}</strong>
+     <span>Required total</span>
+    </div>
+    <div className="goal-info-card days-card">
+     <div className="goal-info-label"><CalendarDays size={15}/> Days on record</div>
+     <strong>{goal.daysOnRecord}</strong>
+     <span>Distinct days with a DTR</span>
+    </div>
+   </div>
+
+   <section className="goal-activity-card" aria-label="DTR activity summary">
+    <div className="goal-section-heading"><div><span className="goal-card-eyebrow">Attendance summary</span><h3>DTR activity</h3></div><ClipboardList size={18}/></div>
+    <div className="goal-activity-metrics">
+     <div className="goal-activity-metric"><strong>{entries.length}</strong><span>Submitted entries</span></div>
+     <div className="goal-activity-metric waiting"><strong>{hours(pendingMinutes)}</strong><span>Hours awaiting review</span></div>
+     <div className="goal-activity-metric"><strong>{goal.daysOnRecord?hours(goal.averagePerDay):'—'}</strong><span>Average per logged day</span></div>
+     <div className="goal-activity-metric"><strong>{latestDate}</strong><span>Most recent log</span></div>
+    </div>
+    <div className="goal-activity-foot"><span>{pendingEntries} {pendingEntries===1?'entry':'entries'} awaiting coordinator review</span><span>{goal.target?`${goal.percent}% of required hours reported`:'Set a target to track progress'}</span></div>
+   </section>
+
+   <div className="goal-bottom-cards">
+    <section className={`goal-status-card ${statusTone}`} aria-label="Progress status">
+     <span className="goal-card-eyebrow">Status</span>
+     <div className="goal-status-value">{goal.remaining===0&&goal.target?<CheckCircle2 size={22}/>:<Clock3 size={22}/>}<strong>{status}</strong></div>
+     <p>{goal.remaining===0&&goal.target?'Your reported hours have reached the target.':goal.target?'Keep logging DTR entries to build your hours progress.':'A required-hours target is needed to track progress.'}</p>
+    </section>
+    <section className="goal-forecast-card" aria-label="Predicted completion">
+     <span className="goal-card-eyebrow"><TrendingUp size={14}/> Predicted completion</span>
+     <strong>{forecast}</strong>
+     <p>{forecastDetail}</p>
+    </section>
    </div>
   </div>
 
-  {/* Right Column: Context Focus Banner + 3 Polished Metric Tiles */}
-  <div className="goal-content-section">
-   {/* Real-time Focus Callout Banner */}
-   <div className={`goal-focus-banner ${hovered?'is-reported':'is-default'}`} role="status" aria-live="polite">
-    {hovered?(
-     <div className="banner-inner">
-      <div className="banner-left">
-       <span className="banner-badge reported"><i className="dot"/>Self-Reported Hours</span>
-       <p className="banner-desc">Total training time submitted through your Daily Training Records toward your practicum requirement.</p>
-      </div>
-      <div className="banner-right">
-       <strong className="banner-stat">{hours(goal.reported)}</strong>
-       <span className="banner-sub">{goal.target?`${Math.round(reportedFraction*100)}% of requirement`:'Logged hours'}</span>
-      </div>
-     </div>
-    ):(
-     <div className="banner-inner">
-      <div className="banner-left">
-       <span className="banner-badge default">Training Hours Progress</span>
-       <p className="banner-desc">Track your submitted Daily Training Record hours toward your practicum requirement.</p>
-      </div>
-      <div className="banner-right">
-       <strong className="banner-stat">{hours(goal.reported)} <small>/ {goal.target?hours(goal.target):'480.0 hrs'}</small></strong>
-       <span className="banner-sub">{goal.target?`${goal.percent}% completed`:'Target unconfigured'}</span>
-      </div>
-     </div>
-    )}
-   </div>
-
-   {/* 3 Metric Tiles Grid */}
-   <div className="goal-metric-cards">
-    <div className="goal-metric-card">
-     <div className="metric-header">
-      <Clock size={14} className="metric-icon blue"/>
-      <span>Attendance summary</span>
-     </div>
-     <strong className="metric-val">{hours(goal.reported)} reported</strong>
-     <div className="metric-pills">
-      <span className="metric-pill confirmed"><CheckCircle2 size={10}/> {hours(goal.confirmed)} confirmed</span>
-      <span className="metric-pill pending">{hours(Math.max(0,goal.reported-goal.confirmed))} awaiting</span>
-     </div>
-    </div>
-
-    <div className="goal-metric-card">
-     <div className="metric-header">
-      <TrendingUp size={14} className="metric-icon gold"/>
-      <span>Predicted completion</span>
-     </div>
-     <strong className="metric-val">{forecast}</strong>
-     <small className="metric-desc">
-      {goal.predictedDays?`At your average of ${hours(goal.averagePerDay)} per logged day.`:'Prediction uses your average reported hours per logged day.'}
-     </small>
-    </div>
-
-    <div className="goal-metric-card">
-     <div className="metric-header">
-      <CalendarDays size={14} className="metric-icon green"/>
-      <span>Days on record</span>
-     </div>
-     <strong className="metric-val">{goal.daysOnRecord} {goal.daysOnRecord===1?'day':'days'}</strong>
-     <small className="metric-desc">Distinct dates with a submitted DTR</small>
-    </div>
-   </div>
-  </div>
-
-  {/* Footer Info Disclaimer */}
   <div className="goal-footer-bar">
-   <Info size={13} className="footer-icon"/>
-   <p className="goal-disclaimer-text">
-    {goal.target?`${hours(goal.remaining)} remain against the fictional hours target. `:'A required-hours target is needed for progress. '}
-    Hours progress and the estimate do not certify formal completion.
-   </p>
+   <Info size={14} className="footer-icon"/>
+   <p className="goal-disclaimer-text">Hours progress and estimates do not certify formal completion.</p>
   </div>
  </div>;
+}
+
+function formatLogDate(value:string){
+ const [year,month,day]=value.slice(0,10).split('-').map(Number);
+ if(!year||!month||!day)return value;
+ return new Intl.DateTimeFormat('en-PH',{month:'short',day:'numeric',year:'numeric'}).format(new Date(year,month-1,day));
 }
