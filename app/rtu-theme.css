@@ -1251,36 +1251,28 @@ tr:last-child td {
    Ensures consistent margins, paddings, gaps, and baselines across all modules
    ========================================================================== */
 
-/* 1. Main Content Layout & Shell Spacing */
-.content {
-  width: 100%;
-  min-width: 0;
-  padding: 28px 32px 42px !important;
-  max-width: 1540px !important;
-  margin: 0 auto !important;
-}
-
+/* 1. Main Content Layout & Shell Spacing - Unified Full-Width Across All Modules */
+.content,
 .content.content-wide-modules {
-  width: 100%;
-  max-width: none !important;
-}
-
-@media (min-width: 1101px) {
-  .content.content-wide-modules {
-    padding-left: 24px !important;
-    padding-right: 24px !important;
-  }
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 24px 28px 40px !important;
+  box-sizing: border-box !important;
 }
 
 @media (max-width: 1100px) {
-  .content {
-    padding: 24px 24px 36px !important;
+  .content,
+  .content.content-wide-modules {
+    padding: 20px 20px 32px !important;
   }
 }
 
 @media (max-width: 768px) {
-  .content {
-    padding: 18px 16px 30px !important;
+  .content,
+  .content.content-wide-modules {
+    padding: 16px 14px 24px !important;
   }
 }
 
