@@ -2333,6 +2333,12 @@ body.high-contrast .item-card {
   }
 }
 
+@media (max-width: 540px) {
+  .overall-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Google Classroom-style Student Class View */
 .student-classroom-container {
   max-width: 860px;

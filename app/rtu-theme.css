@@ -1217,7 +1217,7 @@ tr:last-child td {
   border-color: #a4c3e8 !important;
 }
 
-/* Responsive Mobile Layout */
+/* Responsive Mobile & Tablet Layout Harmonization */
 @media (max-width: 900px) {
   .login {
     grid-template-columns: 1fr !important;
@@ -1233,16 +1233,104 @@ tr:last-child td {
     min-height: auto !important;
     padding: 32px 24px 48px !important;
   }
-  .app-topbar { padding: 0 20px; height: 64px; }
-  .content { padding: 20px 18px; }
 }
 
-@media (max-width: 520px) {
-  .login .demo-grid {
+@media (max-width: 768px) {
+  .app-topbar {
+    height: 60px !important;
+    padding: 0 16px !important;
+    gap: 10px !important;
+  }
+  .topbar-trail {
+    gap: 8px !important;
+    font-size: 13px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  .topbar-trail .topbar-trail-parent,
+  .topbar-trail .topbar-trail-sep {
+    display: none !important;
+  }
+  .topbar-trail strong {
+    font-size: 14px !important;
+    max-width: 170px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .topbar-right {
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+  .topbar-right > span {
+    display: none !important;
+  }
+}
+
+@media (max-width: 540px) {
+  .login .demo-grid,
+  .demo-grid {
     grid-template-columns: 1fr !important;
   }
   .login-main {
     padding: 24px 16px 40px !important;
+  }
+  .app-topbar {
+    padding: 0 12px !important;
+  }
+  .topbar-trail strong {
+    max-width: 125px !important;
+  }
+  .topbar-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .topbar-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 11px !important;
+  }
+  .overall-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .role-metric {
+    min-height: auto !important;
+    padding: 14px !important;
+  }
+  .role-metric > strong {
+    font-size: 24px !important;
+  }
+  .role-card-heading {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .role-card-heading .role-link {
+    align-self: flex-start !important;
+  }
+  .role-placement {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .form-actions {
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+  .form-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .form-actions .textbutton {
+    width: auto !important;
+    margin-right: 0 !important;
+    align-self: center !important;
   }
 }
 
@@ -1274,6 +1362,25 @@ tr:last-child td {
   .content.content-wide-modules {
     padding: 16px 14px 24px !important;
   }
+}
+
+.table-overflow {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  border-radius: var(--radius-card, 12px) !important;
+  border: 1px solid var(--border) !important;
+  background: #ffffff !important;
+  box-shadow: var(--shadow-sm) !important;
+  margin-bottom: 20px !important;
+}
+
+.table-overflow table {
+  min-width: 640px !important;
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
 }
 
 .internship-applications-tab .table-overflow table {
@@ -1376,6 +1483,35 @@ tr:last-child td {
   align-items: center !important;
   gap: 10px !important;
   flex-shrink: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .page-heading {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+    margin-bottom: 20px !important;
+  }
+  .page-heading-title {
+    font-size: 22px !important;
+  }
+  .page-heading-title .page-heading-brand,
+  .page-heading-title .page-heading-module {
+    font-size: 22px !important;
+  }
+  .page-heading-title .page-heading-sep {
+    font-size: 19px !important;
+  }
+  .page-heading-actions {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+  .page-heading-actions button,
+  .page-heading-actions a {
+    font-size: 13px !important;
+  }
 }
 
 /* 3. Surface & Card Padding Harmonization */
