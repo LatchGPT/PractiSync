@@ -34,7 +34,7 @@ export default function RoleDashboard({data,navigate,onLogAttendance,onViewStude
   const documents=placement?data.documents.filter(row=>row.placementId===placement.id):[];
   const unresolved=documents.filter(row=>row.status!=='APPROVED');
   return <div className="role-dashboard student-dashboard">
-   <Card title="Overall required hours" description="Your progress across every DTR in this placement."><StudentGoalProgress entries={ownEntries} requiredMinutes={Number(placement?.requiredMinutes??0)}/></Card>
+   <Card title="Overall required hours" description="Your progress across every DTR in this placement."><div className="panel-body"><StudentGoalProgress entries={ownEntries} requiredMinutes={Number(placement?.requiredMinutes??0)}/></div></Card>
    <div className="role-columns"><div className="role-stack">
     <Card title="Recent attendance" description="Self reported entries appear as soon as they are submitted." action={<Link to="attendance" navigate={navigate}>View DTR</Link>}>{ownEntries.length?<div className="role-list">{ownEntries.slice(0,4).map(entry=><div className="role-list-row" key={entry.id}><span className="role-symbol soft"><Clock size={17}/></span><div><strong>{date(value(entry,'date'))}</strong><span>{value(entry,'narrative')}</span></div><span className="role-list-end"><strong>{hours(number(entry,'minutes'))}</strong><small>{entry.confirmedVersion===entry.version?'Coordinator confirmed':'Self reported'}</small></span></div>)}</div>:<Empty>No attendance entries yet. Your first DTR will appear here.</Empty>}</Card>
     <DocumentReadinessChecklist data={data} navigate={navigate}/>
