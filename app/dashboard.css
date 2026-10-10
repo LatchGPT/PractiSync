@@ -1843,19 +1843,21 @@ body.high-contrast .item-card {
   border: 1px solid #dce6f3;
   border-radius: 14px;
   box-shadow: 0 4px 18px rgba(18, 76, 145, 0.06);
-  padding: 22px 24px;
-  margin-bottom: 22px;
+  padding: 26px 28px;
+  margin-bottom: 24px;
 }
 
+.overall-card-header,
 .overall-students-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 18px;
-  margin-bottom: 18px;
+  gap: 20px;
+  margin-bottom: 22px;
   flex-wrap: wrap;
 }
 
+.overall-card-header h2,
 .overall-students-title h2 {
   font-size: 19px;
   font-weight: 750;
@@ -1867,19 +1869,44 @@ body.high-contrast .item-card {
   gap: 9px;
 }
 
+.overall-card-header p,
 .overall-students-title p {
+  font-size: 13.5px;
+  color: #5a7596;
+  margin: 5px 0 0;
+  line-height: 1.45;
+}
+
+.overall-card-header .role-link {
   font-size: 13px;
-  color: #647b99;
-  margin: 4px 0 0;
+  font-weight: 650;
+  color: #124c91;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #edf4fc;
+  border: 1px solid #d4e3f4;
+  padding: 7px 14px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.overall-card-header .role-link:hover {
+  background: #e2eefa;
+  border-color: #bad3ef;
+  color: #0a3568;
 }
 
 /* Section / Block Selector Pills */
 .section-filter-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #edf3fa;
 }
 
 .section-filter-label {
@@ -1976,63 +2003,77 @@ body.high-contrast .item-card {
 .student-progress-roster {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
 .student-progress-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 16px;
+  gap: 24px;
+  padding: 18px 22px;
   background: #ffffff;
-  border: 1px solid #e3edf7;
-  border-radius: 10px;
+  border: 1px solid #e2ecf7;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(18, 76, 145, 0.035);
   transition: all 0.15s ease;
 }
 
 .student-progress-item:hover {
   border-color: #b7d1ed;
-  box-shadow: 0 4px 14px rgba(18, 76, 145, 0.06);
+  box-shadow: 0 5px 16px rgba(18, 76, 145, 0.07);
   background: #fafcff;
 }
 
 .student-info-col {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 220px;
-  flex-shrink: 0;
+  gap: 14px;
+  flex: 0 0 260px;
+  min-width: 240px;
 }
 
 .student-avatar-badge {
   position: relative;
 }
 
+.student-meta-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .student-meta-details strong {
-  font-size: 14px;
-  color: #12345d;
+  font-size: 14.5px;
+  color: #0e2a57;
   font-weight: 700;
   display: block;
+  line-height: 1.3;
 }
 
 .student-meta-details span {
   font-size: 12px;
-  color: #7289a4;
+  color: #637c99;
   display: block;
-  margin-top: 2px;
+  margin-top: 3px;
+  line-height: 1.35;
 }
 
 .student-bars-col {
   flex: 1;
-  min-width: 180px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .student-bars-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
-  margin-bottom: 5px;
+  font-size: 12.5px;
+  margin-bottom: 9px;
+  gap: 12px;
 }
 
 .student-bars-header strong {
@@ -2041,15 +2082,29 @@ body.high-contrast .item-card {
 }
 
 .student-bars-header span {
-  color: #768da6;
-  font-size: 11px;
+  color: #6a829e;
+  font-size: 11.5px;
+}
+
+.student-bars-confirmed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px !important;
+  font-weight: 650 !important;
+  color: #1a4d8c !important;
+  background: #edf4fc;
+  border: 1px solid #d8e6f5;
+  padding: 2.5px 8.5px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
 .dual-progress-bar-track {
   position: relative;
-  height: 10px;
+  height: 11px;
   background: #e8eff7;
-  border-radius: 6px;
+  border-radius: 9999px;
   overflow: hidden;
 }
 
@@ -2059,7 +2114,7 @@ body.high-contrast .item-card {
   left: 0;
   height: 100%;
   background: #185399;
-  border-radius: 6px;
+  border-radius: 9999px;
   transition: width 0.4s ease;
 }
 
@@ -2069,7 +2124,7 @@ body.high-contrast .item-card {
   left: 0;
   height: 100%;
   background: #d7aa3e;
-  border-radius: 6px;
+  border-radius: 9999px;
   transition: width 0.4s ease;
   z-index: 1;
 }
@@ -2077,8 +2132,17 @@ body.high-contrast .item-card {
 .student-action-col {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
   flex-shrink: 0;
+  min-width: 120px;
+}
+
+.student-action-col button {
+  font-size: 12.5px !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
 }
 
 /* Class Rep & Vice Class Rep Badges */
@@ -2319,17 +2383,35 @@ body.high-contrast .item-card {
   margin-top: 2px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 860px) {
+  .overall-students-card {
+    padding: 20px 18px;
+  }
+  .overall-card-header,
+  .overall-students-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
   .overall-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .student-progress-item {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 14px;
+    padding: 16px;
   }
   .student-info-col {
     min-width: unset;
+    flex: unset;
+  }
+  .student-bars-col {
+    min-width: unset;
+    width: 100%;
+  }
+  .student-action-col {
+    justify-content: flex-start;
   }
 }
 

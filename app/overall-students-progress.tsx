@@ -184,7 +184,7 @@ export default function OverallStudentsProgress({
                       <span>{targetMins ? hours(targetMins) : 'No target'}</span>
                       <strong style={{ marginLeft: 8, color: '#185399' }}>({percentReported}%)</strong>
                     </div>
-                    <span>{hours(confMins)} confirmed</span>
+                    <span className="student-bars-confirmed">{hours(confMins)} confirmed</span>
                   </div>
                   <div
                     className="dual-progress-bar-track"
@@ -206,7 +206,6 @@ export default function OverallStudentsProgress({
                   <button
                     type="button"
                     className="secondary"
-                    style={{ fontSize: 12, padding: '6px 12px' }}
                     onClick={() => {
                       if (onViewStudent) {
                         onViewStudent(s(placement, 'studentId'));
@@ -215,7 +214,7 @@ export default function OverallStudentsProgress({
                       }
                     }}
                   >
-                    <Eye size={13} style={{ display: 'inline', marginRight: 4 }} />
+                    <Eye size={13} style={{ display: 'inline', marginRight: 5 }} />
                     View profile
                   </button>
                 </div>
