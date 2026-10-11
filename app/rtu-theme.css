@@ -293,14 +293,6 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
   padding: 0 35px;
 }
 
-.topbar-trail {
-  font-size: 13.5px;
-}
-
-.topbar-trail strong {
-  color: var(--rtu-navy);
-  font-weight: 600;
-}
 
 .topbar-right span {
   background: #f2f7fd;
@@ -1312,25 +1304,7 @@ tr:last-child td {
     padding: 0 16px !important;
     gap: 10px !important;
   }
-  .topbar-trail {
-    gap: 8px !important;
-    font-size: 13px !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-  .topbar-trail .topbar-trail-parent,
-  .topbar-trail .topbar-trail-sep {
-    display: none !important;
-  }
-  .topbar-trail strong {
-    font-size: 14px !important;
-    max-width: 170px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
+
   .topbar-right {
     gap: 8px !important;
     flex-shrink: 0 !important;
@@ -1351,9 +1325,7 @@ tr:last-child td {
   .app-topbar {
     padding: 0 12px !important;
   }
-  .topbar-trail strong {
-    max-width: 125px !important;
-  }
+
   .topbar-icon {
     width: 32px !important;
     height: 32px !important;
@@ -1499,39 +1471,6 @@ tr:last-child td {
   gap: 20px !important;
 }
 
-.page-heading-title {
-  display: inline-flex !important;
-  align-items: baseline !important;
-  flex-wrap: wrap !important;
-  gap: 8px !important;
-  font-size: 27px !important;
-  font-weight: 750 !important;
-  letter-spacing: -0.025em !important;
-  line-height: 1.25 !important;
-  margin: 0 !important;
-}
-
-.page-heading-title .page-heading-brand {
-  color: var(--rtu-gold-deep, #966916) !important;
-  font-weight: 800 !important;
-  font-size: 27px !important;
-  letter-spacing: -0.02em !important;
-}
-
-.page-heading-title .page-heading-sep {
-  color: #94a3b8 !important;
-  font-weight: 500 !important;
-  font-size: 23px !important;
-  margin: 0 1px !important;
-  user-select: none !important;
-}
-
-.page-heading-title .page-heading-module {
-  color: var(--rtu-blue, #124c91) !important;
-  font-weight: 750 !important;
-  font-size: 27px !important;
-  letter-spacing: -0.025em !important;
-}
 
 .page-heading h1 {
   font-size: 27px !important;
@@ -1563,15 +1502,8 @@ tr:last-child td {
     gap: 14px !important;
     margin-bottom: 20px !important;
   }
-  .page-heading-title {
+  .page-heading h1 {
     font-size: 22px !important;
-  }
-  .page-heading-title .page-heading-brand,
-  .page-heading-title .page-heading-module {
-    font-size: 22px !important;
-  }
-  .page-heading-title .page-heading-sep {
-    font-size: 19px !important;
   }
   .page-heading-actions {
     width: 100% !important;

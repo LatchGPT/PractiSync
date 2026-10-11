@@ -1680,10 +1680,6 @@ html.dark .app-topbar {
   color: #e2ecf7 !important;
 }
 
-html.dark .topbar-trail,
-html.dark .topbar-trail strong {
-  color: #b5ccdf !important;
-}
 
 html.dark .topbar-profile-dropdown {
   background: #0d1829 !important;
