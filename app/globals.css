@@ -12,3 +12,15 @@ html{scrollbar-gutter:stable}
 @media(max-width:540px){.demo-grid{grid-template-columns:1fr 1fr}.demo-account{padding:11px;gap:8px}.demo-account p{display:none}.demo-account b{margin:5px 0}.role-icon{padding:7px}.cards-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.stat-value{font-size:24px}.page-heading-actions .primary{font-size:12px;padding:9px 10px}.topbar-right{gap:8px}.demo-banner{font-size:10px}.demo-banner svg{display:none}.demo-banner button{font-size:10px}.content{padding:16px 14px 24px}.page-heading h1{font-size:24px}.stat-card{padding:14px}.stat-top{font-size:11px}.training-info{font-size:11px}.page-heading p{font-size:12px}.login-main{padding:20px}.login-brand .brand{font-size:22px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .workspace-load-error{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--background)}.workspace-load-error section{width:min(100%,520px);padding:32px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px #183b6d12}.workspace-load-error h1{margin:18px 0 10px;font-size:26px;letter-spacing:-.6px}.workspace-load-error p{margin-bottom:22px;color:var(--muted-foreground)}
+
+.class-detail-dialog{width:min(1080px,calc(100vw - 32px));max-width:1080px;max-height:min(90dvh,920px);overflow-y:auto;padding:32px}
+.class-detail-dialog [data-slot="dialog-header"]{padding-right:28px}
+.class-detail-dialog [data-slot="table-container"]{overflow-x:auto}
+.class-detail-dialog table{min-width:820px;table-layout:fixed}
+.class-detail-dialog th,.class-detail-dialog td{padding:16px 18px}
+.class-detail-dialog th:nth-child(1),.class-detail-dialog td:nth-child(1){width:25%}
+.class-detail-dialog th:nth-child(2),.class-detail-dialog td:nth-child(2){width:24%}
+.class-detail-dialog th:nth-child(3),.class-detail-dialog td:nth-child(3){width:14%}
+.class-detail-dialog th:nth-child(4),.class-detail-dialog td:nth-child(4){width:15%}
+.class-detail-dialog th:nth-child(5),.class-detail-dialog td:nth-child(5){width:22%}
+@media(max-width:700px){.class-detail-dialog{width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:22px 16px}.class-detail-dialog th,.class-detail-dialog td{padding:13px 12px}}
