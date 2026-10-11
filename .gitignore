@@ -50,3 +50,5 @@ next-env.d.ts
 !/.env.example
 /.pnpm-store/
 /.openai/
+/.sites-checkout/
+/deliverables/

@@ -12,8 +12,7 @@ export default async function Page(){
  try{
   const h=await headers();
   const host=h.get('host')??'localhost';
-  const localHost=/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/.test(host)||host.includes('terminal.local');
-  // A secure Auth.js cookie may reach this page through a loopback Worker proxy.
+  const localHost=/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/.test(host);
   const secureSession=/(?:^|;\s*)__Secure-authjs\.session-token=/.test(h.get('cookie')??'');
   const protocol=secureSession||!localHost?'https':'http';
   const user=await identity(new Request(`${protocol}://${host}/`,{headers:h}));

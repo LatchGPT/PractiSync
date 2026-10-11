@@ -1,74 +1,11 @@
 # Model map
 
-PostgreSQL is the institutional reference schema. Hosted demo D1 is a separate, explicitly reduced demo adapter.
+The primary schema is PostgreSQL and is managed through Prisma migrations. It contains:
 
-- Tenant
-- User
-- Account
-- Session
-- VerificationToken
-- Membership
-- Department
-- Course
-- AcademicPeriod
-- StudentProfile
-- SupervisorProfile
-- Company
-- CompanyMembership
-- CoursePolicyScope
-- HoursPolicy
-- ClassSpace
-- JoinCode
-- Enrollment
-- Placement
-- PlacementSupervisor
-- PolicyMigration
-- DailyEntry
-- TimeInterval
-- EntryRevision
-- IntervalRevision
-- EntryConfirmation
-- StorageObject
-- CompanyRecord
-- CompetencyFramework
-- Competency
-- CourseFramework
-- RubricDimension
-- Evaluation
-- AssessmentSchedule
-- EvaluationScore
-- EvaluationRevision
-- EvaluationScoreRevision
-- DocumentType
-- RequirementSet
-- DocumentRequirement
-- DocumentSubmission
-- IncidentCase
-- CaseHandler
-- CaseMessage
-- CaseAttachment
-- CaseEscalation
-- SensitiveAccess
-- JobPosting
-- JobCompetency
-- JobEligibility
-- Application
-- ApplicationHistory
-- Announcement
-- AnnouncementAudience
-- ReadReceipt
-- DirectoryProfile
-- CompanyReview
-- CompletionChecklist
-- ChecklistItem
-- CompletionRecord
-- CompletionItem
-- PortfolioJob
-- Notification
-- OutboxEvent
-- BackgroundJob
-- IdempotencyKey
-- AuditEvent
-- LoginAttempt
+- 68 normalized institutional models covering tenant identity, memberships, courses, placements, attendance, competencies, documents, cases, jobs, announcements, completion, notifications, auditing, and infrastructure.
+- A reduced set of mapped `Demo*` Prisma models for the current fictional demo workflows. They preserve the existing demo records and action/query contracts while the domain layer moves off D1.
+- Additional demo models for guest HTE evaluation links, private host contact records, and the two completion-form response types. Guest access codes and URL tokens are stored only as hashes; issued access codes are returned once.
 
-68 models cover identity, institution, DTR, competencies, documents, incidents, jobs, announcements, directory, completion, exports, and infrastructure.
+Both model sets live in the same local PostgreSQL database. Demo access is tenant-scoped and disabled unless the explicit demo environment flags are enabled. Demo seeding checks that the normalized tenant is marked `DEMO` and refuses institutional tenants.
+
+The demo data is clean-seeded on a new database. Existing D1 demo edits are not copied.
