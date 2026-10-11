@@ -1646,6 +1646,13 @@ tr:last-child td {
   margin-bottom: 22px !important;
 }
 
+.daily-training-records-panel .table-overflow {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin-bottom: 0 !important;
+}
+
 .panel-head {
   padding: 18px 22px !important;
   border-bottom: 1px solid var(--border) !important;
