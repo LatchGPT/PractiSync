@@ -95,7 +95,7 @@ const DEFAULT_SETTINGS: PractiSyncSettings = {
 const titleRole: Record<Role, string> = {
   STUDENT: 'Student',
   COORDINATOR: 'Coordinator',
-  SUPERVISOR: 'Industry Supervisor',
+  SUPERVISOR: 'HTE Supervisor',
   SUPER_ADMIN: 'Super Admin'
 };
 

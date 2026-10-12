@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".sites-checkout/**",
+    ".sites-runtime/**",
+    ".wrangler/**",
+    ".vinext/**",
+    ".pnpm-store/**",
+    "deliverables/**",
   ]),
   {
     files: ["components/ui/**/*.{ts,tsx}", "hooks/use-mobile.ts"],

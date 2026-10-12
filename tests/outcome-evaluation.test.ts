@@ -1,18 +1,8 @@
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
-const { mockEnv } = vi.hoisted(() => ({
-  mockEnv: {
-    DB: null as unknown,
-    DEPLOYMENT_MODE: 'demo',
-    DEMO_ENABLED: 'true',
-    AUTH_SECRET: 'test-secret-that-is-not-a-production-secret',
-  },
-}));
-vi.mock('cloudflare:workers', () => ({ env: mockEnv }));
-
-import { seed, one, list } from '../packages/db/demo';
+import { seed, one, list, installTestDatabase, type DemoDatabase, type PreparedStatement } from '../packages/db/demo';
 import { snapshot } from '../packages/domain/read';
 import { mutate } from '../packages/domain/actions';
 import {
@@ -33,13 +23,18 @@ function prepared(query: string, values: unknown[] = []): unknown {
 const users = {} as Record<string, Identity>;
 
 beforeAll(async () => {
+  vi.stubEnv('DEPLOYMENT_MODE', 'demo');
+  vi.stubEnv('DEMO_ENABLED', 'true');
+  vi.stubEnv('AUTH_SECRET', 'test-secret-that-is-not-a-production-secret');
   sql = new DatabaseSync(':memory:');
-  for (const file of readdirSync('drizzle').filter((f) => f.endsWith('.sql')).sort()) {
-    sql.exec(readFileSync('drizzle/' + file, 'utf8'));
-  }
-  mockEnv.DB = {
-    prepare: prepared,
-    batch: async (statements: { run: () => Promise<unknown> }[]) => {
+  const migration = readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql', 'utf8').split('INSERT INTO "assessment_schedules"')[0]!;
+  sql.exec(migration);
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql', 'utf8'));
+  sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql', 'utf8').replace(/--> statement-breakpoint/g, ''));
+  sql.exec(readFileSync('drizzle/0008_industry_feedback.sql', 'utf8'));
+  const database: DemoDatabase = {
+    prepare: (query) => prepared(query) as PreparedStatement,
+    batch: async (statements) => {
       sql.exec('BEGIN');
       try {
         const values = [];
@@ -52,10 +47,16 @@ beforeAll(async () => {
       }
     },
   };
+  installTestDatabase(database);
   await seed();
   for (const role of ['student', 'coordinator', 'admin']) {
     users[role] = ((await one('SELECT * FROM users WHERE id=?', 'demo-' + role)) as unknown) as Identity;
   }
+});
+
+afterAll(() => {
+  installTestDatabase(undefined);
+  vi.unstubAllEnvs();
 });
 
 describe('PSS-19: Transparent Rubric-Based Outcome Evaluation Engine', () => {

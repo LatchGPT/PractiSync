@@ -1,21 +1,11 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync, readdirSync } from 'node:fs';
-
-const { mockEnv } = vi.hoisted(() => ({
-  mockEnv: {
-    DB: null as unknown,
-    DEPLOYMENT_MODE: 'demo',
-    DEMO_ENABLED: 'true',
-    AUTH_SECRET: 'test-secret-that-is-not-a-production-secret',
-  },
-}));
-vi.mock('cloudflare:workers', () => ({ env: mockEnv }));
+import { readFileSync } from 'node:fs';
 
 import { calculateCurriculumAnalytics } from '../packages/domain/curriculum-analytics';
 import { mutate } from '../packages/domain/actions';
 import { snapshot } from '../packages/domain/read';
-import { seed, list } from '../packages/db/demo';
+import { seed, list, installTestDatabase, type DemoDatabase, type PreparedStatement } from '../packages/db/demo';
 import type { Identity, Row } from '../packages/validation/contracts';
 
 let sql: DatabaseSync;
@@ -95,13 +85,18 @@ const mockFeedback: Row[] = [
 ];
 
 beforeAll(async () => {
+  vi.stubEnv('DEPLOYMENT_MODE', 'demo');
+  vi.stubEnv('DEMO_ENABLED', 'true');
+  vi.stubEnv('AUTH_SECRET', 'test-secret-that-is-not-a-production-secret');
   sql = new DatabaseSync(':memory:');
-  for (const file of readdirSync('drizzle').filter((f) => f.endsWith('.sql')).sort()) {
-    sql.exec(readFileSync('drizzle/' + file, 'utf8'));
-  }
-  mockEnv.DB = {
-    prepare: prepared,
-    batch: async (statements: { run: () => Promise<unknown> }[]) => {
+  const migration = readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql', 'utf8').split('INSERT INTO "assessment_schedules"')[0]!;
+  sql.exec(migration);
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql', 'utf8'));
+  sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql', 'utf8').replace(/--> statement-breakpoint/g, ''));
+  sql.exec(readFileSync('drizzle/0008_industry_feedback.sql', 'utf8'));
+  const database: DemoDatabase = {
+    prepare: (query) => prepared(query) as PreparedStatement,
+    batch: async (statements) => {
       sql.exec('BEGIN');
       try {
         const values = [];
@@ -114,7 +109,13 @@ beforeAll(async () => {
       }
     },
   };
+  installTestDatabase(database);
   await seed();
+});
+
+afterAll(() => {
+  installTestDatabase(undefined);
+  vi.unstubAllEnvs();
 });
 
 describe('Industry Feedback & Curriculum Gap Analytics (PSS-20)', () => {

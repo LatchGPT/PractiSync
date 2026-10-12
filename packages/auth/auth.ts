@@ -7,13 +7,13 @@ import {DomainError,demoAllowed} from '../domain/policies';
 import type {Identity,Role} from '../validation/contracts';
 export async function limit(key:string,max=15){
  const now=Date.now(),window=600000;
- await statement('INSERT INTO rate_limits (key,attempts,window_start) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET attempts=CASE WHEN window_start<? THEN 1 ELSE attempts+1 END, window_start=CASE WHEN window_start<? THEN ? ELSE window_start END',key,now,now-window,now-window,now).run();
+ await statement('INSERT INTO rate_limits (key,attempts,window_start) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET attempts=CASE WHEN rate_limits.window_start<? THEN 1 ELSE rate_limits.attempts+1 END, window_start=CASE WHEN rate_limits.window_start<? THEN ? ELSE rate_limits.window_start END',key,now,now-window,now-window,now).run();
  const row=await database().prepare('SELECT attempts FROM rate_limits WHERE key=?').bind(key).first<{attempts:number}>();if((row?.attempts??max+1)>max)throw new DomainError('Too many attempts. Please try again in 10 minutes.',429);
 }
 export function config():AuthConfig {
  const cfg=settings();if(!cfg.AUTH_SECRET)throw new DomainError('Sign-in is not configured. The app administrator must set the authentication secret.',503);
  return {secret:cfg.AUTH_SECRET,trustHost:true,basePath:'/api/auth',session:{strategy:'jwt',maxAge:60*60*8},pages:{signIn:'/',error:'/'},providers:[Credentials({id:'credentials',name:'University account',credentials:{username:{},password:{},demoId:{}},async authorize(credentials,request){
-  await seed();await limit('login:'+ (request.headers.get('cf-connecting-ip')??'private-demo'));
+  await seed();const clientIp=request.headers.get('x-real-ip')??request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()??'private-demo';await limit('login:'+clientIp);
   const demoId=typeof credentials.demoId==='string'?credentials.demoId:null;
   let user;
   if(demoId){if(!demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)||!demoAccounts.some(a=>a.id===demoId))return null;user=await one('SELECT * FROM users WHERE id=? AND is_demo=1 AND status=\'ACTIVE\'',demoId);}

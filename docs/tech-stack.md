@@ -1,33 +1,34 @@
 # PractiSync tech stack
 
-This describes the stack currently present in the repository. The hosted, fictional demo and the institutional reference schema use different database paths.
-
-## Running demo
+## Development and preview runtime
 
 | Area | Technology | Use in this project |
 | --- | --- | --- |
 | Language and runtime | TypeScript 5.9, Node.js 22+ | Application code and local tooling |
 | Web framework | Next.js 16 App Router, React 19 | Pages, layouts, route handlers, and UI |
-| Build and hosting | Vinext, Vite 8, Cloudflare Workers, Sites | Builds and runs the Next.js application in a Workers-compatible environment |
-| Database | Cloudflare D1 (SQLite) | Persistent fictional demo data |
-| Data access | Drizzle ORM and direct D1 SQL | Demo schema and queries |
-| Authentication | Auth.js (`@auth/core`) credentials provider | Username/password and demo-role sign-in with JWT sessions |
+| Hosting target | Vercel Node.js runtime | Native Next.js development, build, and start commands |
+| Database | PostgreSQL 17 | Local fictional demo database and intended Vercel preview database |
+| Data access | Prisma 6 and Prisma-managed migrations | PostgreSQL client, schema, migrations, and transactions; existing demo SQL uses a parameterized Prisma bridge during the port |
+| Authentication | Auth.js (`@auth/core`) credentials provider | Username/password and four fixed demo sign-ins with JWT sessions |
 | Styling | Tailwind CSS 4, custom CSS | Interface styling and theme |
-| UI components | shadcn-style components, Radix UI, Base UI, Lucide | Controls, dialogs, icons, and other interface elements |
+| UI components | shadcn-style components, Radix UI, Base UI, Lucide | Controls, dialogs, icons, and interface elements |
 | Forms and validation | React Hook Form, Zod | Form state and typed request validation |
 | Charts and exports | Recharts, React PDF | Dashboard charts and downloadable training records |
 
-The configured Sites database binding is `DB`. No R2 bucket is configured in `.openai/hosting.json`; document files are not currently uploaded or stored by the demo.
+## Database boundaries
 
-## Institutional reference schema
+Local development uses the PostgreSQL 17 service in `packages/db/docker-compose.yml`. The demo database is separate from any institutional database. `DEPLOYMENT_MODE=demo` and `DEMO_ENABLED=true` are required for demo reads, writes, authentication, and fixture seeding. Seeding also checks the normalized `Tenant` record and refuses to seed an institutional tenant.
 
-The repository also contains a PostgreSQL 17 schema and migration managed with Prisma 6. This is a reference for the intended institutional backend. The current hosted demo uses D1, and the PostgreSQL application integration is not complete. See [the implementation checklist](checklist.md) and [runbook](runbook.md) before treating this as a production stack.
+The existing 68-model normalized Prisma schema remains in place for the institutional data design. The current fictional demo is being moved with its existing reduced table shape represented in the same PostgreSQL database and Prisma migration history. The server-side compatibility bridge uses parameterized Prisma raw queries and `$transaction` so existing response shapes and role/resource checks survive the port. Vercel preview validation is required before removing the old Cloudflare deployment files and D1 migrations.
 
-## Development tooling
+Documents remain fictional metadata; no object storage or real uploads are configured. Google sign-in, email, and institutional use remain disabled.
 
-- **Package management:** pnpm 11 workspace, with packages under `packages/`.
-- **Task orchestration:** Turbo.
-- **Checks:** TypeScript (`pnpm check`), ESLint (`pnpm lint`), and Vitest (`pnpm test`).
-- **Local Cloudflare runtime:** Wrangler and Miniflare.
+## Development commands
 
-Primary configuration: [`package.json`](../package.json), [`vite.config.ts`](../vite.config.ts), [`drizzle.config.ts`](../drizzle.config.ts), [`packages/db/prisma/schema.prisma`](../packages/db/prisma/schema.prisma), and [`.openai/hosting.json`](../.openai/hosting.json).
+- `pnpm dev`, `pnpm build`, and `pnpm start` run native Next.js.
+- `docker compose -f packages/db/docker-compose.yml up -d` starts the isolated PostgreSQL 17 demo database on local port `5433`.
+- `pnpm db:migrate` applies the Prisma migration history.
+- `pnpm db:seed` loads the guarded, idempotent demo accounts and fictional fixtures.
+- `pnpm check`, `pnpm lint`, and `pnpm test` run the project checks.
+
+Primary configuration: [`package.json`](../package.json), [`packages/db/prisma/schema.prisma`](../packages/db/prisma/schema.prisma), and [`packages/db/docker-compose.yml`](../packages/db/docker-compose.yml).

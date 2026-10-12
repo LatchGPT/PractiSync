@@ -4,20 +4,25 @@ Every request obtains identity from the Auth.js encrypted JWT, reloads the curre
 
 | Resource/action | Student | Coordinator | Supervisor | Super Admin |
 |---|---|---|---|---|
-| DTR read | Own | Own class placements | Active assigned placements | Institution |
+| DTR read | Own records and narratives | Own class placements | Assigned active placements; time intervals only | Institution |
 | DTR create/correct | Own placement | Denied | Denied | Denied |
-| Optional confirmation | Denied | Denied | Active assigned placement | Denied |
+| Optional confirmation | Denied | Denied | Active assigned placement; time only | Denied |
 | Classes/create | Join eligible own course | Own classes | Denied | Institution |
 | Hours policy | Read target snapshot | Read | Granted course scope | Grant scope only |
-| Documents/read | Own | Own class | Assigned metadata | Institution metadata |
+| Documents/read | Own | Own class | Denied | Institution metadata |
 | Documents/review | Denied | Own class | Denied | Denied |
 | SOS/read/write | Own report | Assigned class cases | Denied | Denied unless explicit handler (not implemented) |
-| Job publish/update | Denied | Denied | Verified own company + posting permission | Read |
-| Application | Own eligible course | Read own class | Own company's postings | Read institution |
+| Company profile | Denied | Read approved directory | Create own; blocked pending verification | Verify or decline |
+| Internship post | Denied | Review posts in assigned course | Submit for own verified company; cannot publish | Read/manage institution |
+| Application | Apply to eligible published post | Read scoped applications; confirm HTE-selected placement | Read applicants to own published posts; shortlist or decline only | Read institution |
+| Placement activation | Denied | Activate own-class planned placement on/after start date | Denied | Denied |
 | Announcement publish | Denied | Own class | Denied | University |
-| Period competency assessment | Submit/revise own weekly or monthly assessment according to course cadence | Configure cadence for own courses; approve or request revision for own class | Denied in hosted demo | Read |
-| Review | Formally completed own placement | Moderate own class | Read approved | Read approved |
+| Student competency assessment | Submit/revise own weekly or monthly assessment according to course cadence | Configure cadence for own courses; approve or request revision for own class | Denied | Read |
+| HTE final evaluation | Read after coordinator approval | Review and release for own class | Submit rubric only for own assigned active placement; own receipt/revisions only | Read institution |
+| Guest HTE evaluation | Read after coordinator approval | Issue/revoke one-use link and review response | No account or dashboard access | Read institution |
+| Completion forms | Submit two required university forms after reported hours reach target | Review both forms and make formal completion decision for own class | Denied | Read institution |
+| Company review | Submit after formal placement completion; other authors are anonymous | Identify and moderate in university scope | Anonymous approved feedback only after five distinct placements in the same period | Identify and moderate |
 | Portfolio | Own | Own class | Assigned scope | Institution scope |
 | Accounts/structure | Own profile | Own profile | Own profile | Provision and assign non-demo accounts |
 
-Supervisor policy scope and assignment are separate. Removed assignments immediately deny access despite valid JWTs. SOS has independent authorization; counts and audit views omit narrative and sensitive case access. Privileged account fields are never autofilled. Rate limits apply to credentials and class code checks. Limits are bounded for this small demo; true 30,000-student capacity requires real PostgreSQL measured workloads.
+Supervisor company verification and placement assignment are separate. A verified account can post only for its own company, and every post remains invisible to students until university approval. HTE evaluation link access requires a separate eight-digit access code; links expire, can be revoked, and work once. No identity or student details appear before the code is accepted. Removed assignments immediately remove placement/evaluation access despite a valid JWT. Supervisors never read student DTR narratives, documents, SOS/support records, coordinator dashboards, or analytics. SOS has independent authorization; counts and audit views omit narrative and sensitive case access. Privileged account fields are never autofilled. Rate limits apply to credentials, class code checks, and guest evaluation submission. Limits are bounded for this small demo; true 30,000-student capacity requires real PostgreSQL measured workloads.
