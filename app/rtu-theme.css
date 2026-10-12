@@ -23,12 +23,132 @@
   --radius-card: 12px;
   --radius-btn: 8px;
   --transition-smooth: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --destructive: #b91c1c;
+  --destructive-hover: #991b1b;
+  --destructive-muted: #fef2f2;
+  --destructive-border: #fecaca;
+  --warning: #b45309;
+  --warning-muted: #fffbeb;
+  --warning-border: #fde68a;
+  --success: #15803d;
+  --success-muted: #f0fdf4;
+  --success-border: #bbf7d0;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Button & Text Semantic Action Helpers */
+.textbutton.textbutton-danger {
+  color: var(--destructive) !important;
+}
+.textbutton.textbutton-danger:hover {
+  color: var(--destructive-hover) !important;
+  text-decoration: underline;
+}
+.textbutton.textbutton-warning {
+  color: var(--warning) !important;
+}
+.textbutton.textbutton-warning:hover {
+  text-decoration: underline;
+}
+.btn-destructive-outline {
+  color: var(--destructive) !important;
+  border-color: var(--destructive-border) !important;
+  background: #ffffff !important;
+}
+.btn-destructive-outline:hover {
+  background: var(--destructive-muted) !important;
+  border-color: var(--destructive) !important;
+}
+.text-muted-foreground {
+  color: var(--muted-foreground) !important;
+}
+
+/* Action Hierarchy & Coordinator Operations */
+.btn-confirm-accuracy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: var(--rtu-ice);
+  color: var(--rtu-blue);
+  border: 1px solid rgba(18, 76, 145, 0.25);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+.btn-confirm-accuracy:hover {
+  background: var(--rtu-blue);
+  color: #ffffff !important;
+  border-color: var(--rtu-blue);
+  box-shadow: 0 2px 6px rgba(18, 76, 145, 0.2);
+}
+.btn-confirm-accuracy svg {
+  color: inherit;
+}
+
+.btn-review-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--rtu-blue);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+.btn-review-action:hover {
+  background: var(--rtu-ice);
+  border-color: var(--rtu-blue);
+}
+.btn-review-action svg {
+  color: inherit;
+}
+
+.btn-class-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 7px;
+  background: var(--rtu-ice);
+  color: var(--rtu-blue);
+  border: 1px solid rgba(18, 76, 145, 0.2);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.btn-class-primary:hover {
+  background: var(--rtu-blue);
+  color: #ffffff !important;
+  border-color: var(--rtu-blue);
+}
+.btn-class-primary svg {
+  color: inherit;
+}
+
+.class-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
 
 /* Accessibility & Focus Rings */
 button:focus-visible,

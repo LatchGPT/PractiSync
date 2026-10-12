@@ -29,7 +29,7 @@
 .outcome-tabs-bar {
   display: flex;
   gap: 8px;
-  border-bottom: 2px solid var(--border, #e2e8f0);
+  border-bottom: 2px solid var(--border);
   margin-bottom: 24px;
   padding-bottom: 2px;
 }
@@ -40,7 +40,7 @@
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--muted-foreground, #64748b);
+  color: var(--muted-foreground);
   background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
@@ -49,12 +49,12 @@
   border-radius: 6px 6px 0 0;
 }
 .outcome-tab-btn:hover {
-  color: var(--rtu-blue, #124c91);
+  color: var(--rtu-blue);
   background: rgba(18, 76, 145, 0.04);
 }
 .outcome-tab-btn.active {
-  color: var(--rtu-navy, #0e2a57);
-  border-bottom-color: var(--rtu-gold, #d7aa3e);
+  color: var(--rtu-navy);
+  border-bottom-color: var(--rtu-gold);
   background: rgba(18, 76, 145, 0.06);
 }
 
@@ -86,7 +86,7 @@
 
 /* Student Picker Panel */
 .outcome-picker-panel {
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border);
   background: #ffffff;
   border-radius: 10px;
 }
@@ -103,15 +103,15 @@
   padding: 9px 12px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid var(--border, #cbd5e1);
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: #fff;
-  color: var(--foreground, #0f172a);
+  color: var(--foreground);
 }
 
 /* Outcome Attainment Hero Panel */
 .outcome-hero-panel {
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border);
   border-radius: 12px;
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(14, 42, 87, 0.04);
@@ -138,7 +138,7 @@
   justify-content: center;
   padding: 20px 28px;
   background: #ffffff;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(14, 42, 87, 0.06);
   min-width: 170px;
@@ -151,13 +151,13 @@
 .outcome-score-number {
   font-size: 42px;
   font-weight: 800;
-  color: var(--rtu-navy, #0e2a57);
+  color: var(--rtu-navy);
   line-height: 1;
 }
 .outcome-score-scale {
   font-size: 18px;
   font-weight: 600;
-  color: var(--muted-foreground, #64748b);
+  color: var(--muted-foreground);
 }
 .outcome-score-label {
   margin-top: 8px;
@@ -165,7 +165,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--muted-foreground, #64748b);
+  color: var(--muted-foreground);
 }
 .outcome-evidence-status-card {
   display: flex;
@@ -206,7 +206,7 @@
 
 /* Transparent Mathematical Derivation Box */
 .outcome-derivation-panel {
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border);
   border-radius: 10px;
   background: #ffffff;
 }
@@ -224,7 +224,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--muted-foreground, #64748b);
+  color: var(--muted-foreground);
 }
 .formula-code {
   display: block;
