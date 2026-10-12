@@ -1937,3 +1937,64 @@ td {
 }
 
 
+
+
+/* Super Admin account group cards */
+.account-type-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.account-type-card{appearance:none;text-align:left;width:100%;min-height:245px;padding:22px;background:#fff;border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;gap:15px;color:var(--foreground);transition:border-color .15s,box-shadow .15s,transform .15s}.account-type-card:hover{border-color:#96b5dc;box-shadow:0 12px 28px #124c9112;transform:translateY(-2px)}.account-type-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.account-type-card h2{font-size:18px}.account-type-card p{font-size:13px;line-height:1.7;color:var(--muted-foreground)}.account-type-count{margin-top:auto;font-size:26px;line-height:1.15}.account-type-count small{font-size:13px;font-weight:400;color:var(--muted-foreground)}.account-type-card-cta{padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;color:var(--primary);font-size:13px;font-weight:600}@media(max-width:900px){.account-type-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:540px){.account-type-grid{grid-template-columns:1fr}}
+
+@media (max-width: 640px) {
+  .account-directory-table {
+    display: block !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    text-align: left !important;
+  }
+  .account-directory-table thead {
+    display: none !important;
+  }
+  .account-directory-table tbody {
+    display: grid !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+  .account-directory-table tbody tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    align-items: center !important;
+    margin: 0 !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+  .account-directory-table tbody td {
+    display: block !important;
+    min-width: 0 !important;
+    padding: 10px 12px !important;
+    border: 0 !important;
+    overflow-wrap: anywhere !important;
+    white-space: normal !important;
+  }
+  .account-directory-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: #7186a0;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+  }
+  .account-directory-table tbody td:first-child,
+  .account-directory-table tbody td:nth-child(2),
+  .account-directory-table tbody td:last-child {
+    grid-column: 1 / -1;
+  }
+  .account-directory-table tbody td:last-child {
+    border-top: 1px solid #edf2f7 !important;
+  }
+  .account-directory-table tbody td:last-child::before {
+    content: none;
+  }
+}
