@@ -414,7 +414,7 @@ export default function AssessmentWorkspace({
           onClick={() => setActiveTab('outcome')}
         >
           <Scale size={16} />
-          <span>Transparent Rubric Outcome Evaluation</span>
+          <span>Outcome Framework &amp; Competency Mapping</span>
         </button>
         <button
           type="button"
@@ -434,7 +434,7 @@ export default function AssessmentWorkspace({
           onClick={() => setActiveTab('industry')}
         >
           <GraduationCap size={16} />
-          <span>Industry Feedback & Curriculum Analytics</span>
+          <span>Industry Supervisor Competency Evaluations</span>
         </button>
       </div>
 
@@ -1250,7 +1250,7 @@ export default function AssessmentWorkspace({
           {/* Header & Main Actions */}
           <div className="industry-section-header">
             <div>
-              <h2>Industry Feedback &amp; Curriculum Gap Analytics</h2>
+              <h2>Industry Supervisor Competency Evaluations</h2>
               <p className="small muted">
                 Structured employer evaluations of student workplace readiness, competency relevance,
                 supervision support, and curriculum alignment under Framework v1.0.
@@ -1269,7 +1269,7 @@ export default function AssessmentWorkspace({
                   }}
                 >
                   <PlusCircle size={15} />
-                  <span>Record Industry Feedback</span>
+                  <span>Record Supervisor Competency Evaluation</span>
                 </button>
               )}
           </div>
