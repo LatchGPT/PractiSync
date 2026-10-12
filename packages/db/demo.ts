@@ -186,7 +186,7 @@ export async function seed() {
     }
   }
 
-  // Promote the existing fictional HTE account for quick demo sign-in without reseeding or resetting demo edits.
+  // Promote the existing fictional HTE account for password sign-in without reseeding or resetting demo edits.
   await db.prepare("UPDATE users SET is_demo=1 WHERE id=? AND username=? AND role=?").bind('demo-supervisor', 'demo.supervisor', 'SUPERVISOR').run();
 
   const existingSeed = await db.prepare("SELECT value FROM seed_state WHERE key='seed-v5'").first();

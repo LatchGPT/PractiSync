@@ -18,6 +18,14 @@ async function save(user: Identity, action: string, id: string, statements: Prep
   return { message, id, ...extra };
 }
 
+async function verifiedSupervisorCompanyId(user: Identity) {
+  const companyId = user.companyId ?? '';
+  const company = await one(`SELECT c.id FROM users u JOIN companies c ON c.tenant_id=u.tenant_id AND c.id=u.company_id
+    WHERE u.tenant_id=? AND u.id=? AND u.role='SUPERVISOR' AND u.company_id=? AND u.supervisor_verified=1 AND u.can_post=1 AND c.status='APPROVED' AND c.can_post=1`, user.tenantId, user.id, companyId);
+  if (!company) throw new DomainError('A verified company profile and posting permission are required.', 403);
+  return String(company.id);
+}
+
 const finalSelfAssessment = z.object({
   technicalSkills: z.number().int().min(1).max(5),
   communication: z.number().int().min(1).max(5),
@@ -68,13 +76,8 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
   }
 
   if (action === 'job') {
-    const companyId = user.role === 'SUPERVISOR' ? (user.companyId ?? '') : String(d.companyId ?? (await one('SELECT id FROM companies WHERE tenant_id=? AND status=\'APPROVED\' AND can_post=1 ORDER BY name LIMIT 1', user.tenantId))?.id ?? '');
-    if (user.role === 'SUPERVISOR') {
-      const permitted = await one('SELECT id FROM users WHERE tenant_id=? AND id=? AND role=\'SUPERVISOR\' AND company_id=? AND supervisor_verified=1 AND can_post=1', user.tenantId, user.id, companyId);
-      if (!permitted || !companyId) throw new DomainError('A verified company profile and posting permission are required.', 403);
-    } else {
-      requireRole(user, 'COORDINATOR', 'SUPER_ADMIN');
-    }
+    const companyId = user.role === 'SUPERVISOR' ? await verifiedSupervisorCompanyId(user) : String(d.companyId ?? (await one('SELECT id FROM companies WHERE tenant_id=? AND status=\'APPROVED\' AND can_post=1 ORDER BY name LIMIT 1', user.tenantId))?.id ?? '');
+    if (user.role !== 'SUPERVISOR') requireRole(user, 'COORDINATOR', 'SUPER_ADMIN');
     const company = await one('SELECT id FROM companies WHERE tenant_id=? AND id=? AND status=\'APPROVED\' AND can_post=1', user.tenantId, companyId);
     if (!company) throw new DomainError('A university-verified company with posting access is required.', 403);
     if (!await one('SELECT id FROM courses WHERE tenant_id=? AND id=?', user.tenantId, String(d.courseId))) throw new DomainError('Choose a valid target course.');
@@ -98,7 +101,8 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
 
   if (action === 'selectApplication') {
     requireRole(user, 'SUPERVISOR');
-    const app = await one('SELECT a.*,j.company_id,j.title,j.course_id FROM applications a JOIN jobs j ON j.id=a.job_id AND j.tenant_id=a.tenant_id WHERE a.tenant_id=? AND a.id=? AND j.company_id=? AND j.status=\'PUBLISHED\'', user.tenantId, String(d.applicationId), user.companyId ?? '');
+    const companyId = await verifiedSupervisorCompanyId(user);
+    const app = await one('SELECT a.*,j.company_id,j.title,j.course_id FROM applications a JOIN jobs j ON j.id=a.job_id AND j.tenant_id=a.tenant_id WHERE a.tenant_id=? AND a.id=? AND j.company_id=? AND j.status=\'PUBLISHED\'', user.tenantId, String(d.applicationId), companyId);
     if (!app || app.status !== 'SUBMITTED') throw new DomainError('This application is not available for your verified company.', 403);
     id = String(app.id);
     const decision = String(d.decision);
@@ -151,7 +155,8 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
 
   if (action === 'industryFinalEvaluation') {
     requireRole(user, 'SUPERVISOR');
-    const placement = await one('SELECT * FROM placements WHERE tenant_id=? AND id=? AND company_id=? AND id IN (SELECT placement_id FROM assignments WHERE tenant_id=? AND supervisor_id=? AND active=1) AND status=\'ACTIVE\'', user.tenantId, String(d.placementId), user.companyId ?? '', user.tenantId, user.id);
+    const companyId = await verifiedSupervisorCompanyId(user);
+    const placement = await one('SELECT * FROM placements WHERE tenant_id=? AND id=? AND company_id=? AND id IN (SELECT placement_id FROM assignments WHERE tenant_id=? AND supervisor_id=? AND active=1) AND status=\'ACTIVE\'', user.tenantId, String(d.placementId), companyId, user.tenantId, user.id);
     if (!placement) throw new DomainError('This placement is not assigned to your verified company account.', 403);
     const scores = d.scores as Record<string, { score: number; evidence: string }>;
     const dimensions = [['Technical skills', scores.technicalSkills], ['Communication', scores.communication], ['Professionalism', scores.professionalism], ['Problem solving', scores.problemSolving]] as const;
@@ -269,6 +274,7 @@ export async function guestEvaluationContext(token: string, accessCode: string) 
   const row = await one(`SELECT l.id,l.access_code_hash,p.id AS placement_id,p.period,p.status,l.expires_at,u.name AS student_name,c.name AS company_name,co.code AS course_code
     FROM guest_evaluation_links l
     JOIN placements p ON p.id=l.placement_id AND p.tenant_id=l.tenant_id
+    JOIN classes cl ON cl.id=p.class_id AND cl.tenant_id=p.tenant_id AND cl.coordinator_id=l.issued_by
     JOIN users u ON u.id=p.student_id AND u.tenant_id=p.tenant_id
     JOIN companies c ON c.id=p.company_id AND c.tenant_id=p.tenant_id
     JOIN courses co ON co.id=p.course_id AND co.tenant_id=p.tenant_id
@@ -285,7 +291,9 @@ export async function submitGuestEvaluation(token: string, payload: unknown) {
     'Problem solving': z.object({ score: z.number().int().min(1).max(5), evidence: z.string().trim().min(1).max(1000) }),
   }).strict() }).strict().parse(payload);
   if (!/^[A-Za-z0-9_-]{32,64}$/.test(token)) throw new DomainError('This evaluation link is invalid or unavailable.', 404);
-  const link = await one('SELECT * FROM guest_evaluation_links WHERE tenant_id=? AND token_hash=? AND revoked_at IS NULL AND used_at IS NULL AND expires_at>?', tenantId, await hash(token), new Date().toISOString());
+  const link = await one(`SELECT l.* FROM guest_evaluation_links l JOIN placements p ON p.id=l.placement_id AND p.tenant_id=l.tenant_id
+    JOIN classes cl ON cl.id=p.class_id AND cl.tenant_id=p.tenant_id AND cl.coordinator_id=l.issued_by
+    WHERE l.tenant_id=? AND l.token_hash=? AND l.revoked_at IS NULL AND l.used_at IS NULL AND l.expires_at>? AND p.status IN ('ACTIVE','COMPLETED')`, tenantId, await hash(token), new Date().toISOString());
   if (!link || await hash(`${link.id}:${body.accessCode}`) !== link.accessCodeHash) throw new DomainError('The access code is invalid or this link is unavailable.', 403);
   const evaluationId = crypto.randomUUID();
   const now = new Date().toISOString();

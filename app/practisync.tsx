@@ -10,7 +10,7 @@ import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/compo
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/tabs';
 import {Table,TableHeader,TableBody,TableHead,TableRow,TableCell} from '@/components/ui/table';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from '@/components/ui/dropdown-menu';
-import {sampleFor,demoAccounts,type FormValues} from '@/packages/test-utils/fixtures';
+import {sampleFor,quickDemoAccounts as demoAccounts,type FormValues} from '@/packages/test-utils/fixtures';
 import RoleDashboard from './role-dashboard';
 import AssessmentWorkspace from './assessment-workspace';
 import OverviewGreetingBanner from './overview-greeting-banner';
