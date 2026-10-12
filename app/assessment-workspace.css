@@ -1,12 +1,12 @@
 .assessment-workspace .panel-body { padding: 4px 21px 21px; }
 .assessment-controls { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
 .assessment-controls label, .assessment-form > label { display: grid; gap: 6px; min-width: 170px; }
-.assessment-workspace select { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: #fff; color: var(--foreground); }
+.assessment-workspace select { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-input, 8px); background: #fff; color: var(--foreground); }
 .assessment-compose { display: grid; grid-template-columns: minmax(270px, 1fr) minmax(270px, 1fr); gap: 22px; }
 .assessment-form { display: grid; align-content: start; gap: 14px; }
 .assessment-form .assessment-controls label { flex: 1; }
 .assessment-rating { display: grid; grid-template-columns: 1fr 110px; align-items: center; gap: 12px; }
-.assessment-context { background: #f7f9fd; border: 1px solid var(--border); border-radius: 9px; padding: 18px; min-width: 0; }
+.assessment-context { background: #f7f9fd; border: 1px solid var(--border); border-radius: var(--radius-card, 12px); padding: 18px; min-width: 0; }
 .assessment-context h3 { margin-bottom: 5px; }
 .assessment-context-totals { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; font-size: 12px; }
 .assessment-context-totals > * { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; }
@@ -88,7 +88,7 @@
 .outcome-picker-panel {
   border: 1px solid var(--border);
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
 }
 .outcome-picker-body {
   padding: 16px 20px;
@@ -207,7 +207,7 @@
 /* Transparent Mathematical Derivation Box */
 .outcome-derivation-panel {
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
   background: #ffffff;
 }
 .outcome-derivation-body {
@@ -264,7 +264,7 @@
 .outcome-category-card {
   background: #ffffff;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -321,7 +321,7 @@
 /* Dimension Details Table */
 .outcome-table-panel {
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
   background: #ffffff;
 }
 .outcome-dimensions-table-wrap {
@@ -334,7 +334,7 @@
   font-size: 13px;
 }
 .outcome-dimensions-table th {
-  padding: 12px 14px;
+  padding: 12px 18px;
   background: #f8fafc;
   color: #475569;
   font-weight: 700;
@@ -344,9 +344,16 @@
   white-space: nowrap;
 }
 .outcome-dimensions-table td {
-  padding: 14px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border, #e2e8f0);
   vertical-align: middle;
+}
+.outcome-dimensions-table th:nth-child(2),
+.outcome-dimensions-table td:nth-child(2),
+.outcome-dimensions-table th:nth-child(3),
+.outcome-dimensions-table td:nth-child(3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .outcome-dimensions-table tr:last-child td {
   border-bottom: none;
@@ -358,13 +365,13 @@
   font-weight: 700;
   background: #e0f2fe;
   color: #0369a1;
-  border-radius: 4px;
+  border-radius: var(--radius-chip, 6px);
 }
 
 /* Coordinator Decision Form */
 .outcome-decision-form-panel {
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
   background: #ffffff;
 }
 .outcome-decision-form-body {
@@ -414,7 +421,7 @@
 /* Decision History Timeline */
 .outcome-history-panel {
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
   background: #ffffff;
 }
 .decision-history-list {
@@ -500,7 +507,7 @@
 .industry-controls-panel {
   border: 1px solid var(--border, #e2e8f0);
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
 }
 .industry-controls-body {
   padding: 16px 20px;
@@ -524,7 +531,7 @@
 .industry-kpi-card {
   background: #ffffff;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
@@ -553,7 +560,7 @@
   background: #fffbeb;
   border: 1px solid #fef3c7;
   border-left: 5px solid #d97706;
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
   padding: 32px 24px;
   text-align: center;
   display: flex;
@@ -623,7 +630,7 @@
 .dimension-card {
   background: #f8fafc;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 10px;
+  border-radius: var(--radius-card, 12px);
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -796,7 +803,7 @@
   text-align: left;
 }
 .industry-feedback-table th {
-  padding: 10px 12px;
+  padding: 12px 18px;
   font-size: 11px;
   font-weight: 700;
   color: var(--muted-foreground, #64748b);
@@ -804,11 +811,23 @@
   letter-spacing: 0.5px;
   border-bottom: 2px solid var(--border, #e2e8f0);
   background: #f8fafc;
+  white-space: nowrap;
 }
 .industry-feedback-table td {
-  padding: 12px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border, #e2e8f0);
   vertical-align: top;
+}
+.industry-feedback-table th:nth-child(5),
+.industry-feedback-table td:nth-child(5),
+.industry-feedback-table th:nth-child(6),
+.industry-feedback-table td:nth-child(6),
+.industry-feedback-table th:nth-child(7),
+.industry-feedback-table td:nth-child(7),
+.industry-feedback-table th:nth-child(8),
+.industry-feedback-table td:nth-child(8) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .modal-backdrop {
   position: fixed;
