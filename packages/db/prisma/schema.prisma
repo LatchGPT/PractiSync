@@ -1978,6 +1978,48 @@ model DemoCompletionResponses {
   @@map("completion_responses")
 }
 
+model DemoOutcomeDecisions {
+  id                String  @id
+  tenantId          String  @map("tenant_id")
+  createdAt         String  @map("created_at")
+  placementId       String  @map("placement_id")
+  coordinatorId     String  @map("coordinator_id")
+  decision          String
+  rationale         String
+  rubricVersion     Int     @default(1) @map("rubric_version")
+  calculatedScore   Float?  @map("calculated_score")
+  calculatedStatus  String  @map("calculated_status")
+
+  @@index([tenantId, placementId], map: "outcome_decisions_placement")
+  @@index([tenantId, coordinatorId], map: "outcome_decisions_coordinator")
+  @@map("outcome_decisions")
+}
+
+model DemoIndustryFeedback {
+  id                  String @id
+  tenantId            String @map("tenant_id")
+  createdAt           String @map("created_at")
+  placementId         String @map("placement_id")
+  companyId           String @map("company_id")
+  supervisorId        String @map("supervisor_id")
+  courseId            String @map("course_id")
+  academicPeriod      String @map("academic_period")
+  frameworkVersion    Int    @default(1) @map("framework_version")
+  workplaceReadiness  Int    @map("workplace_readiness")
+  competencyRelevance Int    @map("competency_relevance")
+  supervisionSupport  Int    @map("supervision_support")
+  curriculumAlignment Int    @map("curriculum_alignment")
+  technicalGaps       String? @map("technical_gaps")
+  softSkillGaps       String? @map("soft_skill_gaps")
+  recommendations     String
+  status              String @default("SUBMITTED")
+
+  @@index([tenantId, placementId], map: "industry_feedback_placement")
+  @@index([tenantId, courseId, academicPeriod], map: "industry_feedback_course_period")
+  @@index([tenantId, companyId], map: "industry_feedback_company")
+  @@map("industry_feedback")
+}
+
 model DemoPrivateHosts {
   id             String @id
   tenantId       String @map("tenant_id")
