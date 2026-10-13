@@ -28,7 +28,7 @@
 .goal-donut-value{font-size:29px;font-weight:750;fill:var(--foreground,#143e7e)}
 .goal-donut-caption{font-size:10px;font-weight:650;fill:var(--muted-foreground,#60758e);letter-spacing:.65px;text-transform:uppercase}
 .goal-hero-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin-top:1px}
-.goal-hero-metric{display:flex;min-height:60px;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border:1px solid #e1e9f2;border-radius:9px;background:#f3f6fa;text-align:center}
+.goal-hero-metric{display:flex;min-height:60px;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border:1px solid #e1e9f2;border-radius:8px;background:#f3f6fa;text-align:center}
 .goal-hero-metric strong{color:#124c91;font-size:13px;line-height:1.15;font-weight:750;overflow-wrap:anywhere}
 .goal-hero-metric span{color:#49637e;font-size:9px;line-height:1.25;font-weight:650;letter-spacing:.35px;text-transform:uppercase}
 .goal-hero-metric.logged strong{color:#13835d}
@@ -48,7 +48,7 @@
 .goal-section-heading>svg{color:#56728f}
 .goal-section-heading h3{margin-top:2px;color:#17385e;font-size:13px;font-weight:700;letter-spacing:-.1px}
 .goal-activity-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.goal-activity-metric{display:flex;min-height:64px;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 7px;border:1px solid #dfe7f1;border-radius:9px;background:#f1f5fa;text-align:center}
+.goal-activity-metric{display:flex;min-height:64px;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 7px;border:1px solid #dfe7f1;border-radius:8px;background:#f1f5fa;text-align:center}
 .goal-activity-metric strong{color:#13835d;font-size:17px;line-height:1.15;font-weight:750;overflow-wrap:anywhere}
 .goal-activity-metric span{color:#3d5875;font-size:9px;line-height:1.3;font-weight:650;letter-spacing:.3px;text-transform:uppercase}
 .goal-activity-metric.waiting{background:#fbf6ea;border-color:#f0e3c5}

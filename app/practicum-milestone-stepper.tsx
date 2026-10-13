@@ -5,7 +5,6 @@ import type {LucideIcon} from 'lucide-react';
 import {
   ArrowRight,
   Award,
-  BookOpen,
   BriefcaseBusiness,
   Check,
   Clock,
@@ -328,27 +327,33 @@ export default function PracticumMilestoneStepper({
     currentPhaseLabel = 'Cohort Monitoring Matrix';
   } else {
     // Super Admin view
-    const disabledUsers = data.users.filter(u => u.status === 'DISABLED').length;
-    const activePlacements = data.placements.filter(p => p.status === 'ACTIVE');
-    const classes = data.classes.filter(c => !Number(c.revoked));
-    const reportedMinutes = data.entries.reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
-    const confirmedMinutes = data.entries.filter(e => e.confirmedVersion === e.version)
-      .reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
+    const studentAccounts = data.studentAccountSummary ?? [];
+    const studentCount = studentAccounts.reduce((total, course) => total + Number(course.total ?? 0), 0);
+    const disabledStudents = studentAccounts.reduce((total, course) => total + Number(course.disabled ?? 0), 0);
+    const officeAccounts = data.users.filter(user => user.role !== 'STUDENT');
+    const totalAccounts = officeAccounts.length + studentCount;
+    const disabledUsers = officeAccounts.filter(user => user.status === 'DISABLED').length + disabledStudents;
+    const pendingCompanies = data.companies.filter(company => company.status === 'PENDING');
+    const verifiedCompanies = data.companies.filter(company => company.status === 'APPROVED');
+    const pendingPosts = data.jobs.filter(job => job.status === 'DRAFT');
+    const publishedPosts = data.jobs.filter(job => job.status === 'PUBLISHED');
 
     steps = [
       {
         id: 'adm-accounts',
         phase: 'SYSTEM 01',
         title: 'Accounts & Access',
-        status: data.users.length ? 'current' : 'empty',
-        badgeLabel: data.users.length ? 'Active' : 'No accounts',
-        kpiValue: `${data.users.length} Users`,
+        status: totalAccounts ? 'current' : 'empty',
+        badgeLabel: totalAccounts ? 'Active' : 'No accounts',
+        kpiValue: `${totalAccounts} Accounts`,
         kpiSubLabel: `${disabledUsers} disabled accounts`,
         detail: 'Provision sample accounts and manage roles',
         to: 'accounts',
         icon: ShieldCheck,
         metrics: [
-          {label: 'Accounts', value: String(data.users.length)},
+          {label: 'Accounts', value: String(totalAccounts)},
+          {label: 'Students', value: String(studentCount)},
+          {label: 'Office & staff', value: String(officeAccounts.length)},
           {label: 'Disabled', value: String(disabledUsers)},
         ],
       },
@@ -369,39 +374,42 @@ export default function PracticumMilestoneStepper({
         ],
       },
       {
-        id: 'adm-classes',
+        id: 'adm-partners',
         phase: 'SYSTEM 03',
-        title: 'Sections & Cohorts',
-        status: classes.length ? 'current' : 'empty',
-        badgeLabel: classes.length ? 'Active' : 'No sections',
-        kpiValue: `${classes.length} Classes`,
-        kpiSubLabel: 'Coordinator-led spaces',
-        detail: 'Enrollment codes & student memberships',
-        to: 'classes',
-        icon: BookOpen,
-        metrics: [{label: 'Class spaces', value: String(classes.length)}],
-      },
-      {
-        id: 'adm-placements',
-        phase: 'SYSTEM 04',
-        title: 'Active Placements',
-        status: activePlacements.length ? 'current' : 'empty',
-        badgeLabel: activePlacements.length ? 'Active' : 'No placements',
-        kpiValue: `${activePlacements.length} Placements`,
-        kpiSubLabel: 'Institutional records in view',
-        detail: `${data.companies.length} verified partner establishments`,
-        to: 'attendance',
+        title: 'Training Partners',
+        status: pendingCompanies.length ? 'attention' : data.companies.length ? 'clear' : 'empty',
+        badgeLabel: pendingCompanies.length ? 'Needs verification' : data.companies.length ? 'Up to date' : 'No partners',
+        kpiValue: `${data.companies.length} Partners`,
+        kpiSubLabel: `${pendingCompanies.length} awaiting verification`,
+        detail: 'Verify organizations that want to host students',
+        to: 'jobs',
         icon: BriefcaseBusiness,
         metrics: [
-          {label: 'Active placements', value: String(activePlacements.length)},
-          {label: 'Partner companies', value: String(data.companies.length)},
-          {label: 'Reported hours · all records', value: hours(reportedMinutes)},
-          {label: 'Confirmed hours · all records', value: hours(confirmedMinutes)},
+          {label: 'Awaiting verification', value: String(pendingCompanies.length)},
+          {label: 'Verified partners', value: String(verifiedCompanies.length)},
+          {label: 'Total profiles', value: String(data.companies.length)},
+        ],
+      },
+      {
+        id: 'adm-posts',
+        phase: 'SYSTEM 04',
+        title: 'Internship Approvals',
+        status: pendingPosts.length ? 'attention' : data.jobs.length ? 'clear' : 'empty',
+        badgeLabel: pendingPosts.length ? 'Needs review' : data.jobs.length ? 'Queue clear' : 'No postings',
+        kpiValue: `${pendingPosts.length} Pending`,
+        kpiSubLabel: `${publishedPosts.length} published openings`,
+        detail: 'Review internship posts before they appear to students',
+        to: 'jobs',
+        icon: ShieldCheck,
+        metrics: [
+          {label: 'Awaiting approval', value: String(pendingPosts.length)},
+          {label: 'Published openings', value: String(publishedPosts.length)},
+          {label: 'Total posts', value: String(data.jobs.length)},
         ],
       },
     ];
 
-    currentPhaseLabel = 'Institutional Operations Matrix';
+    currentPhaseLabel = 'University Office Overview';
   }
 
   const [active, setActive] = useState<{id: string; pinned: boolean} | null>(null);

@@ -12,7 +12,6 @@ export interface PreparedStatement {
   first<T extends RowResult = RowResult>(): Promise<T | null>;
   run(): Promise<unknown>;
 }
-
 export interface DemoDatabase {
   prepare(sql: string): PreparedStatement;
   batch(statements: PreparedStatement[]): Promise<unknown[]>;
@@ -25,7 +24,7 @@ function compilePostgres(sql: string, values: Values): [string, Values] {
   let query = sql.trim();
 
   // The notification table is owned by a Prisma migration, not created at runtime.
-  if (/^CREATE TABLE IF NOT EXISTS notifications\b/i.test(query)) return ['', []];
+  if (/^CREATE TABLE IF NOT EXISTS (notifications|outcome_decisions|industry_feedback)\b/i.test(query)) return ['', []];
 
   query = query.replace(/datetime\('now'\)/gi, "CURRENT_TIMESTAMP::text");
   query = query.replace(/^INSERT\s+OR\s+REPLACE\s+INTO\s+seed_state\b/i, 'INSERT INTO seed_state');
@@ -99,7 +98,7 @@ class PrismaDemoDatabase implements DemoDatabase {
   prepare(sql: string): BoundStatement {
     return new BoundStatement(
       sql,
-      (query, values) => this.client.$queryRawUnsafe<RowResult[]>(query, ...values),
+      (query, values) => this.client.$queryRawUnsafe(query, ...values) as Promise<RowResult[]>,
       (query, values) => this.client.$executeRawUnsafe(query, ...values),
     );
   }
@@ -187,7 +186,7 @@ export async function seed() {
     }
   }
 
-  // Promote the existing fictional HTE account for quick demo sign-in without reseeding or resetting demo edits.
+  // Promote the existing fictional HTE account for password sign-in without reseeding or resetting demo edits.
   await db.prepare("UPDATE users SET is_demo=1 WHERE id=? AND username=? AND role=?").bind('demo-supervisor', 'demo.supervisor', 'SUPERVISOR').run();
 
   const existingSeed = await db.prepare("SELECT value FROM seed_state WHERE key='seed-v5'").first();
@@ -211,6 +210,8 @@ export async function seed() {
   }
   for (const [id, name, course] of [['student-2', 'Sofia Mendoza', 'course-business'], ['student-3', 'Ethan Flores', 'course-it'], ['student-4', 'Mia Garcia', 'course-education'], ['student-5', 'Luca Tan', 'course-it'], ['student-completed', 'Nina Ramos', 'course-it']]) add('users', id, { name, username: id, email: `${id}@example.invalid`, role: 'STUDENT', course_id: course, is_demo: 0 });
   add('users', 'coordinator-other', { name: 'Patricia Lim', username: 'coordinator.other', email: 'patricia@example.invalid', role: 'COORDINATOR', is_demo: 0 });
+  add('users', 'supervisor-northstar', { name: 'Engr. Marc Torres', username: 'supervisor.northstar', email: 'marc.torres@northstar.example.com', role: 'SUPERVISOR', course_id: null, company_id: 'company-northstar', supervisor_verified: 1, is_demo: 0 });
+  add('users', 'supervisor-brightside', { name: 'Dr. Elena Cruz', username: 'supervisor.brightside', email: 'elena.cruz@brightside.example.com', role: 'SUPERVISOR', course_id: null, company_id: 'company-brightside', supervisor_verified: 1, is_demo: 0 });
   for (const [id, name, code] of [['dept-it', 'Computing & Technology', 'CCT'], ['dept-business', 'Business & Management', 'CBM'], ['dept-education', 'Teacher Education', 'CED']]) add('departments', id, { name, code });
   for (const [id, department, name, code] of [['course-it', 'dept-it', 'BS Information Technology', 'BSIT'], ['course-business', 'dept-business', 'BS Business Administration', 'BSBA'], ['course-education', 'dept-education', 'BS Education', 'BSED']]) add('courses', id, { department_id: department, name, code });
   for (const [id, name, section, course, coordinator, code, expires, revoked, rep, vice] of [['class-it', 'OJT Practicum', 'BSIT 4-A', 'course-it', 'demo-coordinator', 'SYNC4A', null, 0, 'demo-student', 'student-5'], ['class-it-b', 'OJT Practicum', 'BSIT 4-B', 'course-it', 'demo-coordinator', 'SYNC4B', null, 0, 'student-3', null], ['class-business', 'Business Practicum', 'BSBA 4-A', 'course-business', 'demo-coordinator', 'BIZ4A', null, 0, 'student-2', null], ['class-ed', 'Teaching Internship', 'BSED 4-A', 'course-education', 'coordinator-other', 'EDUC4A', null, 0, 'student-4', null], ['class-expired', 'Archived Practicum', 'BSIT 3-X', 'course-it', 'demo-coordinator', 'EXPIRED', '2026-01-01', 0, null, null], ['class-revoked', 'Archived Practicum', 'BSIT 3-Y', 'course-it', 'demo-coordinator', 'REVOKED', null, 1, null, null]] as const) {
@@ -261,6 +262,13 @@ export async function seed() {
     ['notif-7', 'demo-coordinator', 'Document Awaiting Review', 'Parent / guardian consent form was submitted in BSIT 4-A.', 'DOCUMENT', 'document', 'doc-placement-1-2', 'documents', '2026-10-02T08:00:00Z'],
     ['notif-8', 'demo-admin', 'Policy Baseline Active', 'Course policy v1 active for Computing & Technology (480 required hours).', 'POLICY', 'policy', 'policy-course-it', 'policies', '2026-10-01T00:00:00Z'],
   ] as const) add('notifications', id, { user_id: userId, title, message, type, resource_type: resourceType, resource_id: resourceId, link_page: linkPage, read_at: readAt });
+  add('outcome_decisions', 'outcome-dec-1', { placement_id: 'placement-completed', coordinator_id: 'demo-coordinator', decision: 'EXEMPLARY', rationale: 'Demonstrated exemplary technical mastery and consistent communication across all evaluation periods.', rubric_version: 1, calculated_score: 4.25, calculated_status: 'ACHIEVED' });
+  add('assignments', 'assign-completed', { placement_id: 'placement-completed', supervisor_id: 'supervisor-northstar', active: 1 });
+  add('assignments', 'assign-4', { placement_id: 'placement-4', supervisor_id: 'supervisor-brightside', active: 1 });
+  add('industry_feedback', 'ind-feed-1', { placement_id: 'placement-completed', company_id: 'company-northstar', supervisor_id: 'supervisor-northstar', course_id: 'course-it', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 5, competency_relevance: 4, supervision_support: 5, curriculum_alignment: 4, technical_gaps: 'Git branching workflows, Docker containerization basics', soft_skill_gaps: 'Sprint grooming communication', recommendations: 'Strong foundation in React and TypeScript. Recommend incorporating hands-on Git conflict resolution and containerized deployment in the curriculum.', status: 'SUBMITTED' });
+  add('industry_feedback', 'ind-feed-2', { placement_id: 'placement-1', company_id: 'company-northstar', supervisor_id: 'supervisor-northstar', course_id: 'course-it', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 4, supervision_support: 4, curriculum_alignment: 3, technical_gaps: 'Automated testing (Vitest/Jest), API contract validation', soft_skill_gaps: 'Client-facing status updates', recommendations: 'Student demonstrates quick learning and good problem solving. More emphasis on test-driven development and API integration would enhance readiness.', status: 'SUBMITTED' });
+  add('industry_feedback', 'ind-feed-3', { placement_id: 'placement-3', company_id: 'company-northstar', supervisor_id: 'supervisor-northstar', course_id: 'course-it', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 5, supervision_support: 4, curriculum_alignment: 4, technical_gaps: 'SQL query optimization, Relational indexing', soft_skill_gaps: 'None observed', recommendations: 'Overall well prepared for engineering tasks. Integrating database performance tuning into advanced database subjects would be beneficial.', status: 'SUBMITTED' });
+  add('industry_feedback', 'ind-feed-4', { placement_id: 'placement-4', company_id: 'company-brightside', supervisor_id: 'supervisor-brightside', course_id: 'course-education', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 5, supervision_support: 5, curriculum_alignment: 4, technical_gaps: 'Digital lesson planning tools', soft_skill_gaps: 'Parent-teacher conference facilitation', recommendations: 'Very strong pedagogy and classroom presence. Training on blended learning management systems would be a great addition.', status: 'SUBMITTED' });
   statements.push(db.prepare("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v5','20261011')"));
   for (let index = 0; index < statements.length; index += 80) await db.batch(statements.slice(index, index + 80));
   await ensureSchedules();

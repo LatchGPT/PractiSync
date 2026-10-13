@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {seed,one,list,installTestDatabase,type DemoDatabase,type PreparedStatement} from '../packages/db/demo';
 import {snapshot} from '../packages/domain/read';
 import {mutate} from '../packages/domain/actions';
-import {authHandler,identity} from '../packages/auth/auth';
+import {authHandler,identity,limit} from '../packages/auth/auth';
 import {demoAllowed,calculateMinutes} from '../packages/domain/policies';
 import {sampleFor} from '../packages/test-utils/fixtures';
 import type {Identity} from '../packages/validation/contracts';
@@ -12,10 +12,10 @@ import {guestEvaluationContext,submitGuestEvaluation} from '../packages/domain/i
 let sql:DatabaseSync;
 function prepared(query:string,values:(string|number|null)[]=[]):PreparedStatement{return {bind:(...args:(string|number|null)[])=>prepared(query,args),all:async<T extends Record<string,unknown>>()=>({results:sql.prepare(query).all(...values) as T[]}),first:async<T extends Record<string,unknown>>()=>sql.prepare(query).get(...values) as T|null??null,run:async()=>({meta:sql.prepare(query).run(...values)})};}
 const users={} as Record<string,Identity>;
-beforeAll(async()=>{vi.stubEnv('DEPLOYMENT_MODE','demo');vi.stubEnv('DEMO_ENABLED','true');vi.stubEnv('AUTH_SECRET','test-secret-that-is-not-a-production-secret');sql=new DatabaseSync(':memory:');const migration=readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql','utf8').split('INSERT INTO "assessment_schedules"')[0]!;sql.exec(migration);sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql','utf8'));sql.exec(`CREATE TRIGGER test_scoped_entry BEFORE INSERT ON entries BEGIN SELECT RAISE(ABORT, 'Invalid scoped relationship') WHERE NOT EXISTS (SELECT 1 FROM placements WHERE id=NEW.placement_id AND tenant_id=NEW.tenant_id); END; CREATE TRIGGER test_final_application BEFORE UPDATE OF status ON applications WHEN OLD.status IN ('ACCEPTED','REJECTED') AND NEW.status<>OLD.status BEGIN SELECT RAISE(ABORT, 'Application final decision is immutable'); END;`);const database:DemoDatabase={prepare:(query)=>prepared(query),batch:async(statements)=>{sql.exec('BEGIN');try{const values=[];for(const statement of statements)values.push(await statement.run());sql.exec('COMMIT');return values;}catch(e){sql.exec('ROLLBACK');throw e;}}};installTestDatabase(database);await seed();for(const role of ['student','coordinator','admin'])users[role]=await one('SELECT * FROM users WHERE id=?','demo-'+role) as unknown as Identity;users.supervisor=await one('SELECT * FROM users WHERE id=?','demo-supervisor') as unknown as Identity;});
+beforeAll(async()=>{vi.stubEnv('DEPLOYMENT_MODE','demo');vi.stubEnv('DEMO_ENABLED','true');vi.stubEnv('AUTH_SECRET','test-secret-that-is-not-a-production-secret');sql=new DatabaseSync(':memory:');const migration=readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql','utf8').split('INSERT INTO "assessment_schedules"')[0]!;sql.exec(migration);sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql','utf8'));sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql','utf8').replace(/--> statement-breakpoint/g,''));sql.exec(readFileSync('drizzle/0008_industry_feedback.sql','utf8'));sql.exec(`CREATE TRIGGER test_scoped_entry BEFORE INSERT ON entries BEGIN SELECT RAISE(ABORT, 'Invalid scoped relationship') WHERE NOT EXISTS (SELECT 1 FROM placements WHERE id=NEW.placement_id AND tenant_id=NEW.tenant_id); END; CREATE TRIGGER test_final_application BEFORE UPDATE OF status ON applications WHEN OLD.status IN ('ACCEPTED','REJECTED') AND NEW.status<>OLD.status BEGIN SELECT RAISE(ABORT, 'Application final decision is immutable'); END;`);const database:DemoDatabase={prepare:(query)=>prepared(query),batch:async(statements)=>{sql.exec('BEGIN');try{const values=[];for(const statement of statements)values.push(await statement.run());sql.exec('COMMIT');return values;}catch(e){sql.exec('ROLLBACK');throw e;}}};installTestDatabase(database);await seed();for(const role of ['student','coordinator','admin'])users[role]=await one('SELECT * FROM users WHERE id=?','demo-'+role) as unknown as Identity;users.supervisor=await one('SELECT * FROM users WHERE id=?','demo-supervisor') as unknown as Identity;});
 afterAll(()=>{installTestDatabase(undefined);vi.unstubAllEnvs();});
 describe('foundations and isolation',()=>{
- it('seeds all four quick sign-in accounts idempotently and promotes the HTE fixture',async()=>{const before=await list('SELECT * FROM entries');sql.prepare('UPDATE users SET is_demo=0 WHERE id=?').run('demo-supervisor');await seed();expect((await list('SELECT * FROM users WHERE is_demo=1')).length).toBe(4);expect((await one('SELECT is_demo FROM users WHERE id=?','demo-supervisor'))?.isDemo).toBe(1);expect((await list('SELECT * FROM entries')).length).toBe(before.length);});
+ it('seeds four demo identities idempotently and promotes the password-based HTE fixture',async()=>{const before=await list('SELECT * FROM entries');sql.prepare('UPDATE users SET is_demo=0 WHERE id=?').run('demo-supervisor');await seed();expect((await list('SELECT * FROM users WHERE is_demo=1')).length).toBe(4);expect((await one('SELECT is_demo FROM users WHERE id=?','demo-supervisor'))?.isDemo).toBe(1);expect((await list('SELECT * FROM entries')).length).toBe(before.length);});
  it('fails closed outside isolated demo',()=>{expect(demoAllowed('institutional','true')).toBe(false);expect(demoAllowed('demo','false')).toBe(false);});
  it('student cannot see another placement or private case',async()=>{const s=await snapshot(users.student);expect(s.placements.every(p=>p.studentId===users.student.id)).toBe(true);expect(s.incidents.map(i=>i.id)).toEqual(['case-1']);expect(s.classes.length).toBe(1);expect(s.classes[0]?.coordinatorName).toBe('Andrea Santos');await expect(mutate(users.student,'dtr',{placementId:'placement-2',date:'2026-10-01',startsAt:'2026-10-01T08:00',endsAt:'2026-10-01T17:00',breakMinutes:60,narrative:'Scope-negative test'})).rejects.toThrow('access denied');});
  it('coordinator sees assigned class placements and routed SOS cases',async()=>{const s=await snapshot(users.coordinator);expect(s.placements.length).toBeGreaterThan(0);expect(s.incidents.length).toBeGreaterThan(0);});
@@ -183,6 +183,43 @@ describe('foundations and isolation',()=>{
  it('triggers notifications for document review, attendance confirmation, support cases, and announcements',async()=>{await mutate(users.coordinator,'documentReview',{documentId:'doc-placement-1-2',status:'APPROVED',reason:'All requirements verified.'});const docNotif=await one('SELECT * FROM notifications WHERE user_id=? AND resource_id=? AND type=\'DOCUMENT\'',users.student.id,'doc-placement-1-2');expect(docNotif).not.toBeNull();expect(docNotif?.title).toBe('Document Clearance Approved');await mutate(users.student,'incident',{placementId:'placement-1',subject:'Urgent schedule question',narrative:'Need to clarify company shift changes.'});const caseNotif=await one('SELECT * FROM notifications WHERE user_id=? AND type=\'SUPPORT\' ORDER BY created_at DESC LIMIT 1',users.coordinator.id);expect(caseNotif).not.toBeNull();expect(caseNotif?.title).toBe('New Student Support Inquiry');await mutate(users.coordinator,'announcement',{title:'Midterm Checklist Released',body:'Review all DTRs before Friday.',classId:'class-it'});const annNotif=await one('SELECT * FROM notifications WHERE user_id=? AND type=\'ANNOUNCEMENT\' AND title=?','demo-student','New Class Announcement');expect(annNotif).not.toBeNull();});
 });
 
+describe('PSS-26 to PSS-29 workflow regressions',()=>{
+ it('unverified HTEs cannot view applicants, create posts, or select candidates',async()=>{
+  sql.prepare('INSERT INTO users (id,tenant_id,created_at,name,username,email,role,status,password_hash,session_version,is_demo,course_id,company_id,supervisor_verified,can_post) VALUES (?,?,?,?,?,?,?,\'ACTIVE\',NULL,1,0,NULL,NULL,0,0)').run('supervisor-pending-ticket','fictional-university','2026-10-12T00:00:00Z','Pending Supervisor','pending.ticket','pending.ticket@example.invalid','SUPERVISOR');
+  const pending=await one('SELECT * FROM users WHERE id=?','supervisor-pending-ticket') as unknown as Identity;
+  const profile=await mutate(pending,'companyProfile',{name:'Pending Fictional Partner',industry:'Technology',location:'Pasig',description:'Pending profile.'});
+  const refreshed=await one('SELECT * FROM users WHERE id=?','supervisor-pending-ticket') as unknown as Identity;
+  expect((await snapshot(refreshed)).applications).toEqual([]);
+  expect((await snapshot(refreshed)).placements).toEqual([]);
+  await expect(mutate(refreshed,'job',{title:'Unverified post',description:'Hidden until approval.',location:'Pasig',courseId:'course-it',skills:'Testing',openings:1})).rejects.toThrow('verified company profile');
+  await expect(mutate(refreshed,'selectApplication',{applicationId:'app-1',decision:'SHORTLISTED'})).rejects.toThrow('verified company profile');
+  expect((await one('SELECT status FROM companies WHERE id=?',profile.id!))?.status).toBe('PENDING');
+ });
+ it('HTEs only see and select applicants on their own published posts',async()=>{
+  const draft=await mutate(users.supervisor,'job',{title:'Hidden draft',description:'Not public yet.',location:'Pasig',courseId:'course-it',skills:'Testing',openings:1});
+  sql.prepare('INSERT INTO applications (id,tenant_id,created_at,job_id,student_id,cover_letter,status) VALUES (?,?,?,?,?,?,\'SUBMITTED\')').run('app-draft-ticket','fictional-university','2026-10-12T00:00:00Z',draft.id!,'student-2','Fictional application.');
+  expect((await snapshot(users.supervisor)).applications.some(application=>application.id==='app-draft-ticket')).toBe(false);
+  await expect(mutate(users.supervisor,'selectApplication',{applicationId:'app-draft-ticket',decision:'SHORTLISTED'})).rejects.toThrow('not available');
+ });
+ it('guest links stop revealing data when their issuing coordinator loses scope and rate-limit attempts',async()=>{
+  const issue=await mutate(users.coordinator,'guestEvaluationLink',{placementId:'placement-1',expiresInDays:7});
+  const token=issue.url!.split('/').pop()!;
+  sql.prepare('UPDATE classes SET coordinator_id=? WHERE id=?').run(users.admin.id,'class-it');
+  await expect(guestEvaluationContext(token,issue.accessCode!)).rejects.toThrow('unavailable');
+  sql.prepare('UPDATE classes SET coordinator_id=? WHERE id=?').run(users.coordinator.id,'class-it');
+  const key=`guest-evaluation-test:${crypto.randomUUID()}`;
+  for(let attempt=0;attempt<5;attempt++)await limit(key,5);
+  await expect(limit(key,5)).rejects.toThrow('Too many attempts');
+ });
+ it('completion forms reject extra fields and cross-student placement access',async()=>{
+  sql.prepare('UPDATE placements SET required_minutes=1 WHERE id=?').run('placement-1');
+  const self={technicalSkills:4,communication:4,professionalism:5,problemSolving:4,reflection:'A valid reflection.'};
+  await expect(mutate(users.student,'completionForm',{placementId:'placement-1',formType:'FINAL_SELF_ASSESSMENT',answers:{...self,unexpected:'extra'}})).rejects.toThrow('required question');
+  const other=await one('SELECT * FROM users WHERE id=?','student-2') as unknown as Identity;
+  await expect(mutate(other,'completionForm',{placementId:'placement-1',formType:'FINAL_SELF_ASSESSMENT',answers:self})).rejects.toThrow('configured placement');
+ });
+});
+
 describe('Auth.js Request/Response smoke checks',()=>{
  const origin='http://auth-test.local';
  function cookies(response:Response){return response.headers.getSetCookie().map(v=>v.split(';')[0]);}
@@ -193,7 +230,7 @@ describe('Auth.js Request/Response smoke checks',()=>{
   const result=await response.json() as {url:string};
   return {result,request:new Request(origin+'/api/data',{headers:{Cookie:cookies(response).join('; ')}})};
  }
- it('all four quick sign-ins use Auth.js cookies and reload their scoped identity',async()=>{for(const role of ['student','coordinator','admin','supervisor']){const {result,request}=await signIn({demoId:'demo-'+role});expect(result.url).not.toContain('error=');const user=await identity(request);expect(user.id).toBe('demo-'+role);expect(user.isDemo).toBe(1);expect(user).not.toHaveProperty('passwordHash');}const bad=await signIn({demoId:'demo-not-a-real-account'});expect(bad.result.url).toContain('error=');});
+ it('three quick sign-ins use Auth.js cookies and the HTE quick path is disabled',async()=>{for(const role of ['student','coordinator','admin']){const {result,request}=await signIn({demoId:'demo-'+role});expect(result.url).not.toContain('error=');const user=await identity(request);expect(user.id).toBe('demo-'+role);expect(user.isDemo).toBe(1);expect(user).not.toHaveProperty('passwordHash');}const hteQuick=await signIn({demoId:'demo-supervisor'});expect(hteQuick.result.url).toContain('error=');const bad=await signIn({demoId:'demo-not-a-real-account'});expect(bad.result.url).toContain('error=');});
  it('username/password still works for the HTE account',async()=>{const good=await signIn({username:'demo.student',password:'Demo@2026!'});expect((await identity(good.request)).id).toBe('demo-student');const hte=await signIn({username:'demo.supervisor',password:'Demo@2026!'});expect((await identity(hte.request)).role).toBe('SUPERVISOR');const bad=await signIn({username:'demo.student',password:'incorrect-password'});expect(bad.result.url).toContain('error=');await expect(identity(bad.request)).rejects.toThrow('sign in');});
  it('stale signed session fails after version revocation',async()=>{const signed=await signIn({demoId:'demo-student'});sql.prepare('UPDATE users SET session_version=session_version+1 WHERE id=?').run('demo-student');await expect(identity(signed.request)).rejects.toThrow('sign in');});
 });

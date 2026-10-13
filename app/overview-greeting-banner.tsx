@@ -265,7 +265,7 @@ export default function OverviewGreetingBanner({
       <div className="banner-content">
         <div className="banner-eyebrow">
           <Sparkles size={13} className="banner-sparkle-icon" />
-          <span>INSTITUTIONAL ADMINISTRATION · RIZAL TECHNOLOGICAL UNIVERSITY</span>
+          <span>UNIVERSITY OFFICE · RIZAL TECHNOLOGICAL UNIVERSITY</span>
         </div>
 
         <h1 className="banner-title">
@@ -274,7 +274,7 @@ export default function OverviewGreetingBanner({
 
         <p className="banner-subtitle">
           <ShieldCheck size={15} />
-          <span>Rizal Technological University OJT Portal</span>
+          <span>Practicum Office Administration</span>
         </p>
 
         <div className="banner-pills">

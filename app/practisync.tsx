@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import {useState,useEffect,useCallback,type CSSProperties} from 'react';
 import {useForm,Controller} from 'react-hook-form';
 import {toast,Toaster} from 'sonner';
@@ -10,7 +11,7 @@ import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/compo
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/tabs';
 import {Table,TableHeader,TableBody,TableHead,TableRow,TableCell} from '@/components/ui/table';
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from '@/components/ui/dropdown-menu';
-import {sampleFor,demoAccounts,type FormValues} from '@/packages/test-utils/fixtures';
+import {sampleFor,quickDemoAccounts as demoAccounts,type FormValues} from '@/packages/test-utils/fixtures';
 import RoleDashboard from './role-dashboard';
 import AssessmentWorkspace from './assessment-workspace';
 import OverviewGreetingBanner from './overview-greeting-banner';
@@ -181,24 +182,24 @@ export default function PractiSync({initial,initialError,demo,authConfigured}:{i
  };
  const accountColumns=[{label:'ACCOUNT',render:(account:Row)=><div style={{display:'flex',gap:10,alignItems:'center'}}><span className="avatar" style={{height:31,width:31,fontSize:10}}>{initials(s(account,'name'))}</span><div><strong>{s(account,'name')}</strong><p style={{fontSize:11,color:'#607791',marginTop:3}}>{s(account,'username')}</p></div></div>},{label:'EMAIL',render:(account:Row)=>s(account,'email')},{label:'ROLE',render:(account:Row)=><span className="chip">{titleRole[s(account,'role')]}</span>},{label:'STATUS',render:(account:Row)=><Badge value={s(account,'status')}/>},{label:'',render:(account:Row)=>n(account,'isDemo')?<span className="small muted">Fixed demo account</span>:<button className="textbutton" onClick={()=>open('role','Manage account access',[{name:'role',label:'Assigned role',options:accountRoleOptions},{name:'status',label:'Account status',options:[{value:'ACTIVE',label:'Active'},{value:'DISABLED',label:'Disabled'}]}],{userId:account.id,role:s(account,'role'),status:s(account,'status')},{},false,'Role or status changes revoke existing sessions.','Update access')}>Manage</button>}];
  return accountsView==='overview'?<div className="account-type-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,260px),1fr))',gap:16,alignItems:'stretch'}}>
-  <a href="/?view=accounts&group=staff" className="account-type-card" style={accountCardStyle} onClick={event=>{event.preventDefault();openGroup('staff');}}>
+  <Link href="/?view=accounts&group=staff" className="account-type-card" style={accountCardStyle} onClick={event=>{event.preventDefault();openGroup('staff');}}>
    <div className="account-type-card-top" style={accountCardTopStyle}><span className="company-symbol"><Users size={21}/></span><span className="chip">Office team</span></div>
    <h2 style={{fontSize:17,fontWeight:700,lineHeight:1.3,color:'#153d73'}}>Coordinators &amp; staff</h2><p style={accountCardCopyStyle}>University office administrators and coordinators who support practicum operations.</p>
    <strong className="account-type-count" style={accountCardCountStyle}>{allStaffAccounts.length.toLocaleString()} <small>accounts</small></strong>
    <span className="account-type-card-cta" style={accountCardCtaStyle}>View accounts <ChevronRight size={16}/></span>
-  </a>
-  <a href="/?view=accounts&group=students" className="account-type-card" style={accountCardStyle} onClick={event=>{event.preventDefault();openGroup('students');}}>
+  </Link>
+  <Link href="/?view=accounts&group=students" className="account-type-card" style={accountCardStyle} onClick={event=>{event.preventDefault();openGroup('students');}}>
    <div className="account-type-card-top" style={accountCardTopStyle}><span className="company-symbol"><GraduationCap size={21}/></span><span className="chip blue">University-wide</span></div>
    <h2 style={{fontSize:17,fontWeight:700,lineHeight:1.3,color:'#153d73'}}>Students</h2><p style={accountCardCopyStyle}>Student access across every program, with individual records available in the directory.</p>
    <strong className="account-type-count" style={accountCardCountStyle}>{totalStudents.toLocaleString()} <small>accounts</small></strong>
    <span className="account-type-card-cta" style={accountCardCtaStyle}>View accounts <ChevronRight size={16}/></span>
-  </a>
-  <a href="/?view=accounts&group=hte" className="account-type-card" style={accountCardStyle} onClick={event=>{event.preventDefault();openGroup('hte');}}>
+  </Link>
+  <Link href="/?view=accounts&group=hte" className="account-type-card" style={accountCardStyle} onClick={event=>{event.preventDefault();openGroup('hte');}}>
    <div className="account-type-card-top" style={accountCardTopStyle}><span className="company-symbol"><BriefcaseBusiness size={21}/></span><span className="chip orange">Training partners</span></div>
    <h2 style={{fontSize:17,fontWeight:700,lineHeight:1.3,color:'#153d73'}}>HTE accounts</h2><p style={accountCardCopyStyle}>Host Training Establishment supervisor accounts and access status.</p>
    <strong className="account-type-count" style={accountCardCountStyle}>{allHteAccounts.length.toLocaleString()} <small>accounts</small></strong>
    <span className="account-type-card-cta" style={accountCardCtaStyle}>View accounts <ChevronRight size={16}/></span>
-  </a>
+  </Link>
  </div>:accountsView==='students'?<>
   <Toolbar options={[{value:'ALL',label:'All statuses'},{value:'ACTIVE',label:'Active'},{value:'DISABLED',label:'Disabled'}]} search={studentDirectorySearch} setSearch={value=>{setStudentDirectorySearch(value);setStudentDirectoryPage(1);}} filter={studentDirectoryStatus} setFilter={value=>{setStudentDirectoryStatus(value);setStudentDirectoryPage(1);}} hidePeriod/>
   <Panel title="Student accounts" description={totalStudents.toLocaleString()+' students across '+studentSummary.length+' programs. Search or filter to manage an individual student account.'} action={<span className="chip blue">{totalStudents.toLocaleString()} students</span>}>

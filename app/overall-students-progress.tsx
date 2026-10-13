@@ -180,9 +180,9 @@ export default function OverallStudentsProgress({
                   <div className="student-bars-header">
                     <div>
                       <strong>{hours(repMins)}</strong>
-                      <span style={{ margin: '0 4px', color: '#8aa0b8' }}>/</span>
+                      <span style={{ margin: '0 4px', color: 'var(--muted-foreground)' }}>/</span>
                       <span>{targetMins ? hours(targetMins) : 'No target'}</span>
-                      <strong style={{ marginLeft: 8, color: '#185399' }}>({percentReported}%)</strong>
+                      <strong style={{ marginLeft: 8, color: 'var(--primary)' }}>({percentReported}%)</strong>
                     </div>
                     <span className="student-bars-confirmed">{hours(confMins)} confirmed</span>
                   </div>

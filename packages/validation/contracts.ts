@@ -3,7 +3,8 @@ export const roles=['SUPER_ADMIN','COORDINATOR','SUPERVISOR','STUDENT'] as const
 export type Role=typeof roles[number];
 export type Row={id:string;tenantId:string;createdAt:string;[key:string]:string|number|null};
 export interface Identity {id:string;name:string;username:string;email:string;role:Role;status:string;sessionVersion:number;isDemo:number;courseId:string|null;companyId:string|null;tenantId:string;}
-export interface Snapshot {user:Identity;users:Row[];studentAccountSummary?:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];completionResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];}
+export interface StudentAccountSummary extends Row {courseId:string|null;courseCode:string|null;courseName:string|null;total:number;active:number;disabled:number;}
+export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];outcomeDecisions:Row[];industryFeedback:Row[];completionResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];studentAccountSummary?:StudentAccountSummary[];}
 const str=(max=500)=>z.string().trim().min(1).max(max);
 export const dtrInput=z.object({placementId:str(),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),startsAt:str(),endsAt:str(),breakMinutes:z.coerce.number().int().min(0),narrative:str(8000),entryId:z.string().optional(),version:z.coerce.number().int().optional(),reason:z.string().max(1000).optional()});
 export const inputs={
@@ -38,6 +39,8 @@ export const inputs={
  assessmentSchedule:z.object({courseId:str(),cadence:z.enum(['WEEKLY','MONTHLY','BOTH']),version:z.coerce.number().int().min(0)}),
  evaluation:z.object({placementId:str(),kind:z.enum(['WEEKLY','MONTHLY']),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),version:z.coerce.number().int().min(1).optional(),technical:z.coerce.number().int().min(1).max(5),communication:z.coerce.number().int().min(1).max(5),professionalism:z.coerce.number().int().min(1).max(5),problemSolving:z.coerce.number().int().min(1).max(5)}),
  evaluationReview:z.object({evaluationId:str(),decision:z.enum(['APPROVED','REVISION_REQUESTED']),note:z.string().trim().max(1000).optional()}),
+ outcomeDecision:z.object({placementId:str(),decision:z.enum(['EXEMPLARY','SATISFACTORY','NEEDS_REINFORCEMENT','UNSATISFACTORY']),rationale:z.string().trim().min(5).max(2000)}),
+ industryFeedback:z.object({placementId:str(),workplaceReadiness:z.coerce.number().int().min(1).max(5),competencyRelevance:z.coerce.number().int().min(1).max(5),supervisionSupport:z.coerce.number().int().min(1).max(5),curriculumAlignment:z.coerce.number().int().min(1).max(5),technicalGaps:z.string().trim().max(500).optional(),softSkillGaps:z.string().trim().max(500).optional(),recommendations:z.string().trim().min(5).max(2000)}),
  review:z.object({placementId:str(),rating:z.coerce.number().int().min(1).max(5),body:str(5000)}),
  moderateReview:z.object({reviewId:str(),status:z.enum(['APPROVED','REJECTED'])}),
  account:z.object({name:str(120),username:z.string().trim().toLowerCase().regex(/^[a-z][a-z0-9._-]{3,40}$/),email:z.string().email(),role:z.enum(roles),courseId:z.string().optional(),companyId:z.string().optional(),password:z.string().min(12).max(128)}),

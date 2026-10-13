@@ -12,17 +12,18 @@ def request(opener,path,data=None,form=False):
  try:
   with opener.open(req) as response:return response.status,json.loads(response.read())
  except urllib.error.HTTPError as e:return e.code,json.loads(e.read())
-def login(role=None,password=None):
+def login(role=None,password=None,username='demo.student'):
  op=client();status,csrf=request(op,'/api/auth/csrf');assert status==200,(status,csrf)
  values={'csrfToken':csrf['csrfToken'],'callbackUrl':base+'/'}
  if role:values['demoId']='demo-'+role
- else:values.update(username='demo.student',password=password)
+ else:values.update(username=username,password=password)
  status,result=request(op,'/api/auth/callback/credentials',values,True);assert status==200 and 'error=' not in result.get('url',''),(status,result)
  return op
 status,config=request(client(),'/api/config');assert config['demo'] and config['authConfigured'],config
 assert request(client(),'/api/data')[0]==401
-for role in ['student','coordinator','admin','supervisor']:
- op=login(role);status,data=request(op,'/api/data');assert status==200,(role,status,data)
+accounts=[('student',login('student')),('coordinator',login('coordinator')),('admin',login('admin')),('supervisor',login(password='Demo@2026!',username='demo.supervisor'))]
+for role,op in accounts:
+ status,data=request(op,'/api/data');assert status==200,(role,status,data)
  expected={'student':'STUDENT','coordinator':'COORDINATOR','admin':'SUPER_ADMIN','supervisor':'SUPERVISOR'}[role]
  assert data['user']['role']==expected,(role,data)
  assert 'passwordHash' not in data['user'],'Sensitive password hash leaked'
