@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: practisync-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: practisync_demo
+      POSTGRES_USER: practisync
+      POSTGRES_PASSWORD: local-demo-only
+    ports:
+      - '5433:5432'
+    volumes:
+      - practisync-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U practisync -d practisync_demo']
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: practisync-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '${PORT:-3000}:3000'
+    environment:
+      - NODE_ENV=production
+      - DEPLOYMENT_MODE=demo
+      - DEMO_ENABLED=true
+      - AUTH_SECRET=93d0484c5436557dcf9ba519d6d9a2ccd56bb18833157ef4217d38b3c405a30a
+      - DATABASE_URL=postgresql://practisync:local-demo-only@postgres:5432/practisync_demo
+      - PORT=3000
+
+volumes:
+  practisync-data:

@@ -19,20 +19,83 @@
 @media(max-width:1100px){.attendance-visuals-detail{grid-template-columns:1fr}}
 @media(max-width:600px){.attendance-chart-card{padding:16px 12px 13px}.attendance-chart-head{padding-inline:4px}.attendance-chart-head>strong{font-size:12px}.attendance-chart-head h2{font-size:14px}.attendance-plot{min-width:560px}}
 
-.goal-summary{display:grid;grid-template-columns:185px minmax(0,1fr);gap:16px 23px;align-items:center;margin-top:22px}
-.goal-donut-wrap{display:grid;justify-items:center;gap:2px}
-.goal-donut{display:block;width:180px;height:180px}
-.goal-donut-value{font-size:29px;font-weight:700;fill:#143e7e}
-.goal-donut-caption{font-size:10px;fill:#60758e}
-.goal-donut-hours{display:grid;justify-items:center;gap:1px;font-size:12px;color:#60758e}
-.goal-donut-hours strong{font-size:15px;color:#1b4073}
-.goal-summary-details{display:grid;gap:0;min-width:0}
-.goal-detail{display:grid;gap:3px;padding:10px 0;border-bottom:1px solid #e8eef6}
-.goal-detail:last-child{border-bottom:0}
-.goal-detail>span{font-size:11px;font-weight:650;color:#60758e}
-.goal-detail>strong{font-size:15px;color:#1b4073}
-.goal-detail>small{font-size:11px;line-height:1.45;color:#60758e}
-.goal-disclaimer{grid-column:1/-1;padding-top:13px;border-top:1px solid #e8eef6;font-size:11px;line-height:1.5;color:#60758e}
-@media(min-width:1250px){.student-dashboard>.role-card .goal-summary-details,.panel-body>.goal-summary .goal-summary-details{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.student-dashboard>.role-card .goal-detail,.panel-body>.goal-summary .goal-detail{padding:12px 14px;border-bottom:0;border-left:1px solid #e8eef6}}
-@media(max-width:700px){.goal-summary{grid-template-columns:1fr;gap:15px}.goal-disclaimer{grid-column:1}.goal-summary-details{grid-template-columns:1fr 1fr;column-gap:14px}.goal-detail:last-child{grid-column:1/-1}}
-@media(max-width:420px){.goal-summary-details{grid-template-columns:1fr}.goal-detail:last-child{grid-column:auto}}
+.goal-summary{display:grid;grid-template-columns:minmax(240px,.78fr) minmax(0,2.22fr);gap:12px;margin-top:16px;align-items:stretch;color:#17385e}
+.goal-hero-card,.goal-info-card,.goal-activity-card,.goal-status-card,.goal-forecast-card{min-width:0;border:1px solid #dce5f0;border-radius:12px;background:#fff;box-shadow:0 3px 12px rgba(18,76,145,.045)}
+.goal-hero-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:13px;padding:17px 14px;background:linear-gradient(180deg,#fff 0%,#f9fbfe 100%)}
+.goal-card-eyebrow{display:inline-flex;align-items:center;gap:7px;color:#315273;font-size:10px;font-weight:750;letter-spacing:.85px;text-transform:uppercase}
+.goal-eyebrow-dot{width:7px;height:7px;border-radius:50%;background:var(--primary,#124c91)}
+.goal-donut{display:block;width:157px;height:157px;overflow:visible}
+.goal-donut-value{font-size:29px;font-weight:750;fill:var(--foreground,#143e7e)}
+.goal-donut-caption{font-size:10px;font-weight:650;fill:var(--muted-foreground,#60758e);letter-spacing:.65px;text-transform:uppercase}
+.goal-hero-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin-top:1px}
+.goal-hero-metric{display:flex;min-height:60px;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border:1px solid #e1e9f2;border-radius:8px;background:#f3f6fa;text-align:center}
+.goal-hero-metric strong{color:#124c91;font-size:13px;line-height:1.15;font-weight:750;overflow-wrap:anywhere}
+.goal-hero-metric span{color:#49637e;font-size:9px;line-height:1.25;font-weight:650;letter-spacing:.35px;text-transform:uppercase}
+.goal-hero-metric.logged strong{color:#13835d}
+.goal-hero-metric.remaining strong{color:#bd7414}
+.goal-hero-metric.pending strong{color:#7352b8}
+.goal-detail-grid{display:grid;grid-template-rows:auto 1fr auto;gap:12px;min-width:0}
+.goal-top-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.goal-info-card{display:flex;min-height:94px;flex-direction:column;justify-content:center;gap:4px;padding:14px 18px}
+.goal-info-label{display:flex;align-items:center;gap:7px;color:#3d5875;font-size:10px;font-weight:700;letter-spacing:.55px;text-transform:uppercase}
+.target-card .goal-info-label svg{color:var(--primary,#13835d)}
+.days-card .goal-info-label svg{color:#124c91}
+.goal-info-card>strong{color:var(--primary,#13835d);font-size:23px;font-weight:750;line-height:1.15;letter-spacing:-.5px}
+.days-card>strong{color:#1684c6}
+.goal-info-card>span{color:#637b95;font-size:11px;line-height:1.35}
+.goal-activity-card{padding:14px 17px 11px}
+.goal-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.goal-section-heading>svg{color:#56728f}
+.goal-section-heading h3{margin-top:2px;color:#17385e;font-size:13px;font-weight:700;letter-spacing:-.1px}
+.goal-activity-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.goal-activity-metric{display:flex;min-height:64px;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 7px;border:1px solid #dfe7f1;border-radius:8px;background:#f1f5fa;text-align:center}
+.goal-activity-metric strong{color:#13835d;font-size:17px;line-height:1.15;font-weight:750;overflow-wrap:anywhere}
+.goal-activity-metric span{color:#3d5875;font-size:9px;line-height:1.3;font-weight:650;letter-spacing:.3px;text-transform:uppercase}
+.goal-activity-metric.waiting{background:#fbf6ea;border-color:#f0e3c5}
+.goal-activity-metric.waiting strong{color:#ac7510}
+.goal-activity-metric:last-child strong{font-size:13px;color:#1684c6}
+.goal-activity-foot{display:flex;justify-content:space-between;gap:8px;margin-top:9px;color:#627995;font-size:10px;line-height:1.35}
+.goal-bottom-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.goal-status-card,.goal-forecast-card{display:flex;min-height:105px;flex-direction:column;gap:6px;padding:13px 16px;background:#fff}
+.goal-status-card.active{background:#f5f9fe}
+.goal-status-card.reached{background:#f1f8f4;border-color:#d8eadf}
+.goal-status-card.neutral{background:#f8fafc}
+.goal-status-value{display:flex;align-items:center;gap:9px;min-width:0;color:var(--primary,#124c91)}
+.goal-status-value strong{color:var(--foreground,#102f62);font-size:17px;line-height:1.25;font-weight:750}
+.goal-status-card.reached .goal-status-value,.goal-status-card.reached .goal-status-value strong{color:#168052}
+.goal-status-card.neutral .goal-status-value{color:#74869a}
+.goal-status-card p,.goal-forecast-card p{color:#60758e;font-size:10.5px;line-height:1.4}
+.goal-forecast-card>.goal-card-eyebrow{gap:6px}
+.goal-forecast-card>.goal-card-eyebrow svg{color:#1684c6}
+.goal-forecast-card>strong{color:#1684c6;font-size:15px;line-height:1.25;font-weight:750}
+.goal-footer-bar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f6f8fb;border-radius:8px;border:1px solid #e9eef5}
+.footer-icon{flex-shrink:0;color:#69809c}
+.goal-disclaimer-text{margin:0;color:#586f8a;font-size:10.5px;line-height:1.45}
+@media(max-width:980px){
+ .goal-summary{grid-template-columns:1fr;gap:12px}
+ .goal-hero-card{display:grid;grid-template-columns:minmax(145px,190px) minmax(0,1fr);align-items:center;justify-items:center}
+ .goal-hero-card>.goal-card-eyebrow{grid-column:1/-1;justify-self:start}
+ .goal-hero-card>.goal-donut{grid-column:1;grid-row:2}
+ .goal-hero-metrics{grid-column:2;grid-row:2}
+ .goal-hero-metric{min-height:72px}
+ .goal-detail-grid{grid-template-rows:auto}
+}
+@media(max-width:620px){
+ .goal-hero-card{display:flex;padding:15px 12px}
+ .goal-donut{width:145px;height:145px}
+ .goal-hero-metrics{gap:6px}
+ .goal-hero-metric{min-height:57px;padding:6px 3px}
+ .goal-hero-metric strong{font-size:12px}
+ .goal-top-metrics,.goal-bottom-cards{grid-template-columns:1fr 1fr;gap:8px}
+ .goal-info-card{min-height:88px;padding:12px}
+ .goal-info-card>strong{font-size:20px}
+ .goal-activity-card{padding:13px 12px 10px}
+ .goal-activity-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .goal-activity-foot{flex-direction:column;gap:3px}
+ .goal-status-card,.goal-forecast-card{min-height:112px;padding:12px}
+ .goal-status-value strong{font-size:15px}
+}
+@media(max-width:390px){
+ .goal-top-metrics,.goal-bottom-cards{grid-template-columns:1fr}
+ .goal-hero-metric span,.goal-activity-metric span{font-size:8px}
+}

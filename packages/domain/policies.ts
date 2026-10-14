@@ -15,7 +15,7 @@ export function scope(user:Identity,alias='p'):{sql:string;args:string[]}{
  const base=`${alias}.tenant_id=?`;
  if(user.role==='STUDENT')return {sql:`${base} AND ${alias}.student_id=?`,args:[user.tenantId,user.id]};
  if(user.role==='COORDINATOR')return {sql:`${base} AND ${alias}.class_id IN (SELECT id FROM classes WHERE tenant_id=? AND coordinator_id=?)`,args:[user.tenantId,user.tenantId,user.id]};
- if(user.role==='SUPERVISOR')return {sql:`${base} AND ${alias}.id IN (SELECT placement_id FROM assignments WHERE tenant_id=? AND supervisor_id=? AND active=1)`,args:[user.tenantId,user.tenantId,user.id]};
+ if(user.role==='SUPERVISOR')return {sql:`${base} AND ${alias}.company_id=? AND ${alias}.id IN (SELECT placement_id FROM assignments WHERE tenant_id=? AND supervisor_id=? AND active=1) AND EXISTS (SELECT 1 FROM users h JOIN companies hc ON hc.tenant_id=h.tenant_id AND hc.id=h.company_id WHERE h.tenant_id=${alias}.tenant_id AND h.id=? AND h.role='SUPERVISOR' AND h.supervisor_verified=1 AND hc.status='APPROVED' AND hc.can_post=1)`,args:[user.tenantId,user.companyId??'',user.tenantId,user.id,user.id]};
  return {sql:base,args:[user.tenantId]};
 }
 export function demoAllowed(mode:string|undefined,flag:string|undefined){return mode==='demo'&&flag==='true';}

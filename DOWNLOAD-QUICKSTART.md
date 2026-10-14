@@ -21,13 +21,14 @@ Node.js 22.13 or newer (Node 24 recommended), pnpm 11.25, and a terminal. The do
 
    Keep this file private. It is excluded from Git by the `/dist/` rule.
 
-5. Apply the four demo migrations to a fresh local D1 database, in order:
+5. Apply the five demo migrations to a fresh local D1 database, in order:
 
    ```sh
    node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_fat_solo.sql
    node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_scoped_constraints.sql
    node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_vengeful_stark_industries.sql
    node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_application_finality.sql
+   node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_coordinator_features.sql
    ```
 
 6. Run `pnpm start` and open the local URL printed by Wrangler. The app starts at the login page. First demo sign-in seeds the fictional records automatically.
@@ -55,4 +56,4 @@ The institutional reference schema is `packages/db/prisma/schema.prisma`. It con
 
 The hosted app currently uses a separate D1 demo adapter and the Vinext runtime. Institutional PostgreSQL repository integration, Google sign-in, actual private file storage/scanning, email, recovery and durable export jobs are unfinished. No PostgreSQL runtime or concurrency pass is claimed. See `docs/checklist.md`, `docs/assumptions.md`, and `docs/runbook.md` before planning production usage.
 
-The `.openai/hosting.json` file identifies your existing hosted Site and contains no secrets. This download does not alter the published Site.
+The `.openai/hosting.json` file keeps local Sites binding settings and contains no secrets. The previous hosted Site has been retired.

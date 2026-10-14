@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, existsSync, copyFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,4 +19,10 @@ for (const directory of [
   process.env.MINIFLARE_REGISTRY_PATH,
 ]) {
   mkdirSync(directory, { recursive: true });
+}
+
+const devVars = path.join(projectRoot, ".dev.vars");
+const distVars = path.join(projectRoot, "dist/server/.dev.vars");
+if (existsSync(devVars) && existsSync(path.join(projectRoot, "dist/server"))) {
+  copyFileSync(devVars, distVars);
 }
