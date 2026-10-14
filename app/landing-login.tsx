@@ -272,7 +272,10 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
                         id="ps-username"
                         type="text"
                         autoComplete="username"
-                        placeholder="e.g. jreyes@rtu.edu.ph or demo.student"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        placeholder="e.g. jreyes or jreyes@rtu.edu.ph"
                         value={username}
                         onChange={(e) => {
                           setUsername(e.target.value);
@@ -282,13 +285,17 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
                         }}
                         className="ps-input"
                         aria-invalid={!!formErrors.username}
-                        aria-describedby={formErrors.username ? 'username-error' : undefined}
+                        aria-describedby={formErrors.username ? 'username-error' : 'username-hint'}
                       />
                     </div>
-                    {formErrors.username && (
+                    {formErrors.username ? (
                       <p id="username-error" className="ps-field-error" role="alert">
                         <AlertCircle size={13} />
                         <span>{formErrors.username}</span>
+                      </p>
+                    ) : (
+                      <p id="username-hint" className="ps-field-hint">
+                        Use your university account ID or institutional email.
                       </p>
                     )}
                   </div>
@@ -316,7 +323,7 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
                         id="ps-password"
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="current-password"
-                        placeholder="Enter your password"
+                        placeholder="••••••••••••"
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
@@ -333,6 +340,7 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
                         className="ps-toggle-password-btn"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        title={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -426,15 +434,21 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
                 <span>or use university single sign-on</span>
               </div>
 
-              <button
-                type="button"
-                disabled
-                className="ps-google-btn"
-                title="Google Workspace OAuth integration"
-              >
-                <span className="ps-google-icon">G</span>
-                <span>Continue with @rtu.edu.ph Google Account</span>
-              </button>
+              <div className="ps-sso-wrap">
+                <button
+                  type="button"
+                  disabled
+                  className="ps-google-btn"
+                  title="Google Workspace OAuth integration for RTU faculty & students"
+                >
+                  <span className="ps-google-icon">G</span>
+                  <span>Continue with @rtu.edu.ph Google Account</span>
+                  <span className="ps-sso-badge">Coming Soon</span>
+                </button>
+                <p className="ps-sso-note">
+                  Institutional Google Workspace SSO will activate in the next enrollment cycle.
+                </p>
+              </div>
 
               <div className="ps-login-footer-notes">
                 <p>

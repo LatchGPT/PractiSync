@@ -2492,7 +2492,7 @@ td {
 .ps-login-tab {
   appearance: none;
   background: transparent;
-  border: none;
+  border: 1.5px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2503,13 +2503,24 @@ td {
   font-weight: 700;
   color: #4b688a;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ps-login-tab:hover:not(.active) {
+  color: #0c2b53;
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .ps-login-tab.active {
   background: #ffffff;
   color: #0c2b53;
-  box-shadow: 0 2px 6px rgba(14, 42, 87, 0.08);
+  font-weight: 800;
+  border-color: #d0e1f4;
+  box-shadow: 0 2px 8px rgba(14, 42, 87, 0.08), inset 0 -2.5px 0 #d7aa3e;
+}
+
+.ps-login-tab.active svg {
+  color: #124c91;
 }
 
 /* Form Fields */
@@ -2549,13 +2560,15 @@ td {
   background: transparent;
   border: none;
   color: #124c91;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   padding: 0;
+  transition: color 0.15s ease;
 }
 
 .ps-forgot-link:hover {
+  color: #0a2f5e;
   text-decoration: underline;
 }
 
@@ -2611,6 +2624,13 @@ td {
   margin: 2px 0 0;
 }
 
+.ps-field-hint {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #637f9e;
+  margin: 2px 0 0 2px;
+}
+
 .ps-toggle-password-btn {
   position: absolute;
   right: 12px;
@@ -2623,6 +2643,7 @@ td {
   display: grid;
   place-items: center;
   border-radius: 4px;
+  transition: color 0.15s ease;
 }
 
 .ps-toggle-password-btn:hover {
@@ -2665,14 +2686,24 @@ td {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(18, 76, 145, 0.28);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 14px rgba(18, 76, 145, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
   margin-top: 4px;
 }
 
 .ps-submit-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(18, 76, 145, 0.38);
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 22px rgba(18, 76, 145, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.ps-submit-btn:active:not(:disabled) {
+  transform: scale(0.985);
+  box-shadow: 0 2px 8px rgba(18, 76, 145, 0.28);
+}
+
+.ps-submit-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(18, 76, 145, 0.25), 0 0 0 1.5px #d7aa3e;
 }
 
 .ps-submit-btn:disabled {
@@ -2704,28 +2735,62 @@ td {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  align-items: stretch;
 }
 
 .ps-demo-card {
+  position: relative;
+  overflow: hidden;
   appearance: none;
   background: #ffffff;
   border: 1.5px solid #d8e5f2;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 14px 13px 12px;
+  min-height: 126px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  justify-content: space-between;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s ease, box-shadow 0.2s ease, background-color 0.15s ease;
+}
+
+/* Distinct Top Role Accent Lines */
+.ps-demo-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+
+.ps-demo-student::before {
+  background: #2563eb;
+}
+
+.ps-demo-coordinator::before {
+  background: #7c3aed;
+}
+
+.ps-demo-supervisor::before {
+  background: #d97706;
+}
+
+.ps-demo-admin::before {
+  background: #16a34a;
 }
 
 .ps-demo-card:hover:not(:disabled) {
-  transform: translateY(-2px);
+  transform: translateY(-2.5px);
   border-color: #124c91;
-  box-shadow: 0 6px 16px rgba(18, 76, 145, 0.12);
+  box-shadow: 0 8px 20px rgba(18, 76, 145, 0.14);
   background: #fafcff;
+}
+
+.ps-demo-card:active:not(:disabled) {
+  transform: scale(0.985);
 }
 
 .ps-demo-card-head {
@@ -2744,14 +2809,19 @@ td {
   place-items: center;
   background: #edf4fd;
   color: #124c91;
+  transition: transform 0.15s ease;
+}
+
+.ps-demo-card:hover .ps-demo-icon {
+  transform: scale(1.08);
 }
 
 .ps-demo-role-badge {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 2px 7px;
+  padding: 2.5px 7.5px;
   border-radius: 9999px;
   background: #f0f4fa;
   color: #3f5e82;
@@ -2781,24 +2851,35 @@ td {
   font-size: 13.5px;
   font-weight: 800;
   color: #0c2340;
+  margin-top: 2px;
 }
 
 .ps-demo-desc {
   font-size: 11.5px;
-  line-height: 1.35;
+  line-height: 1.4;
   color: #557294;
-  margin: 0;
+  margin: 1px 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1;
 }
 
 .ps-demo-click-hint {
   font-size: 11px;
   font-weight: 700;
   color: #124c91;
-  margin-top: 4px;
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.ps-demo-card:hover .ps-demo-click-hint {
+  transform: translateX(3px);
+  color: #0d3c74;
 }
 
 /* Divider & Secondary SSO */
@@ -2823,6 +2904,12 @@ td {
   padding: 0 12px;
 }
 
+.ps-sso-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .ps-google-btn {
   appearance: none;
   background: #ffffff;
@@ -2837,13 +2924,35 @@ td {
   font-size: 13.5px;
   font-weight: 600;
   cursor: not-allowed;
-  opacity: 0.85;
+  opacity: 0.92;
+  padding: 0 14px;
+  transition: border-color 0.15s ease;
 }
 
 .ps-google-icon {
   font-weight: 800;
   font-size: 16px;
   color: #4285f4;
+}
+
+.ps-sso-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8c6008;
+  background: #fdf6e6;
+  border: 1px solid #fae4b2;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ps-sso-note {
+  font-size: 11.5px;
+  color: #728ea9;
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .ps-login-footer-notes {
