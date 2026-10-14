@@ -2269,15 +2269,16 @@ td {
   display: grid;
   grid-template-columns: 1.15fr 1fr;
   gap: clamp(32px, 4vw, 56px);
-  align-items: center;
+  align-items: start;
 }
 
-/* Left Hero Column (Vertically Centered to the Middle) */
+/* Left Hero Column (Stationary, visually centered to the middle without shifting) */
 .ps-hero-col {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-self: center;
+  align-self: start;
+  padding-top: clamp(24px, 5vh, 48px);
   gap: 22px;
   padding-right: 12px;
 }
@@ -2478,58 +2479,79 @@ td {
   opacity: 1;
 }
 
-/* Segmented Login Tabs */
+/* Segmented Login Tabs with Gliding Pill Indicator */
 .ps-login-tabs {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 0;
   background: #eef4fc;
   border: 1px solid #d4e3f3;
-  padding: 5px;
+  padding: 4px;
   border-radius: 10px;
+  user-select: none;
+}
+
+.ps-tab-glider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  background: #ffffff;
+  border-radius: 7px;
+  border: 1px solid rgba(18, 76, 145, 0.1);
+  box-shadow: 0 1px 3px rgba(14, 42, 87, 0.08), 0 3px 8px rgba(14, 42, 87, 0.04);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ps-login-tabs[data-active="demo"] .ps-tab-glider {
+  transform: translateX(100%);
+}
+
+.ps-login-tabs[data-tabs="1"] .ps-tab-glider {
+  width: calc(100% - 8px);
 }
 
 .ps-login-tab {
+  position: relative;
+  z-index: 2;
   appearance: none;
   background: transparent;
-  border: 1px solid transparent;
+  border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 9px 12px;
-  border-radius: 8px;
+  border-radius: 7px;
   font-size: 13px;
   font-weight: 600;
   color: #4b688a;
   cursor: pointer;
-  transition: background-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, transform 0.12s ease;
+  transition: color 0.22s ease;
 }
 
 .ps-login-tab:hover:not(.active) {
   color: #0c2b53;
-  background: rgba(255, 255, 255, 0.65);
-  box-shadow: 0 1px 4px rgba(14, 42, 87, 0.04);
-}
-
-.ps-login-tab:active {
-  transform: scale(0.985);
 }
 
 .ps-login-tab.active {
-  background: #ffffff;
   color: #0c2b53;
   font-weight: 700;
-  border-color: rgba(18, 76, 145, 0.1);
-  box-shadow: 0 1px 3px rgba(14, 42, 87, 0.08), 0 3px 8px rgba(14, 42, 87, 0.04);
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
 }
 
 .ps-login-tab svg {
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.22s ease, transform 0.2s ease;
 }
 
 .ps-login-tab:hover svg {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 .ps-login-tab.active svg {
@@ -3349,6 +3371,7 @@ td {
   }
   .ps-hero-col {
     padding-right: 0;
+    padding-top: 0;
   }
   .ps-features-grid {
     grid-template-columns: 1fr;

@@ -223,7 +223,13 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
               )}
 
               {/* Segmented Mode Selector: Credentials vs Demo */}
-              <div className="ps-login-tabs" role="tablist">
+              <div
+                className="ps-login-tabs"
+                role="tablist"
+                data-active={activeTab}
+                data-tabs={demo ? '2' : '1'}
+              >
+                <div className="ps-tab-glider" aria-hidden="true" />
                 <button
                   type="button"
                   role="tab"
