@@ -2272,13 +2272,13 @@ td {
   align-items: start;
 }
 
-/* Left Hero Column (Stationary, visually centered to the middle without shifting) */
+/* Left Hero Column (Stationary, vertically centered to the middle without shifting) */
 .ps-hero-col {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-self: start;
-  padding-top: clamp(24px, 5vh, 48px);
+  padding-top: clamp(75px, 11vh, 140px);
   gap: 22px;
   padding-right: 12px;
 }
