@@ -12,6 +12,7 @@ import {
   ChartNoAxesCombined,
   LockKeyhole,
   UserRound,
+  UserPlus,
   Eye,
   EyeOff,
   LoaderCircle,
@@ -41,6 +42,7 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
   const [formErrors, setFormErrors] = useState<{ username?: string; password?: string }>({});
   const [generalError, setGeneralError] = useState('');
   const [helpOpen, setHelpOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const loginSectionRef = useRef<HTMLDivElement>(null);
@@ -187,12 +189,9 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
               <button
                 type="button"
                 className="ps-hero-primary-btn"
-                onClick={() => {
-                  setActiveTab('credentials');
-                  scrollToLogin();
-                }}
+                onClick={() => setRegisterModalOpen(true)}
               >
-                Sign In to Portal
+                Register
                 <ArrowRight size={16} />
               </button>
               <button
@@ -613,6 +612,76 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
                 onClick={() => setHelpOpen(false)}
               >
                 Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Account Registration Modal */}
+      {registerModalOpen && (
+        <div className="ps-help-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="register-dialog-title">
+          <div className="ps-help-modal">
+            <div className="ps-help-modal-header">
+              <div className="ps-help-modal-title-row">
+                <UserPlus size={20} className="ps-help-icon" />
+                <h3 id="register-dialog-title">RTU Practicum Account Registration</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRegisterModalOpen(false)}
+                className="ps-modal-close-btn"
+                aria-label="Close dialog"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="ps-help-modal-body">
+              <p>
+                <strong>New to PractiSync? Here is how to activate or register your account:</strong>
+              </p>
+              <ul>
+                <li>
+                  <strong>RTU Students:</strong> Student accounts are automatically provisioned upon enrollment in your practicum / OJT section. You can sign in using your official <code>@rtu.edu.ph</code> university credentials.
+                </li>
+                <li>
+                  <strong>Class Section Join Codes:</strong> If your class coordinator gave you a section code (e.g. <code>SYNC4A</code>), you can enter it immediately after signing in to link your training section.
+                </li>
+                <li>
+                  <strong>Host Training Establishments (HTE):</strong> Industry supervisors receive direct onboarding credentials upon verification of the university Memorandum of Agreement (MOA).
+                </li>
+              </ul>
+              <div className="ps-help-demo-tip">
+                <Sparkles size={14} />
+                <span>
+                  Testing the system? You can jump straight in using the{' '}
+                  <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab to explore student, coordinator, or supervisor workflows immediately.
+                </span>
+              </div>
+            </div>
+            <div className="ps-help-modal-footer" style={{ gap: '10px' }}>
+              <button
+                type="button"
+                className="ps-hero-secondary-btn"
+                style={{ padding: '8px 16px', fontSize: '13px' }}
+                onClick={() => {
+                  setRegisterModalOpen(false);
+                  setActiveTab('demo');
+                  scrollToLogin();
+                }}
+              >
+                Explore Demo
+              </button>
+              <button
+                type="button"
+                className="ps-modal-primary-btn"
+                onClick={() => {
+                  setRegisterModalOpen(false);
+                  setActiveTab('credentials');
+                  scrollToLogin();
+                }}
+              >
+                Sign In to Account
               </button>
             </div>
           </div>
