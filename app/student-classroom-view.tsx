@@ -15,12 +15,12 @@ import {
   Search,
   BookOpen,
   ArrowRight,
-  ExternalLink,
-  MapPin,
-  Sparkles,
   School,
-  AlertCircle
+  Copy,
+  Check,
+  X
 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Snapshot, Row, Identity } from '@/packages/validation/contracts';
 
 interface StudentClassroomViewProps {
@@ -49,6 +49,8 @@ export default function StudentClassroomView({
   onViewStudent,
 }: StudentClassroomViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [placementFilter, setPlacementFilter] = useState<'ALL' | 'PLACED' | 'SEEKING'>('ALL');
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // 1. Pending join requests
   const myPending = (data.joinRequests ?? []).find(
@@ -64,7 +66,7 @@ export default function StudentClassroomView({
   const department = data.departments.find(d => d.id === course?.departmentId);
   const courseCode = s(course, 'code') || 'BSIT';
   const courseName = s(course, 'name') || 'BS Information Technology';
-  const departmentName = s(department, 'name') || 'Computing & Technology';
+  const departmentName = s(department, 'name') || 'College of Computer Studies';
 
   // Coordinator context
   const coordinatorUser = data.users.find(u => u.id === myClass?.coordinatorId);
@@ -111,15 +113,44 @@ export default function StudentClassroomView({
 
   // Filtered classmate directory
   const filteredClassmates = useMemo(() => {
-    if (!searchQuery.trim()) return classPlacements;
-    const q = searchQuery.toLowerCase();
-    return classPlacements.filter(p => {
-      const name = s(p, 'studentName').toLowerCase();
-      const company = s(p, 'companyName').toLowerCase();
-      const email = s(p, 'studentEmail').toLowerCase();
-      return name.includes(q) || company.includes(q) || email.includes(q);
-    });
-  }, [classPlacements, searchQuery]);
+    let list = classPlacements;
+
+    if (placementFilter === 'PLACED') {
+      list = list.filter(p => Boolean(s(p, 'companyName')));
+    } else if (placementFilter === 'SEEKING') {
+      list = list.filter(p => !s(p, 'companyName'));
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(p => {
+        const name = s(p, 'studentName').toLowerCase();
+        const company = s(p, 'companyName').toLowerCase();
+        const email = s(p, 'studentEmail').toLowerCase();
+        return name.includes(q) || company.includes(q) || email.includes(q);
+      });
+    }
+
+    return list;
+  }, [classPlacements, placementFilter, searchQuery]);
+
+  const placedCount = useMemo(
+    () => classPlacements.filter(p => Boolean(s(p, 'companyName'))).length,
+    [classPlacements]
+  );
+  const seekingCount = classPlacements.length - placedCount;
+
+  const copyClassCode = async () => {
+    const code = s(myClass, 'codeLabel') || 'SYNC4A';
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(true);
+      toast.success(`Class enrollment code "${code}" copied to clipboard.`);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      toast.error('Could not copy class code.');
+    }
+  };
 
   // If no enrolled class and no class available
   if (!myClass) {
@@ -183,27 +214,22 @@ export default function StudentClassroomView({
       <section className="classroom-banner-card">
         {/* Banner Hero */}
         <div className="classroom-banner-header">
-          <div className="classroom-banner-top">
-            <div>
-              <div className="classroom-banner-badge-row">
-                <span className="classroom-academic-badge">
-                  <CalendarDays size={12} />
-                  {s(myClass, 'period') || 'A.Y. 2026–2027 · 1st Semester'}
-                </span>
-                <span className="classroom-dept-badge">
-                  <School size={12} />
-                  {departmentName}
-                </span>
-              </div>
-              <h2 className="classroom-banner-title">{s(myClass, 'section')}</h2>
-              <div className="classroom-banner-sub">
-                {s(myClass, 'name')} · {courseName} ({courseCode})
-              </div>
+          <div className="classroom-banner-top-row">
+            <div className="classroom-banner-badges">
+              <span className="classroom-academic-badge">
+                <CalendarDays size={12} />
+                {s(myClass, 'period') || 'A.Y. 2026–2027 · 1st Semester'}
+              </span>
+              <span className="classroom-dept-badge">
+                <School size={12} />
+                {departmentName}
+              </span>
             </div>
-            <div className="classroom-banner-status-wrap">
+
+            <div className="classroom-banner-actions">
               <span className="classroom-enrolled-pill">
                 <CheckCircle2 size={13} />
-                Enrolled Section
+                Enrolled Trainee
               </span>
               <button
                 type="button"
@@ -212,72 +238,83 @@ export default function StudentClassroomView({
                 title="Switch section or enter an enrollment code"
               >
                 <Plus size={13} />
-                Switch / Enter Code
+                Switch Section
               </button>
             </div>
           </div>
+
+          <div className="classroom-banner-hero-body">
+            <h1 className="classroom-banner-title">{s(myClass, 'section')}</h1>
+            <p className="classroom-banner-sub">
+              {courseName} ({courseCode}) · {s(myClass, 'name')}
+            </p>
+          </div>
         </div>
 
-        {/* Balanced Grid Body: Consultation & Coordinator Details */}
-        <div className="classroom-banner-grid-body">
-          <div className="classroom-meta-cell">
-            <div className="classroom-meta-icon">
+        {/* Balanced 3-Column Metadata Shelf */}
+        <div className="classroom-banner-meta-shelf">
+          {/* Col 1: Coordinator */}
+          <div className="classroom-meta-col">
+            <div className="classroom-meta-icon blue">
               <GraduationCap size={18} />
             </div>
-            <div className="classroom-meta-content">
+            <div className="classroom-meta-text">
               <span className="classroom-meta-label">Practicum Coordinator</span>
-              <strong className="classroom-meta-value">{coordinatorName}</strong>
+              <strong className="classroom-meta-value" title={coordinatorName}>
+                {coordinatorName}
+              </strong>
               <a
                 href={`mailto:${coordinatorEmail}`}
-                className="classroom-meta-sublink"
+                className="classroom-meta-link"
                 title={`Email ${coordinatorName}`}
               >
                 <Mail size={12} />
-                {coordinatorEmail}
+                <span>{coordinatorEmail}</span>
               </a>
             </div>
           </div>
 
-          <div className="classroom-meta-cell">
-            <div className="classroom-meta-icon">
+          {/* Col 2: Consultation & Office */}
+          <div className="classroom-meta-col">
+            <div className="classroom-meta-icon amber">
               <Clock size={18} />
             </div>
-            <div className="classroom-meta-content">
-              <span className="classroom-meta-label">Consultation Schedule</span>
-              <strong className="classroom-meta-value">Mon–Thu · 1:00 PM – 5:00 PM</strong>
-              <span className="classroom-meta-sub">
+            <div className="classroom-meta-text">
+              <span className="classroom-meta-label">Consultation & Office Hours</span>
+              <strong className="classroom-meta-value">
+                Mon–Thu · 1:00 PM – 5:00 PM
+              </strong>
+              <span className="classroom-meta-subtext">
                 OJT Affairs Office · Room 302 (Pasig Campus)
               </span>
             </div>
           </div>
 
-          <div className="classroom-meta-cell">
-            <div className="classroom-meta-icon">
-              <Building2 size={18} />
-            </div>
-            <div className="classroom-meta-content">
-              <span className="classroom-meta-label">Your Training Placement</span>
-              <strong className="classroom-meta-value">
-                {s(ownPlacement, 'companyName') || 'Pending Placement'}
-              </strong>
-              <span className="classroom-meta-sub">
-                {ownPlacement ? `Status: ${s(ownPlacement, 'status')}` : 'Awaiting company endorsement'}
-              </span>
-            </div>
-          </div>
-
-          <div className="classroom-meta-cell">
-            <div className="classroom-meta-icon">
+          {/* Col 3: Section Roster & Code */}
+          <div className="classroom-meta-col">
+            <div className="classroom-meta-icon green">
               <Users size={18} />
             </div>
-            <div className="classroom-meta-content">
-              <span className="classroom-meta-label">Class Roster Capacity</span>
+            <div className="classroom-meta-text">
+              <span className="classroom-meta-label">Class Roster & Enrollment</span>
               <strong className="classroom-meta-value">
-                {classPlacements.length} Enrolled Students
+                {classPlacements.length} Enrolled Trainees
               </strong>
-              <span className="classroom-meta-sub">
-                Enrollment Code: <code className="classroom-code-inline">{s(myClass, 'codeLabel') || 'SYNC4A'}</code>
-              </span>
+              <div className="classroom-code-row">
+                <span className="classroom-code-label">Code:</span>
+                <code className="classroom-code-inline">
+                  {s(myClass, 'codeLabel') || 'SYNC4A'}
+                </code>
+                <button
+                  type="button"
+                  className="classroom-copy-code-btn"
+                  onClick={copyClassCode}
+                  title="Copy enrollment code"
+                >
+                  {copiedCode ? <Check size={12} color="#166b42" /> : <Copy size={12} />}
+                  <span>{copiedCode ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -288,12 +325,12 @@ export default function StudentClassroomView({
         <div className="student-section-header">
           <div className="student-section-header-left">
             <div className="student-section-icon gold">
-              <Star size={18} fill="#d7aa3e" color="#d7aa3e" />
+              <Star size={17} fill="#d7aa3e" color="#d7aa3e" />
             </div>
             <div>
-              <h3 className="student-section-title">Class Leadership & Student Representatives</h3>
+              <h2 className="student-section-title">Section Leadership</h2>
               <p className="student-section-subtitle">
-                Official student leaders designated for coordinator liaison, section announcements, and peer guidance.
+                Official student leaders designated for coordinator liaison and section announcements.
               </p>
             </div>
           </div>
@@ -302,7 +339,7 @@ export default function StudentClassroomView({
         <div className="student-leadership-grid">
           {/* Class Representative Card */}
           <div className="student-leader-card leader-rep">
-            <div className="student-leader-top">
+            <div className="student-leader-card-main">
               <div className="student-leader-avatar rep">
                 {classRepName ? initials(classRepName) : 'CR'}
               </div>
@@ -316,37 +353,37 @@ export default function StudentClassroomView({
                     <span className="chip blue student-self-pill">You</span>
                   )}
                 </div>
-                <h4 className="student-leader-name">
+                <h3 className="student-leader-name">
                   {classRepName || 'Unassigned Representative'}
-                </h4>
-                <p className="student-leader-desc">
-                  Primary point of contact (kakausapin) for coordinator inquiries and section coordination.
+                </h3>
+                <p className="student-leader-role-desc">
+                  Primary student point of contact for coordinator announcements & section concerns.
                 </p>
               </div>
             </div>
-            {classRepName ? (
-              <div className="student-leader-footer">
+            <div className="student-leader-action-row">
+              {classRepName ? (
                 <a
                   href={`mailto:${classRepEmail}`}
-                  className="student-leader-contact-btn"
+                  className="student-leader-contact-btn rep"
                   title={`Email ${classRepName}`}
                 >
                   <Mail size={13} />
-                  <span>{classRepEmail || 'Contact Representative'}</span>
+                  <span>Email Representative</span>
                 </a>
-              </div>
-            ) : (
-              <div className="student-leader-footer empty">
-                <span className="small muted">Awaiting designation by the class coordinator.</span>
-              </div>
-            )}
+              ) : (
+                <span className="student-leader-status-note">
+                  Awaiting coordinator designation
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Vice Class Representative Card */}
           <div className="student-leader-card leader-vice">
-            <div className="student-leader-top">
+            <div className="student-leader-card-main">
               <div className="student-leader-avatar vice">
-                {viceRepName ? initials(viceRepName) : 'VR'}
+                {viceRepName ? initials(viceRepName) : <ShieldCheck size={20} />}
               </div>
               <div className="student-leader-info">
                 <div className="student-leader-tag-row">
@@ -358,46 +395,47 @@ export default function StudentClassroomView({
                     <span className="chip blue student-self-pill">You</span>
                   )}
                 </div>
-                <h4 className="student-leader-name">
-                  {viceRepName || 'Unassigned (Optional)'}
-                </h4>
-                <p className="student-leader-desc">
-                  Assists the class representative with section updates, peer support, and meeting notes.
+                <h3 className="student-leader-name">
+                  {viceRepName || 'Not Designated'}
+                </h3>
+                <p className="student-leader-role-desc">
+                  Assists representative with meeting updates, peer support, and documentation.
                 </p>
               </div>
             </div>
-            {viceRepName ? (
-              <div className="student-leader-footer">
+            <div className="student-leader-action-row">
+              {viceRepName ? (
                 <a
                   href={`mailto:${viceRepEmail}`}
-                  className="student-leader-contact-btn"
+                  className="student-leader-contact-btn vice"
                   title={`Email ${viceRepName}`}
                 >
                   <Mail size={13} />
-                  <span>{viceRepEmail || 'Contact Vice Representative'}</span>
+                  <span>Email Vice Representative</span>
                 </a>
-              </div>
-            ) : (
-              <div className="student-leader-footer empty">
-                <span className="small muted">Optional role designated by the coordinator.</span>
-              </div>
-            )}
+              ) : (
+                <span className="student-leader-status-note">
+                  Optional peer leadership role
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
       {/* 4. Classmate Directory Section (Acceptance Criterion 3) */}
       <section className="student-directory-section">
-        <div className="student-directory-header">
-          <div className="student-section-header-left">
+        {/* Directory Controls Bar */}
+        <div className="student-directory-controls">
+          <div className="student-directory-head-info">
             <div className="student-section-icon blue">
-              <Users size={18} />
+              <Users size={17} />
             </div>
             <div>
               <div className="student-directory-title-row">
-                <h3 className="student-section-title">Classmate Directory</h3>
+                <h2 className="student-section-title">Classmate Directory</h2>
                 <span className="student-roster-count-badge">
-                  {classPlacements.length} {classPlacements.length === 1 ? 'Peer' : 'Peers'} Enrolled
+                  {classPlacements.length} Trainees
                 </span>
               </div>
               <p className="student-section-subtitle">
@@ -406,21 +444,56 @@ export default function StudentClassroomView({
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Box */}
           <div className="student-directory-search-wrap">
             <Search size={15} className="student-directory-search-icon" />
             <input
               type="text"
-              placeholder="Search classmates or companies..."
+              placeholder="Search by name, company, or email..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="student-directory-search-input"
               aria-label="Search classmates"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                className="student-directory-clear-btn"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Directory Grid: 1 / 2 / 3 columns */}
+        {/* Filter Pills */}
+        <div className="student-directory-filter-tabs">
+          <button
+            type="button"
+            className={`directory-filter-pill ${placementFilter === 'ALL' ? 'active' : ''}`}
+            onClick={() => setPlacementFilter('ALL')}
+          >
+            All Trainees <span className="filter-pill-num">{classPlacements.length}</span>
+          </button>
+          <button
+            type="button"
+            className={`directory-filter-pill ${placementFilter === 'PLACED' ? 'active' : ''}`}
+            onClick={() => setPlacementFilter('PLACED')}
+          >
+            Placed at Company <span className="filter-pill-num green">{placedCount}</span>
+          </button>
+          <button
+            type="button"
+            className={`directory-filter-pill ${placementFilter === 'SEEKING' ? 'active' : ''}`}
+            onClick={() => setPlacementFilter('SEEKING')}
+          >
+            Seeking Placement <span className="filter-pill-num orange">{seekingCount}</span>
+          </button>
+        </div>
+
+        {/* Directory Multi-Column Grid */}
         {filteredClassmates.length > 0 ? (
           <div className="student-classmate-grid">
             {filteredClassmates.map(placement => {
@@ -436,75 +509,86 @@ export default function StudentClassroomView({
               const isVice = studentId === viceClassRepId;
 
               return (
-                <article className={`classmate-card ${isSelf ? 'is-self' : ''}`} key={placement.id}>
-                  <div className="classmate-card-header">
+                <article
+                  className={`classmate-card ${isSelf ? 'is-self' : ''}`}
+                  key={placement.id}
+                  onClick={() => onViewStudent(placement)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onViewStudent(placement);
+                    }
+                  }}
+                >
+                  <div className="classmate-card-top">
                     <div className="classmate-avatar">
                       {initials(studentName)}
                     </div>
-                    <div className="classmate-main-info">
-                      <div className="classmate-name-row">
-                        <strong className="classmate-name">{studentName}</strong>
+                    <div className="classmate-header-info">
+                      <div className="classmate-name-line">
+                        <strong className="classmate-name" title={studentName}>
+                          {studentName}
+                        </strong>
                         {isSelf && <span className="chip blue student-self-pill">You</span>}
                       </div>
                       <a
                         href={`mailto:${studentEmail}`}
-                        className="classmate-email"
+                        className="classmate-email-link"
                         title={`Send email to ${studentName}`}
+                        onClick={e => e.stopPropagation()}
                       >
-                        <Mail size={12} />
+                        <Mail size={11} />
                         <span>{studentEmail}</span>
                       </a>
                     </div>
                   </div>
 
-                  {/* Badges row if leadership */}
+                  {/* Leadership Badge if applicable */}
                   {(isRep || isVice) && (
-                    <div className="classmate-leadership-badge-row">
+                    <div className="classmate-badge-line">
                       {isRep && (
                         <span className="badge-class-rep">
                           <Star size={11} fill="#825b08" color="#825b08" />
-                          Class Rep
+                          Class Representative
                         </span>
                       )}
                       {isVice && (
                         <span className="badge-vice-rep">
                           <ShieldCheck size={11} color="#12437b" />
-                          Vice Rep
+                          Vice Representative
                         </span>
                       )}
                     </div>
                   )}
 
-                  {/* Placement Company Status */}
-                  <div className="classmate-placement-box">
-                    <span className="classmate-placement-label">Training Placement:</span>
+                  {/* Clean Placement Status Row */}
+                  <div className="classmate-placement-row">
                     {companyName ? (
-                      <div className="classmate-placement-status placed">
-                        <Building2 size={13} className="placement-company-icon" />
-                        <span className="placement-company-name">{companyName}</span>
-                        <span className="placement-status-pill green">
-                          {placementStatus === 'ACTIVE' ? 'Placed' : placementStatus}
+                      <div className="classmate-company-info">
+                        <Building2 size={13} className="classmate-status-icon green" />
+                        <span className="classmate-company-name" title={companyName}>
+                          {companyName}
                         </span>
                       </div>
                     ) : (
-                      <div className="classmate-placement-status pending">
-                        <Clock size={13} className="placement-pending-icon" />
-                        <span className="placement-pending-name">Pending Endorsement</span>
-                        <span className="placement-status-pill orange">Seeking</span>
+                      <div className="classmate-company-info">
+                        <Clock size={13} className="classmate-status-icon amber" />
+                        <span className="classmate-pending-text">
+                          Seeking Endorsement
+                        </span>
                       </div>
                     )}
+                    <span className={`classmate-status-chip ${companyName ? 'placed' : 'seeking'}`}>
+                      {companyName ? (placementStatus === 'ACTIVE' ? 'Placed' : placementStatus) : 'Pending'}
+                    </span>
                   </div>
 
-                  {/* Card Action */}
+                  {/* Card Action Link */}
                   <div className="classmate-card-footer">
-                    <button
-                      type="button"
-                      className="classmate-view-profile-btn"
-                      onClick={() => onViewStudent(placement)}
-                    >
-                      <span>View Training Profile</span>
-                      <ArrowRight size={13} />
-                    </button>
+                    <span className="classmate-action-text">View Training Profile</span>
+                    <ArrowRight size={13} className="classmate-action-arrow" />
                   </div>
                 </article>
               );
@@ -513,19 +597,26 @@ export default function StudentClassroomView({
         ) : (
           <div className="student-directory-empty">
             <div className="student-directory-empty-icon">
-              <Search size={24} />
+              <Search size={22} />
             </div>
-            <h4>No classmates found</h4>
+            <h4>No trainees found</h4>
             <p>
-              No student records matched &quot;{searchQuery}&quot;. Try adjusting your search query.
+              {searchQuery
+                ? `No student records matched "${searchQuery}". Try a different keyword.`
+                : 'No students found in this placement filter category.'}
             </p>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setSearchQuery('')}
-            >
-              Clear search filter
-            </button>
+            {(searchQuery || placementFilter !== 'ALL') && (
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setSearchQuery('');
+                  setPlacementFilter('ALL');
+                }}
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         )}
       </section>
