@@ -2492,31 +2492,44 @@ td {
 .ps-login-tab {
   appearance: none;
   background: transparent;
-  border: 1.5px solid transparent;
+  border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 9px 12px;
-  border-radius: 7px;
+  border-radius: 8px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: #4b688a;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, transform 0.12s ease;
 }
 
 .ps-login-tab:hover:not(.active) {
   color: #0c2b53;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 1px 4px rgba(14, 42, 87, 0.04);
+}
+
+.ps-login-tab:active {
+  transform: scale(0.985);
 }
 
 .ps-login-tab.active {
   background: #ffffff;
   color: #0c2b53;
-  font-weight: 800;
-  border-color: #d0e1f4;
-  box-shadow: 0 2px 8px rgba(14, 42, 87, 0.08), inset 0 -2.5px 0 #d7aa3e;
+  font-weight: 700;
+  border-color: rgba(18, 76, 145, 0.1);
+  box-shadow: 0 1px 3px rgba(14, 42, 87, 0.08), 0 3px 8px rgba(14, 42, 87, 0.04);
+}
+
+.ps-login-tab svg {
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.ps-login-tab:hover svg {
+  transform: scale(1.06);
 }
 
 .ps-login-tab.active svg {
