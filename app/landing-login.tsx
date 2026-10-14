@@ -125,40 +125,11 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
             </div>
           </div>
 
-          <nav className="ps-landing-links" aria-label="Portal Navigation">
-            <button type="button" onClick={scrollToFeatures} className="ps-nav-link">
-              Platform Features
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('demo');
-                scrollToLogin();
-              }}
-              className="ps-nav-link"
-            >
-              Demo Preview
-            </button>
-            <button type="button" onClick={() => setHelpOpen(true)} className="ps-nav-link">
-              Help &amp; Support
-            </button>
-          </nav>
-
           <div className="ps-landing-actions">
             <span className="ps-campus-tag">
               <Building2 size={13} />
               <span>Mandaluyong &amp; Pasig</span>
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('credentials');
-                scrollToLogin();
-              }}
-              className="ps-btn-nav-signin"
-            >
-              Sign In
-            </button>
           </div>
         </div>
       </header>
