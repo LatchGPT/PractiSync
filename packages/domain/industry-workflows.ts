@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { auditStatement, database, insert, list, one, statement, type PreparedStatement } from '../db/demo';
 import { inputs, type Action, type Identity } from '../validation/contracts';
+import { documentFormAnswerSchemas, documentFormCatalog, type DocumentFormAnswer, type DocumentFormType } from '../validation/document-forms';
 import { DomainError, requireRole } from './policies';
 import { manilaToday } from './assessment-period';
 
@@ -26,28 +27,82 @@ async function verifiedSupervisorCompanyId(user: Identity) {
   return String(company.id);
 }
 
-const finalSelfAssessment = z.object({
-  technicalSkills: z.number().int().min(1).max(5),
-  communication: z.number().int().min(1).max(5),
-  professionalism: z.number().int().min(1).max(5),
-  problemSolving: z.number().int().min(1).max(5),
-  reflection: z.string().trim().min(1).max(2000),
-}).strict();
-const exitSurvey = z.object({
-  curriculumRelevance: z.number().int().min(1).max(5),
-  universitySupport: z.number().int().min(1).max(5),
-  workplaceAlignment: z.number().int().min(1).max(5),
-  trainingPlanClarity: z.number().int().min(1).max(5),
-  feedback: z.string().trim().min(1).max(2000),
-}).strict();
-
 /** Handles only workflows with external HTE or completion-form access rules. */
 export async function mutateIndustry(user: Identity, action: Action, payload: unknown) {
-  const handled = ['companyProfile', 'companyVerification', 'job', 'jobReview', 'applicationStatus', 'selectApplication', 'confirmPlacement', 'activatePlacement', 'industryFinalEvaluation', 'evaluationReview', 'guestEvaluationLink', 'revokeGuestEvaluationLink', 'completionForm', 'completionDecision', 'privateHost'];
+  const handled = ['companyProfile', 'companyVerification', 'job', 'jobReview', 'applicationStatus', 'selectApplication', 'confirmPlacement', 'activatePlacement', 'industryFinalEvaluation', 'evaluationReview', 'guestEvaluationLink', 'revokeGuestEvaluationLink', 'completionForm', 'completionFormReview', 'documentTemplate', 'customDocumentForm', 'customDocumentReview', 'completionDecision', 'privateHost'];
   if (!handled.includes(action)) return null;
   const d = inputs[action].parse(payload) as Record<string, unknown>;
   const tx: PreparedStatement[] = [];
   let id = crypto.randomUUID();
+
+  if (action === 'documentTemplate') {
+    requireRole(user, 'SUPER_ADMIN');
+    const fields = d.fields as { key: string; label: string; kind: string; required: boolean; hint?: string; page: number; x: number; y: number; width: number; height: number }[];
+    if (new Set(fields.map(field => field.key)).size !== fields.length) throw new DomainError('Each field needs a unique key.');
+    const template=await one('SELECT id,pdf_base64,version FROM custom_document_templates WHERE tenant_id=? AND id=?',user.tenantId,String(d.templateId));
+    if(!template||!String(template.pdfBase64??''))throw new DomainError('Uploaded PDF template not found.',404);
+    id=String(template.id);
+    if(await one('SELECT id FROM custom_document_responses WHERE tenant_id=? AND template_id=? LIMIT 1',user.tenantId,id))throw new DomainError('Students already have responses to this template. Upload a new PDF template to change its fields without changing existing records.',409);
+    tx.push(statement('UPDATE custom_document_templates SET title=?,instructions=?,category=?,fields_json=?,status=\'PUBLISHED\',version=version+1 WHERE tenant_id=? AND id=? AND version=?',String(d.title),String(d.instructions),String(d.category),JSON.stringify(fields),user.tenantId,id,Number(template.version)));
+    return save(user, action, id, tx, 'PDF template published for students.');
+  }
+
+  if (action === 'customDocumentForm') {
+    requireRole(user, 'STUDENT');
+    const placement = await one('SELECT * FROM placements WHERE tenant_id=? AND id=? AND student_id=? AND status IN (\'PLANNED\',\'ACTIVE\')', user.tenantId, String(d.placementId), user.id);
+    if (!placement) throw new DomainError('A configured placement is required to fill this form.', 403);
+    const template = await one('SELECT * FROM custom_document_templates WHERE tenant_id=? AND id=? AND status=\'PUBLISHED\'', user.tenantId, String(d.templateId));
+    if (!template) throw new DomainError('This form is no longer available.', 404);
+    if (template.category === 'OJT') {
+      const totals = await one('SELECT COALESCE(SUM(i.minutes),0) AS reported_minutes FROM entries e JOIN intervals i ON i.tenant_id=e.tenant_id AND i.entry_id=e.id WHERE e.tenant_id=? AND e.placement_id=?', user.tenantId, placement.id);
+      if (!Number(placement.requiredMinutes) || Number(totals?.reportedMinutes ?? 0) < Number(placement.requiredMinutes)) throw new DomainError('End-of-OJT forms open after your reported DTR reaches the placement target.', 403);
+    }
+    const fields = JSON.parse(String(template.fieldsJson)) as { key: string; label: string; kind: string; required: boolean }[];
+    const answers = d.answers as Record<string, unknown>;
+    const allowed = new Set(fields.map(field => field.key));
+    if (Object.keys(answers).some(key => !allowed.has(key))) throw new DomainError('The answers include fields not in this template.');
+    if (d.mode === 'SUBMIT' && fields.some(field => field.required && (answers[field.key] === undefined || answers[field.key] === '' || answers[field.key] === false))) throw new DomainError('Complete every required field before submitting.');
+    for (const field of fields) {
+      const value = answers[field.key];
+      if (value === undefined || value === '') continue;
+      if (field.kind === 'checkbox' ? typeof value !== 'boolean' : field.kind === 'number' ? typeof value !== 'number' || !Number.isFinite(value) : typeof value !== 'string') throw new DomainError(`Check the value entered for ${field.label}.`);
+      if (field.kind === 'email' && typeof value === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) throw new DomainError(`Enter a valid email address for ${field.label}.`);
+      if (field.kind === 'date' && typeof value === 'string' && !isDate(value)) throw new DomainError(`Enter a valid date for ${field.label}.`);
+      if (field.kind === 'tel' && typeof value === 'string' && value.length > 80) throw new DomainError(`Keep ${field.label} under 80 characters.`);
+    }
+    const existing = await one('SELECT * FROM custom_document_responses WHERE tenant_id=? AND placement_id=? AND template_id=?', user.tenantId, placement.id, template.id);
+    const now = new Date().toISOString();
+    const mode = String(d.mode);
+    if (existing) {
+      if (!['DRAFT','REVISION_REQUESTED'].includes(String(existing.status))) throw new DomainError('This form has already been submitted and is awaiting review.',409);
+      if (Number(existing.version) !== Number(d.version ?? 0)) throw new DomainError('This form changed in another session. Refresh and try again.',409);
+      id = String(existing.id);
+      tx.push(statement('UPDATE custom_document_responses SET response_json=?,template_json=?,template_version=?,status=?,updated_at=?,submitted_at=?,review_note=NULL,reviewer_id=NULL,reviewed_at=NULL,version=version+1 WHERE tenant_id=? AND id=? AND version=?', JSON.stringify(answers), JSON.stringify({title:template.title,instructions:template.instructions,category:template.category,fields}), Number(template.version), mode==='SUBMIT'?'SUBMITTED':'DRAFT', now, mode==='SUBMIT'?now:existing.submittedAt??null, user.tenantId, id, Number(existing.version)));
+    } else {
+      if (Number(d.version ?? 0)!==0) throw new DomainError('This form changed in another session. Refresh and try again.',409);
+      tx.push(insert('custom_document_responses',{placement_id:placement.id,template_id:template.id,template_version:Number(template.version),template_json:JSON.stringify({title:template.title,instructions:template.instructions,category:template.category,fields}),response_json:JSON.stringify(answers),submitted_at:mode==='SUBMIT'?now:null,updated_at:now,status:mode==='SUBMIT'?'SUBMITTED':'DRAFT',review_note:null,reviewer_id:null,reviewed_at:null,version:1},id));
+    }
+    if (mode==='SUBMIT') {
+      const cls=await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?',user.tenantId,placement.classId);
+      if(cls)tx.push(insert('notifications',{user_id:String(cls.coordinatorId),title:'Student form submitted',message:`${user.name} submitted ${String(template.title)} for coordinator review.`,type:'DOCUMENT',resource_type:'document_form',resource_id:id,link_page:'documents'}));
+    }
+    return save(user,mode==='SUBMIT'?'custom_form_submit':'custom_form_draft',id,tx,mode==='SUBMIT'?'Form submitted to your coordinator for review.':'Draft saved. You can return to finish it later.');
+  }
+
+  if (action === 'customDocumentReview') {
+    requireRole(user,'COORDINATOR');
+    const response=await one('SELECT * FROM custom_document_responses WHERE tenant_id=? AND id=? AND status=\'SUBMITTED\'',user.tenantId,String(d.responseId));
+    if(!response)throw new DomainError('Submitted form not found or already reviewed.',404);
+    const placement=await one('SELECT * FROM placements WHERE tenant_id=? AND id=?',user.tenantId,String(response.placementId));
+    const cls=placement?await one('SELECT id FROM classes WHERE tenant_id=? AND id=? AND coordinator_id=?',user.tenantId,String(placement.classId),user.id):null;
+    if(!placement||!cls)throw new DomainError('This form is outside your coordinator scope.',403);
+    if(d.decision==='REVISION_REQUESTED'&&!String(d.note??'').trim())throw new DomainError('Add a note explaining the requested changes.');
+    id=String(response.id);
+    const approved=d.decision==='APPROVED';
+    tx.push(statement('UPDATE custom_document_responses SET status=?,review_note=?,reviewer_id=?,reviewed_at=?,updated_at=? WHERE tenant_id=? AND id=? AND status=\'SUBMITTED\'',String(d.decision),String(d.note??'').trim()||null,user.id,new Date().toISOString(),new Date().toISOString(),user.tenantId,id));
+    tx.push(insert('notifications',{user_id:String(placement.studentId),title:approved?'Form approved':'Form revision requested',message:approved?'Your custom form was approved.':`Please revise your form: ${String(d.note).trim()}`,type:'DOCUMENT',resource_type:'document_form',resource_id:id,link_page:'documents'}));
+    return save(user,action,id,tx,approved?'Form approved.':'Revision requested from the student.');
+  }
 
   if (action === 'companyProfile') {
     requireRole(user, 'SUPERVISOR');
@@ -218,25 +273,64 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
   if (action === 'completionForm') {
     requireRole(user, 'STUDENT');
     const placement = await one('SELECT * FROM placements WHERE tenant_id=? AND id=? AND student_id=?', user.tenantId, String(d.placementId), user.id);
-    if (!placement || !Number(placement.requiredMinutes)) throw new DomainError('A configured placement hour target is required before the forms open.', 403);
-    const totals = await one('SELECT COALESCE(SUM(i.minutes),0) AS reported_minutes FROM entries e JOIN intervals i ON i.tenant_id=e.tenant_id AND i.entry_id=e.id WHERE e.tenant_id=? AND e.placement_id=?', user.tenantId, placement.id);
-    if (Number(totals?.reportedMinutes ?? 0) < Number(placement.requiredMinutes)) throw new DomainError('The completion forms open after your reported DTR reaches the placement target.', 403);
-    const answers = d.answers;
-    const parsed = d.formType === 'FINAL_SELF_ASSESSMENT' ? finalSelfAssessment.safeParse(answers) : exitSurvey.safeParse(answers);
-    if (!parsed.success) throw new DomainError('Complete every required question in this form using the displayed scale.');
-    if (await one('SELECT id FROM completion_responses WHERE tenant_id=? AND placement_id=? AND form_type=?', user.tenantId, placement.id, String(d.formType))) throw new DomainError('This form has already been submitted.', 409);
-    id = crypto.randomUUID();
-    tx.push(insert('completion_responses', { placement_id: placement.id, form_type: String(d.formType), form_version: 1, response_json: JSON.stringify(parsed.data), submitted_at: new Date().toISOString(), version: 1 }, id));
-    const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, placement.classId);
-    if (cls) tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), cls.coordinatorId, 'Student completion form submitted', `A student submitted the ${String(d.formType).toLowerCase().replaceAll('_', ' ')}.`, 'ASSESSMENT', 'placement', placement.id, 'competencies'));
-    return save(user, action, id, tx, 'Form submitted. Both required forms must be submitted before the coordinator can approve formal completion.');
+    if (!placement || !['PLANNED', 'ACTIVE'].includes(String(placement.status))) throw new DomainError('A configured placement in planned or active status is required to fill these forms.', 403);
+    const formType = String(d.formType) as DocumentFormType;
+    const mode = String(d.mode ?? 'SUBMIT') as 'SAVE_DRAFT' | 'SUBMIT';
+    const answers = d.answers as Record<string, DocumentFormAnswer>;
+    const definition = documentFormCatalog[formType];
+    const answerSchema = documentFormAnswerSchemas[formType];
+    if (!definition || !answerSchema) throw new DomainError('Choose a supported form.');
+
+    if (definition.group === 'OJT') {
+      if (!Number(placement.requiredMinutes)) throw new DomainError('A configured placement hour target is required before end-of-OJT forms open.', 403);
+      const totals = await one('SELECT COALESCE(SUM(i.minutes),0) AS reported_minutes FROM entries e JOIN intervals i ON i.tenant_id=e.tenant_id AND i.entry_id=e.id WHERE e.tenant_id=? AND e.placement_id=?', user.tenantId, placement.id);
+      if (Number(totals?.reportedMinutes ?? 0) < Number(placement.requiredMinutes)) throw new DomainError('End-of-OJT forms open after your reported DTR reaches the placement target.', 403);
+    }
+
+    const parsed = mode === 'SUBMIT' ? answerSchema.safeParse(answers) : answerSchema.partial().safeParse(answers);
+    if (!parsed.success) throw new DomainError(mode === 'SUBMIT' ? 'Complete every required question and field before submitting this form.' : 'One or more form fields are invalid.');
+    if (mode === 'SUBMIT' && formType === 'TRAINING_AGREEMENT' && answers.studentAcknowledgement !== true) throw new DomainError('Confirm that you reviewed the sample placement details before submitting.');
+    if (mode === 'SUBMIT' && formType === 'PARENT_GUARDIAN_CONSENT' && answers.guardianAcknowledgement !== true) throw new DomainError('Confirm that the fictional OJT information was reviewed before submitting.');
+    const existing = await one('SELECT * FROM completion_responses WHERE tenant_id=? AND placement_id=? AND form_type=?', user.tenantId, placement.id, formType);
+    if (existing) {
+      if (!['DRAFT', 'REVISION_REQUESTED'].includes(String(existing.status ?? 'SUBMITTED'))) throw new DomainError('This form has already been submitted and is awaiting review.', 409);
+      if (Number(existing.version) !== Number(d.version ?? 0)) throw new DomainError('This form changed in another session. Refresh and try again.', 409);
+      id = String(existing.id);
+      tx.push(statement('UPDATE completion_responses SET response_json=?,status=?,updated_at=?,submitted_at=?,review_note=NULL,reviewer_id=NULL,reviewed_at=NULL,version=version+1 WHERE tenant_id=? AND id=? AND version=?', JSON.stringify(parsed.data), mode === 'SUBMIT' ? 'SUBMITTED' : 'DRAFT', new Date().toISOString(), mode === 'SUBMIT' ? new Date().toISOString() : existing.submittedAt ?? null, user.tenantId, existing.id, Number(existing.version)));
+    } else {
+      if (Number(d.version ?? 0) !== 0) throw new DomainError('This form changed in another session. Refresh and try again.', 409);
+      id = crypto.randomUUID();
+      const now = new Date().toISOString();
+      tx.push(insert('completion_responses', { placement_id: placement.id, form_type: formType, form_version: 1, response_json: JSON.stringify(parsed.data), status: mode === 'SUBMIT' ? 'SUBMITTED' : 'DRAFT', updated_at: now, submitted_at: mode === 'SUBMIT' ? now : null, version: 1, review_note: null, reviewer_id: null, reviewed_at: null }, id));
+    }
+    if (mode === 'SUBMIT') {
+      const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, placement.classId);
+      if (cls) tx.push(insert('notifications', { user_id: String(cls.coordinatorId), title: 'Student form submitted', message: `${user.name} submitted the ${definition.title.toLowerCase()} for coordinator review.`, type: 'DOCUMENT', resource_type: 'document_form', resource_id: id, link_page: 'documents' }));
+    }
+    return save(user, mode === 'SUBMIT' ? 'form_submit' : 'form_draft', id, tx, mode === 'SUBMIT' ? 'Form submitted to your coordinator for review.' : 'Draft saved. You can return to finish it later.');
+  }
+
+  if (action === 'completionFormReview') {
+    requireRole(user, 'COORDINATOR');
+    const response = await one('SELECT * FROM completion_responses WHERE tenant_id=? AND id=?', user.tenantId, String(d.responseId));
+    if (!response || String(response.status) !== 'SUBMITTED') throw new DomainError('Submitted form not found or already reviewed.', 404);
+    const placement = await one('SELECT * FROM placements WHERE tenant_id=? AND id=?', user.tenantId, String(response.placementId));
+    if (!placement) throw new DomainError('Form placement not found.', 404);
+    const formClass = await one('SELECT id FROM classes WHERE tenant_id=? AND id=? AND coordinator_id=?', user.tenantId, placement.classId, user.id);
+    if (!formClass) throw new DomainError('This form is outside your coordinator scope.', 403);
+    if (d.decision === 'REVISION_REQUESTED' && !String(d.note ?? '').trim()) throw new DomainError('Add a note explaining the requested changes.');
+    id = String(response.id);
+    tx.push(statement('UPDATE completion_responses SET status=?,review_note=?,reviewer_id=?,reviewed_at=?,updated_at=? WHERE tenant_id=? AND id=? AND status=\'SUBMITTED\'', String(d.decision), String(d.note ?? '').trim() || null, user.id, new Date().toISOString(), new Date().toISOString(), user.tenantId, id));
+    const approved = d.decision === 'APPROVED';
+    tx.push(insert('notifications', { user_id: String(placement.studentId), title: approved ? 'Form approved' : 'Form revision requested', message: approved ? `Your ${String(response.formType).toLowerCase().replaceAll('_', ' ')} was approved.` : `Please revise your ${String(response.formType).toLowerCase().replaceAll('_', ' ')}: ${String(d.note).trim()}`, type: 'DOCUMENT', resource_type: 'document_form', resource_id: id, link_page: 'documents' }));
+    return save(user, action, id, tx, approved ? 'Form approved.' : 'Revision requested from the student.');
   }
 
   if (action === 'completionDecision') {
     requireRole(user, 'COORDINATOR', 'SUPER_ADMIN');
     const placement = await one(`SELECT p.* FROM placements p WHERE p.tenant_id=? AND p.id=? ${user.role === 'COORDINATOR' ? 'AND p.class_id IN (SELECT id FROM classes WHERE tenant_id=? AND coordinator_id=?)' : ''}`, user.tenantId, String(d.placementId), ...(user.role === 'COORDINATOR' ? [user.tenantId, user.id] : []));
     if (!placement) throw new DomainError('Placement is outside your university scope.', 403);
-    const forms = await one('SELECT COUNT(*) AS count FROM completion_responses WHERE tenant_id=? AND placement_id=? AND form_type IN (\'FINAL_SELF_ASSESSMENT\',\'OJT_EXIT_SURVEY\')', user.tenantId, placement.id);
+    const forms = await one('SELECT COUNT(*) AS count FROM completion_responses WHERE tenant_id=? AND placement_id=? AND form_type IN (\'FINAL_SELF_ASSESSMENT\',\'OJT_EXIT_SURVEY\') AND status IN (\'SUBMITTED\',\'APPROVED\')', user.tenantId, placement.id);
     if (d.decision === 'APPROVE' && Number(forms?.count ?? 0) !== 2) throw new DomainError('Both the final competency self-assessment and OJT exit survey are required before approval.', 409);
     id = String(placement.id);
     if (d.decision === 'APPROVE') {

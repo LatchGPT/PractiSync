@@ -1,4 +1,5 @@
 import { prisma } from './client';
+import { openLocalDemoDatabase } from './local-demo';
 import { TENANT, DomainError, demoAllowed } from '../domain/policies';
 import { demoAccounts } from '../test-utils/fixtures';
 import { camelRows, type Row } from '../validation/contracts';
@@ -137,6 +138,7 @@ export function database(): DemoDatabase {
     throw new DomainError('Institutional backend is not configured. Demo access is disabled.', 503);
   }
   if (testDatabase) return testDatabase;
+  if (cfg.PRACTISYNC_LOCAL_DEMO === 'true') return (testDatabase = openLocalDemoDatabase());
   if (!cfg.DATABASE_URL) throw new DomainError('The demo database is unavailable. Please try again.', 503);
   return new PrismaDemoDatabase(prisma);
 }

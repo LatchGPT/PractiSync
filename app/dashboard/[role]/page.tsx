@@ -5,7 +5,7 @@ import {canAccessWorkspaceView,dashboardPathForRole,roleForDashboardSegment} fro
 import {DomainError,demoAllowed} from '@/packages/domain/policies';
 import {snapshot} from '@/packages/domain/read';
 import {settings} from '@/packages/db/demo';
-import type {Identity} from '@/packages/validation/contracts';
+import type {Identity,Snapshot} from '@/packages/validation/contracts';
 
 export const dynamic='force-dynamic';
 
@@ -43,10 +43,12 @@ export default async function DashboardPage({params,searchParams}:{params:Promis
  const requestedViews=Array.isArray(search.view)?search.view:search.view===undefined?[]:[search.view];
  if(requestedViews.some(view=>!canAccessWorkspaceView(expectedRole,view)))forbidden();
  const cfg=settings();
+ let initial:Snapshot|null=null;
+ let initialError:string|null=null;
  try{
-  const initial=await snapshot(user);
-  return <PractiSync initial={initial} initialError={null} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} authConfigured={!!cfg.AUTH_SECRET}/>;
+  initial=await snapshot(user);
  }catch(error){
-  return <PractiSync initial={null} initialError={error instanceof Error?error.message:'PractiSync could not load your workspace.'} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} authConfigured={!!cfg.AUTH_SECRET}/>;
+  initialError=error instanceof Error?error.message:'PractiSync could not load your workspace.';
  }
+ return <PractiSync initial={initial} initialError={initialError} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} authConfigured={!!cfg.AUTH_SECRET}/>;
 }

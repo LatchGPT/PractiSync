@@ -1923,7 +1923,7 @@ model DemoAssessmentSchedules {
   tenantId     String  @map("tenant_id")
   createdAt    String  @map("created_at")
   courseId     String  @map("course_id")
-  updatedAt    String  @map("updated_at")
+  updatedAt    String  @default(dbgenerated("CURRENT_TIMESTAMP::text")) @map("updated_at")
   configuredBy String? @map("configured_by")
   version      Int     @default(1)
 
@@ -1966,15 +1966,21 @@ model DemoCompletionResponses {
   id           String  @id
   tenantId     String  @map("tenant_id")
   createdAt    String  @map("created_at")
+  updatedAt    String  @map("updated_at")
   placementId  String  @map("placement_id")
   formType     String  @map("form_type")
   formVersion  Int     @map("form_version")
   responseJson String  @map("response_json")
-  submittedAt  String  @map("submitted_at")
+  submittedAt  String? @map("submitted_at")
+  status       String  @default("SUBMITTED")
+  reviewNote   String? @map("review_note")
+  reviewerId   String? @map("reviewer_id")
+  reviewedAt   String? @map("reviewed_at")
   version      Int     @default(1)
 
   @@unique([tenantId, placementId, formType], map: "completion_response_once")
   @@index([tenantId, placementId], map: "completion_response_placement")
+  @@index([tenantId, status, updatedAt], map: "completion_response_review_queue")
   @@map("completion_responses")
 }
 

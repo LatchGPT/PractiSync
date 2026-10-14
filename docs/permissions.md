@@ -9,8 +9,10 @@ Every request obtains identity from the Auth.js encrypted JWT, reloads the curre
 | Optional confirmation | Denied | Denied | Active assigned placement; time only | Denied |
 | Classes/create | Join eligible own course | Own classes | Denied | Institution |
 | Hours policy | Read target snapshot | Read | Granted course scope | Grant scope only |
-| Documents/read | Own | Own class | Denied | Institution metadata |
-| Documents/review | Denied | Own class | Denied | Denied |
+| Documents/read | Own metadata and form submissions | Own class metadata and submitted forms | Denied | Institution metadata and submitted forms |
+| PDF template upload/map/publish | Denied | Denied | Denied | Own tenant: upload PDF, draw and label fillable areas, publish or remap |
+| Interactive form draft/submit | Own clearance papers; two OJT forms after reported-hour target | Denied | Denied | Denied |
+| Interactive form review | Denied | Own-class submissions; approve or request revision | Denied | Denied |
 | SOS/read/write | Own report | Assigned class cases | Denied | Denied unless explicit handler (not implemented) |
 | Company profile | Denied | Read approved directory | Create own; blocked pending verification | Verify or decline |
 | Internship post | Denied | Review posts in assigned course | Submit for own verified company; cannot publish | Read/manage institution |
@@ -20,7 +22,7 @@ Every request obtains identity from the Auth.js encrypted JWT, reloads the curre
 | Student competency assessment | Submit/revise own weekly or monthly assessment according to course cadence | Configure cadence for own courses; approve or request revision for own class | Denied | Read |
 | HTE final evaluation | Read after coordinator approval | Review and release for own class | Submit rubric only for own assigned active placement; own receipt/revisions only | Read institution |
 | Guest HTE evaluation | Read after coordinator approval | Issue/revoke one-use link and review response | No account or dashboard access | Read institution |
-| Completion forms | Submit two required university forms after reported hours reach target | Review both forms and make formal completion decision for own class | Denied | Read institution |
+| Completion forms | Save drafts and submit the two required OJT forms after reported hours reach target | Review forms and make formal completion decision for own class | Denied | Read submitted institution forms |
 | Company review | Submit after formal placement completion; other authors are anonymous | Identify and moderate in university scope | Anonymous approved feedback only after five distinct placements in the same period | Identify and moderate |
 | Portfolio | Own | Own class | Assigned scope | Institution scope |
 | Accounts/structure | Own profile | Own profile | Own profile | Provision and assign non-demo accounts |

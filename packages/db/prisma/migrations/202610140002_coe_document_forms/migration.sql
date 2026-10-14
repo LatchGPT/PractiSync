@@ -1,0 +1,11 @@
+ALTER TABLE completion_responses
+  DROP CONSTRAINT completion_form_type,
+  ADD CONSTRAINT completion_form_type CHECK (form_type IN (
+    'COE_PLACEMENT_DATA',
+    'COE_RECOMMENDATION',
+    'STUDENT_INFO_SHEET',
+    'TRAINING_AGREEMENT',
+    'PARENT_GUARDIAN_CONSENT',
+    'FINAL_SELF_ASSESSMENT',
+    'OJT_EXIT_SURVEY'
+  ));

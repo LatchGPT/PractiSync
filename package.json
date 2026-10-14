@@ -8,6 +8,7 @@
   "scripts": {
     "install:ci": "bash scripts/install-pnpm.sh",
     "dev": "next dev",
+    "dev:demo": "node scripts/dev-demo.mjs",
     "build": "next build",
     "start": "next start",
     "cf:dev": "node scripts/run-framework.mjs dev",
@@ -31,6 +32,8 @@
     "@hookform/resolvers": "^5.7.1",
     "@prisma/client": "6.19.3",
     "@react-pdf/renderer": "4.3.1",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "6.4.299",
     "@shadcn/react": "^0.3.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

@@ -18,7 +18,7 @@ const workspaceViews:Record<Role,readonly string[]>={
  STUDENT:['overview','classes','attendance','documents','competencies','incidents','jobs','announcements','portfolio','profile','settings'],
  COORDINATOR:['overview','classes','attendance','documents','competencies','incidents','jobs','announcements','portfolio','policies','profile','settings'],
  SUPERVISOR:[],
- SUPER_ADMIN:['overview','accounts','institution','jobs','announcements','profile','settings'],
+ SUPER_ADMIN:['overview','accounts','institution','required-documents','jobs','announcements','profile','settings'],
 };
 
 export function isRole(value:unknown):value is Role{
