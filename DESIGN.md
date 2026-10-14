@@ -159,9 +159,9 @@ Reuse primitives from `components/ui` and application patterns before introducin
 | Student | Placement context, daily attendance and narratives, target progress, document clearance, competency development, support, and portfolio |
 | Coordinator | Class membership, student progress, document review, scoped announcements, and student support queues |
 | Supervisor | Assigned interns, optional attendance confirmation, evaluations, authorized hour policies, and company internship postings |
-| Super Admin | Account administration, institution structure, assignments, and configured permissions |
+| Super Admin | University office administration, account access, institution structure, and partner approvals |
 
-Module navigation includes overview, attendance/training records, document clearance, competency insights, internship board (including merged company directory and application tracking), announcements, and portfolio. Classes, support, accounts, and institution management depend on role and scope.
+Super Admin navigation focuses on overview, accounts and roles, university structure, the internship board, and university announcements. Coordinator-facing class management, attendance review, document review, competency workflows, student portfolios, and support queues stay out of the office menu. Institutional read access still follows the permissions matrix. Other roles see modules according to their permissions and scope.
 
 Role-specific summaries may use different accents, but should preserve the same card, typography, status, and action conventions. UI visibility follows permissions; server checks remain authoritative. Follow [docs/permissions.md](docs/permissions.md) when exposing a new action or record.
 

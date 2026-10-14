@@ -1,0 +1,537 @@
+/* HTE Supervisor Portal & Partner Workflows */
+.hte-portal {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--background);
+  padding-bottom: 48px;
+}
+
+.hte-header {
+  height: 74px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(18px, 5vw, 64px);
+  gap: 20px;
+}
+
+.hte-header .brand {
+  font-size: 20px;
+}
+
+.hte-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+.hte-account .secondary {
+  padding: 8px 12px;
+  border-radius: var(--radius-btn, 8px);
+}
+
+.hte-intro {
+  padding: 42px clamp(18px, 5vw, 64px) 25px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.hte-intro h1 {
+  margin: 15px 0 8px;
+}
+
+.hte-intro p {
+  max-width: 790px;
+  color: var(--muted-foreground);
+}
+
+.hte-card,
+.hte-notice {
+  width: min(1100px, calc(100% - 36px));
+  margin: 16px auto;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card, 12px);
+  padding: 22px 24px;
+  box-shadow: 0 7px 23px rgba(24, 59, 109, 0.03);
+}
+
+.hte-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+.hte-card > p {
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.hte-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.hte-grid .hte-card {
+  width: calc(100% - 16px);
+  margin: 16px 8px;
+}
+
+.hte-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px;
+  align-items: end;
+}
+
+.hte-form label,
+.guest-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.hte-form input,
+.hte-form select,
+.hte-form textarea {
+  border-radius: var(--radius-input, 8px);
+}
+
+.hte-form .hte-full {
+  grid-column: 1 / -1;
+}
+
+.hte-form textarea {
+  min-height: 100px;
+}
+
+.hte-form button {
+  justify-self: start;
+  border-radius: var(--radius-btn, 8px);
+}
+
+.hte-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff8e8;
+  border-color: #f1d895;
+}
+
+.hte-notice p {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+
+.hte-notice .chip {
+  margin-left: auto;
+}
+
+.hte-list {
+  display: grid;
+  gap: 0;
+}
+
+.hte-list article {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.hte-list article p {
+  color: var(--muted-foreground);
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+
+.hte-list details {
+  margin-top: 8px;
+}
+
+.hte-list summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.hte-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.hte-actions .primary,
+.hte-actions .secondary {
+  padding: 7px 10px;
+  font-size: 12px;
+  border-radius: var(--radius-btn, 8px);
+}
+
+.hte-times {
+  margin: 6px 0 0;
+  padding-left: 17px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.hte-times li {
+  margin: 3px 0;
+}
+
+/* Rubric Fields & Evaluation Form in HTE Supervisor Portal */
+.hte-rubric-field {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card, 12px);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 14px;
+  align-items: start;
+  background: #fbfdff;
+}
+
+.hte-rubric-field legend {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 0 8px;
+  color: var(--foreground);
+}
+
+.hte-rubric-field select {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 8px 10px;
+  border-radius: var(--radius-input, 8px);
+  font-size: 13px;
+}
+
+.hte-rubric-field textarea {
+  min-height: 70px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input, 8px);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.hte-evaluation-form {
+  margin-top: 10px;
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+}
+
+.hte-evaluation-form summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.hte-evaluation-receipt {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-btn, 8px);
+  font-size: 12.5px;
+  color: #166534;
+}
+
+/* Guest Evaluation Page */
+.guest-evaluation-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 32px 16px;
+  background: var(--background);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.guest-evaluation-card {
+  width: min(100%, 700px);
+  padding: 30px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card, 12px);
+  box-shadow: 0 16px 48px rgba(24, 59, 109, 0.07);
+}
+
+.guest-evaluation-card > .brand {
+  margin-bottom: 28px;
+}
+
+.guest-evaluation-card h1 {
+  font-size: 27px;
+  margin: 16px 0 7px;
+}
+
+.guest-evaluation-card > p {
+  margin-bottom: 18px;
+}
+
+.guest-context {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--border);
+  background: #f8fafd;
+  border-radius: var(--radius-btn, 8px);
+  padding: 14px;
+  margin: 20px 0;
+  font-size: 13px;
+}
+
+.guest-context small {
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+
+.guest-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.guest-form fieldset {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card, 12px);
+  padding: 15px;
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.guest-form legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.guest-form fieldset textarea {
+  min-height: 75px;
+  border-radius: var(--radius-input, 8px);
+}
+
+.guest-form fieldset label:first-of-type {
+  grid-template-columns: 1fr;
+}
+
+.guest-form fieldset select {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 9px;
+  border-radius: var(--radius-input, 8px);
+}
+
+.guest-done {
+  padding: 24px 0;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.guest-done svg {
+  color: #268052;
+}
+
+.guest-done p {
+  max-width: 470px;
+  color: var(--muted-foreground);
+}
+
+/* Student Completion Forms Component (Documents Module) */
+.completion-forms-card {
+  border-radius: var(--radius-card, 12px);
+  border: 1px solid var(--border);
+  background: #ffffff;
+  margin-top: 20px;
+}
+
+.completion-locked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-btn, 8px);
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.completion-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
+}
+
+.completion-form {
+  background: #fbfdff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card, 12px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.completion-form h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 4px;
+}
+
+.completion-form .muted {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+
+.completion-form.submitted {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+}
+
+.completion-form.submitted svg {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.completion-form.submitted strong {
+  display: block;
+  font-size: 14px;
+  color: #15803d;
+}
+
+.completion-form.submitted p {
+  font-size: 12px;
+  color: #166534;
+  margin-top: 2px;
+}
+
+.completion-form.submitted .chip {
+  margin-left: auto;
+}
+
+.completion-ratings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.completion-ratings label {
+  display: grid;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.completion-ratings select {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 7px 10px;
+  border-radius: var(--radius-input, 8px);
+  font-size: 13px;
+}
+
+.completion-form label textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input, 8px);
+  padding: 9px 12px;
+  font-size: 13px;
+  background: #ffffff;
+  margin-top: 6px;
+}
+
+.completion-form small {
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.completion-form button.primary {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: var(--radius-btn, 8px);
+}
+
+@media (max-width: 760px) {
+  .hte-header {
+    height: auto;
+    min-height: 70px;
+    padding: 12px 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .hte-account {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .hte-intro {
+    padding-top: 28px;
+  }
+  .hte-grid {
+    grid-template-columns: 1fr;
+  }
+  .hte-grid .hte-card {
+    width: calc(100% - 36px);
+    margin: 10px auto;
+  }
+  .hte-card,
+  .hte-notice {
+    padding: 18px;
+  }
+  .hte-form {
+    grid-template-columns: 1fr;
+  }
+  .hte-form .hte-full {
+    grid-column: auto;
+  }
+  .guest-evaluation-card {
+    padding: 22px 17px;
+  }
+  .guest-form fieldset,
+  .hte-rubric-field {
+    grid-template-columns: 1fr;
+  }
+  .guest-form fieldset label:first-of-type {
+    max-width: 190px;
+  }
+  .completion-ratings {
+    grid-template-columns: 1fr;
+  }
+}

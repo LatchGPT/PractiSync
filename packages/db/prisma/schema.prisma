@@ -181,50 +181,50 @@ model Tenant {
 }
 
 model User {
-  id                            String               @id @default(cuid())
-  tenantId                      String
-  tenant                        Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  createdAt                     DateTime             @default(now())
-  updatedAt                     DateTime             @updatedAt
-  name                          String?
-  email                         String?              @unique
-  emailVerified                 DateTime?
-  image                         String?
-  username                      String               @unique
-  passwordHash                  String?
-  status                        AccountStatus        @default(ACTIVE)
-  sessionVersion                Int                  @default(1)
-  isDemo                        Boolean              @default(false)
-  account_userId                Account[]            @relation("Account_userId")
-  session_userId                Session[]            @relation("Session_userId")
-  membership_userId             Membership[]         @relation("Membership_userId")
-  studentProfile_userId         StudentProfile[]     @relation("StudentProfile_userId")
-  supervisorProfile_userId      SupervisorProfile[]  @relation("SupervisorProfile_userId")
-  hoursPolicy_authorId          HoursPolicy[]        @relation("HoursPolicy_authorId")
-  classSpace_coordinatorId      ClassSpace[]         @relation("ClassSpace_coordinatorId")
-  policyMigration_actorId       PolicyMigration[]    @relation("PolicyMigration_actorId")
-  entryRevision_actorId         EntryRevision[]      @relation("EntryRevision_actorId")
-  storageObject_ownerId         StorageObject[]      @relation("StorageObject_ownerId")
-  evaluation_evaluatorId        Evaluation[]         @relation("Evaluation_evaluatorId")
-  evaluation_reviewerId         Evaluation[]         @relation("Evaluation_reviewerId")
+  id                                String               @id @default(cuid())
+  tenantId                          String
+  tenant                            Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdAt                         DateTime             @default(now())
+  updatedAt                         DateTime             @updatedAt
+  name                              String?
+  email                             String?              @unique
+  emailVerified                     DateTime?
+  image                             String?
+  username                          String               @unique
+  passwordHash                      String?
+  status                            AccountStatus        @default(ACTIVE)
+  sessionVersion                    Int                  @default(1)
+  isDemo                            Boolean              @default(false)
+  account_userId                    Account[]            @relation("Account_userId")
+  session_userId                    Session[]            @relation("Session_userId")
+  membership_userId                 Membership[]         @relation("Membership_userId")
+  studentProfile_userId             StudentProfile[]     @relation("StudentProfile_userId")
+  supervisorProfile_userId          SupervisorProfile[]  @relation("SupervisorProfile_userId")
+  hoursPolicy_authorId              HoursPolicy[]        @relation("HoursPolicy_authorId")
+  classSpace_coordinatorId          ClassSpace[]         @relation("ClassSpace_coordinatorId")
+  policyMigration_actorId           PolicyMigration[]    @relation("PolicyMigration_actorId")
+  entryRevision_actorId             EntryRevision[]      @relation("EntryRevision_actorId")
+  storageObject_ownerId             StorageObject[]      @relation("StorageObject_ownerId")
+  evaluation_evaluatorId            Evaluation[]         @relation("Evaluation_evaluatorId")
+  evaluation_reviewerId             Evaluation[]         @relation("Evaluation_reviewerId")
   assessmentSchedule_configuredById AssessmentSchedule[] @relation("AssessmentSchedule_configuredById")
-  documentSubmission_reviewerId DocumentSubmission[] @relation("DocumentSubmission_reviewerId")
-  incidentCase_reporterId       IncidentCase[]       @relation("IncidentCase_reporterId")
-  incidentCase_coordinatorId    IncidentCase[]       @relation("IncidentCase_coordinatorId")
-  caseHandler_userId            CaseHandler[]        @relation("CaseHandler_userId")
-  caseMessage_authorId          CaseMessage[]        @relation("CaseMessage_authorId")
-  caseEscalation_actorId        CaseEscalation[]     @relation("CaseEscalation_actorId")
-  caseEscalation_recipientId    CaseEscalation[]     @relation("CaseEscalation_recipientId")
-  sensitiveAccess_actorId       SensitiveAccess[]    @relation("SensitiveAccess_actorId")
-  jobPosting_authorId           JobPosting[]         @relation("JobPosting_authorId")
-  applicationHistory_actorId    ApplicationHistory[] @relation("ApplicationHistory_actorId")
-  announcement_authorId         Announcement[]       @relation("Announcement_authorId")
-  readReceipt_userId            ReadReceipt[]        @relation("ReadReceipt_userId")
-  completionRecord_decidedById  CompletionRecord[]   @relation("CompletionRecord_decidedById")
-  portfolioJob_requestedById    PortfolioJob[]       @relation("PortfolioJob_requestedById")
-  notification_userId           Notification[]       @relation("Notification_userId")
-  idempotencyKey_actorId        IdempotencyKey[]     @relation("IdempotencyKey_actorId")
-  auditEvent_actorId            AuditEvent[]         @relation("AuditEvent_actorId")
+  documentSubmission_reviewerId     DocumentSubmission[] @relation("DocumentSubmission_reviewerId")
+  incidentCase_reporterId           IncidentCase[]       @relation("IncidentCase_reporterId")
+  incidentCase_coordinatorId        IncidentCase[]       @relation("IncidentCase_coordinatorId")
+  caseHandler_userId                CaseHandler[]        @relation("CaseHandler_userId")
+  caseMessage_authorId              CaseMessage[]        @relation("CaseMessage_authorId")
+  caseEscalation_actorId            CaseEscalation[]     @relation("CaseEscalation_actorId")
+  caseEscalation_recipientId        CaseEscalation[]     @relation("CaseEscalation_recipientId")
+  sensitiveAccess_actorId           SensitiveAccess[]    @relation("SensitiveAccess_actorId")
+  jobPosting_authorId               JobPosting[]         @relation("JobPosting_authorId")
+  applicationHistory_actorId        ApplicationHistory[] @relation("ApplicationHistory_actorId")
+  announcement_authorId             Announcement[]       @relation("Announcement_authorId")
+  readReceipt_userId                ReadReceipt[]        @relation("ReadReceipt_userId")
+  completionRecord_decidedById      CompletionRecord[]   @relation("CompletionRecord_decidedById")
+  portfolioJob_requestedById        PortfolioJob[]       @relation("PortfolioJob_requestedById")
+  notification_userId               Notification[]       @relation("Notification_userId")
+  idempotencyKey_actorId            IdempotencyKey[]     @relation("IdempotencyKey_actorId")
+  auditEvent_actorId                AuditEvent[]         @relation("AuditEvent_actorId")
 
   @@unique([tenantId, id])
   @@index([tenantId, createdAt])
@@ -1509,4 +1509,525 @@ model LoginAttempt {
   @@unique([tenantId, keyHash])
   @@unique([tenantId, id])
   @@index([tenantId, createdAt])
+}
+
+// Fictional demo tables used by the current UI adapter.
+
+model DemoAnnouncements {
+  id        String  @id
+  tenantId  String  @map("tenant_id")
+  createdAt String  @map("created_at")
+  authorId  String  @map("author_id")
+  classId   String? @map("class_id")
+  title     String
+  body      String
+  audience  String
+  status    String  @default("PUBLISHED")
+
+  @@map("announcements")
+}
+
+model DemoApplications {
+  id          String @id
+  tenantId    String @map("tenant_id")
+  createdAt   String @map("created_at")
+  jobId       String @map("job_id")
+  studentId   String @map("student_id")
+  coverLetter String @map("cover_letter")
+  status      String @default("SUBMITTED")
+  placementId String? @map("placement_id")
+
+  @@unique([tenantId, jobId, studentId], map: "application_job_student")
+  @@map("applications")
+}
+
+model DemoAssignments {
+  id           String @id
+  tenantId     String @map("tenant_id")
+  createdAt    String @map("created_at")
+  placementId  String @map("placement_id")
+  supervisorId String @map("supervisor_id")
+  active       Int    @default(1)
+
+  @@unique([tenantId, placementId, supervisorId], map: "assignment_pair")
+  @@map("assignments")
+}
+
+model DemoAudit {
+  id         String  @id
+  tenantId   String  @map("tenant_id")
+  createdAt  String  @map("created_at")
+  actorId    String  @map("actor_id")
+  action     String
+  resourceId String  @map("resource_id")
+  reason     String?
+
+  @@index([tenantId, createdAt], map: "audit_tenant_date")
+  @@map("audit")
+}
+
+model DemoCaseMessages {
+  id        String @id
+  tenantId  String @map("tenant_id")
+  createdAt String @map("created_at")
+  caseId    String @map("case_id")
+  authorId  String @map("author_id")
+  body      String
+
+  @@index([tenantId, caseId], map: "case_message_case")
+  @@map("case_messages")
+}
+
+model DemoClasses {
+  id             String  @id
+  tenantId       String  @map("tenant_id")
+  createdAt      String  @map("created_at")
+  name           String
+  section        String
+  courseId       String  @map("course_id")
+  coordinatorId  String  @map("coordinator_id")
+  period         String
+  codeHash       String  @map("code_hash")
+  codeLabel      String  @map("code_label")
+  expiresAt      String? @map("expires_at")
+  revoked        Int     @default(0)
+  classRepId     String? @map("class_rep_id")
+  viceClassRepId String? @map("vice_class_rep_id")
+
+  @@unique([codeHash], map: "classes_code")
+  @@index([tenantId, coordinatorId], map: "classes_coordinator")
+  @@map("classes")
+}
+
+model DemoCompanies {
+  id          String @id
+  tenantId    String @map("tenant_id")
+  createdAt   String @map("created_at")
+  name        String
+  industry    String
+  location    String
+  description String
+  status      String
+  canPost     Int    @default(0) @map("can_post")
+
+  @@map("companies")
+}
+
+model DemoCompletion {
+  id          String  @id
+  tenantId    String  @map("tenant_id")
+  createdAt   String  @map("created_at")
+  placementId String  @map("placement_id")
+  status      String  @default("PENDING")
+  reason      String?
+  decidedAt   String? @map("decided_at")
+  decidedBy   String? @map("decided_by")
+
+  @@unique([tenantId, placementId], map: "completion_placement")
+  @@map("completion")
+}
+
+model DemoCourses {
+  id           String @id
+  tenantId     String @map("tenant_id")
+  createdAt    String @map("created_at")
+  departmentId String @map("department_id")
+  name         String
+  code         String
+
+  @@map("courses")
+}
+
+model DemoDepartments {
+  id        String @id
+  tenantId  String @map("tenant_id")
+  createdAt String @map("created_at")
+  name      String
+  code      String
+
+  @@map("departments")
+}
+
+model DemoDocuments {
+  id          String  @id
+  tenantId    String  @map("tenant_id")
+  createdAt   String  @map("created_at")
+  placementId String  @map("placement_id")
+  name        String
+  filename    String
+  status      String
+  reason      String?
+  version     Int     @default(1)
+  reviewerId  String? @map("reviewer_id")
+
+  @@index([tenantId, placementId], map: "documents_placement")
+  @@map("documents")
+}
+
+model DemoEnrollments {
+  id        String @id
+  tenantId  String @map("tenant_id")
+  createdAt String @map("created_at")
+  classId   String @map("class_id")
+  studentId String @map("student_id")
+  active    Int    @default(1)
+
+  @@unique([tenantId, classId, studentId], map: "enrollment_class_student")
+  @@index([tenantId, studentId], map: "enrollment_student")
+  @@map("enrollments")
+}
+
+model DemoEntries {
+  id               String  @id
+  tenantId         String  @map("tenant_id")
+  createdAt        String  @map("created_at")
+  placementId      String  @map("placement_id")
+  date             String
+  narrative        String
+  version          Int     @default(1)
+  confirmedVersion Int?    @map("confirmed_version")
+  confirmedBy      String? @map("confirmed_by")
+
+  @@index([tenantId, placementId, date], map: "entries_placement_date")
+  @@map("entries")
+}
+
+model DemoEvaluations {
+  id               String  @id
+  tenantId         String  @map("tenant_id")
+  createdAt        String  @map("created_at")
+  placementId      String  @map("placement_id")
+  evaluatorId      String  @map("evaluator_id")
+  kind             String
+  frameworkVersion Int     @default(1) @map("framework_version")
+  status           String  @default("SUBMITTED")
+  periodStart      String? @map("period_start")
+  periodEnd        String? @map("period_end")
+  version          Int     @default(1)
+  reviewNote       String? @map("review_note")
+  reviewedBy       String? @map("reviewed_by")
+  reviewedAt       String? @map("reviewed_at")
+  evidenceJson     String? @map("evidence_json")
+
+  @@unique([tenantId, placementId, kind, periodStart], map: "evaluation_period_once")
+  @@map("evaluations")
+}
+
+model DemoIncidents {
+  id            String  @id
+  tenantId      String  @map("tenant_id")
+  createdAt     String  @map("created_at")
+  placementId   String  @map("placement_id")
+  studentId     String  @map("student_id")
+  coordinatorId String  @map("coordinator_id")
+  subject       String
+  narrative     String
+  status        String  @default("OPEN")
+  resolution    String?
+
+  @@index([tenantId, coordinatorId], map: "incident_coordinator")
+  @@index([tenantId, studentId], map: "incident_student")
+  @@map("incidents")
+}
+
+model DemoIntervals {
+  id           String @id
+  tenantId     String @map("tenant_id")
+  createdAt    String @map("created_at")
+  entryId      String @map("entry_id")
+  startsAt     String @map("starts_at")
+  endsAt       String @map("ends_at")
+  breakMinutes Int    @default(0) @map("break_minutes")
+  minutes      Int
+
+  @@index([tenantId, entryId], map: "interval_entry")
+  @@map("intervals")
+}
+
+model DemoJobs {
+  id          String @id
+  tenantId    String @map("tenant_id")
+  createdAt   String @map("created_at")
+  companyId   String @map("company_id")
+  authorId    String @map("author_id")
+  title       String
+  description String
+  location    String
+  courseId    String @map("course_id")
+  skills      String
+  openings    Int
+  status      String @default("PUBLISHED")
+
+  @@map("jobs")
+}
+
+model DemoPlacements {
+  id              String @id
+  tenantId        String @map("tenant_id")
+  createdAt       String @map("created_at")
+  studentId       String @map("student_id")
+  companyId       String @map("company_id")
+  classId         String @map("class_id")
+  courseId        String @map("course_id")
+  period          String
+  startsAt        String @map("starts_at")
+  endsAt          String @map("ends_at")
+  requiredMinutes Int?   @map("required_minutes")
+  policyVersion   Int?   @map("policy_version")
+  status          String
+
+  @@index([tenantId, studentId], map: "placement_student")
+  @@index([tenantId, classId], map: "placement_class")
+  @@map("placements")
+}
+
+model DemoPolicies {
+  id              String @id
+  tenantId        String @map("tenant_id")
+  createdAt       String @map("created_at")
+  courseId        String @map("course_id")
+  period          String
+  requiredMinutes Int    @map("required_minutes")
+  version         Int
+  authorId        String @map("author_id")
+
+  @@unique([tenantId, courseId, period, version], map: "policy_course_version")
+  @@map("policies")
+}
+
+model DemoPolicyScopes {
+  id           String @id
+  tenantId     String @map("tenant_id")
+  createdAt    String @map("created_at")
+  supervisorId String @map("supervisor_id")
+  courseId     String @map("course_id")
+  active       Int    @default(1)
+
+  @@unique([tenantId, supervisorId, courseId], map: "scope_supervisor_course")
+  @@map("policy_scopes")
+}
+
+model DemoRateLimits {
+  key         String @id
+  attempts    Int
+  windowStart BigInt @map("window_start")
+
+  @@map("rate_limits")
+}
+
+model DemoReviews {
+  id          String @id
+  tenantId    String @map("tenant_id")
+  createdAt   String @map("created_at")
+  companyId   String @map("company_id")
+  studentId   String @map("student_id")
+  placementId String @map("placement_id")
+  rating      Int
+  body        String
+  status      String @default("PENDING")
+
+  @@unique([tenantId, placementId, studentId], map: "review_placement_student")
+  @@map("reviews")
+}
+
+model DemoRevisions {
+  id              String @id
+  tenantId        String @map("tenant_id")
+  createdAt       String @map("created_at")
+  entryId         String @map("entry_id")
+  actorId         String @map("actor_id")
+  previousVersion Int    @map("previous_version")
+  narrative       String
+  startsAt        String @map("starts_at")
+  endsAt          String @map("ends_at")
+  breakMinutes    Int    @map("break_minutes")
+  reason          String
+
+  @@unique([tenantId, entryId, previousVersion], map: "revision_entry_version")
+  @@map("revisions")
+}
+
+model DemoScores {
+  id           String @id
+  tenantId     String @map("tenant_id")
+  createdAt    String @map("created_at")
+  evaluationId String @map("evaluation_id")
+  dimension    String
+  score        Int
+  evidenceNote String? @map("evidence_note")
+
+  @@map("scores")
+}
+
+model DemoSeedState {
+  key   String @id
+  value String
+
+  @@map("seed_state")
+}
+
+model DemoUsers {
+  id                 String  @id
+  tenantId           String  @map("tenant_id")
+  createdAt          String  @map("created_at")
+  name               String
+  username           String
+  email              String
+  role               String
+  status             String  @default("ACTIVE")
+  passwordHash       String? @map("password_hash")
+  sessionVersion     Int     @default(1) @map("session_version")
+  isDemo             Int     @default(0) @map("is_demo")
+  courseId           String? @map("course_id")
+  companyId          String? @map("company_id")
+  supervisorVerified Int     @default(0) @map("supervisor_verified")
+  canPost            Int     @default(0) @map("can_post")
+
+  @@unique([username], map: "users_username")
+  @@index([tenantId, role], map: "users_tenant_role")
+  @@map("users")
+}
+
+model DemoJoinRequests {
+  id        String  @id
+  tenantId  String  @map("tenant_id")
+  createdAt String  @map("created_at")
+  classId   String  @map("class_id")
+  studentId String  @map("student_id")
+  status    String  @default("PENDING")
+  note      String?
+
+  @@index([tenantId, classId], map: "join_requests_class")
+  @@index([tenantId, studentId], map: "join_requests_student")
+  @@map("join_requests")
+}
+
+model DemoNotifications {
+  id           String  @id
+  tenantId     String  @map("tenant_id")
+  createdAt    String  @map("created_at")
+  userId       String  @map("user_id")
+  title        String
+  message      String
+  type         String
+  resourceType String? @default("") @map("resource_type")
+  resourceId   String? @default("") @map("resource_id")
+  linkPage     String? @default("") @map("link_page")
+  readAt       String? @map("read_at")
+
+  @@map("notifications")
+}
+
+model DemoAssessmentSchedules {
+  id           String  @id
+  tenantId     String  @map("tenant_id")
+  createdAt    String  @map("created_at")
+  courseId     String  @map("course_id")
+  updatedAt    String  @map("updated_at")
+  configuredBy String? @map("configured_by")
+  version      Int     @default(1)
+
+  @@unique([tenantId, courseId], map: "assessment_schedule_course")
+  @@map("assessment_schedules")
+}
+
+model DemoEvaluationRevisions {
+  id              String  @id
+  tenantId        String  @map("tenant_id")
+  createdAt       String  @map("created_at")
+  evaluationId    String  @map("evaluation_id")
+  actorId         String  @map("actor_id")
+  previousVersion Int     @map("previous_version")
+  scoresJson      String  @map("scores_json")
+  reviewNote      String? @map("review_note")
+
+  @@unique([tenantId, evaluationId, previousVersion], map: "evaluation_revision_version")
+  @@map("evaluation_revisions")
+}
+
+model DemoGuestEvaluationLinks {
+  id             String  @id
+  tenantId       String  @map("tenant_id")
+  createdAt      String  @map("created_at")
+  placementId    String  @map("placement_id")
+  tokenHash      String  @unique @map("token_hash")
+  accessCodeHash String  @map("access_code_hash")
+  expiresAt      String  @map("expires_at")
+  issuedBy       String  @map("issued_by")
+  revokedAt      String? @map("revoked_at")
+  usedAt         String? @map("used_at")
+  submissionId   String? @map("submission_id")
+
+  @@index([tenantId, placementId], map: "guest_evaluation_placement")
+  @@map("guest_evaluation_links")
+}
+
+model DemoCompletionResponses {
+  id           String  @id
+  tenantId     String  @map("tenant_id")
+  createdAt    String  @map("created_at")
+  placementId  String  @map("placement_id")
+  formType     String  @map("form_type")
+  formVersion  Int     @map("form_version")
+  responseJson String  @map("response_json")
+  submittedAt  String  @map("submitted_at")
+  version      Int     @default(1)
+
+  @@unique([tenantId, placementId, formType], map: "completion_response_once")
+  @@index([tenantId, placementId], map: "completion_response_placement")
+  @@map("completion_responses")
+}
+
+model DemoOutcomeDecisions {
+  id                String  @id
+  tenantId          String  @map("tenant_id")
+  createdAt         String  @map("created_at")
+  placementId       String  @map("placement_id")
+  coordinatorId     String  @map("coordinator_id")
+  decision          String
+  rationale         String
+  rubricVersion     Int     @default(1) @map("rubric_version")
+  calculatedScore   Float?  @map("calculated_score")
+  calculatedStatus  String  @map("calculated_status")
+
+  @@index([tenantId, placementId], map: "outcome_decisions_placement")
+  @@index([tenantId, coordinatorId], map: "outcome_decisions_coordinator")
+  @@map("outcome_decisions")
+}
+
+model DemoIndustryFeedback {
+  id                  String @id
+  tenantId            String @map("tenant_id")
+  createdAt           String @map("created_at")
+  placementId         String @map("placement_id")
+  companyId           String @map("company_id")
+  supervisorId        String @map("supervisor_id")
+  courseId            String @map("course_id")
+  academicPeriod      String @map("academic_period")
+  frameworkVersion    Int    @default(1) @map("framework_version")
+  workplaceReadiness  Int    @map("workplace_readiness")
+  competencyRelevance Int    @map("competency_relevance")
+  supervisionSupport  Int    @map("supervision_support")
+  curriculumAlignment Int    @map("curriculum_alignment")
+  technicalGaps       String? @map("technical_gaps")
+  softSkillGaps       String? @map("soft_skill_gaps")
+  recommendations     String
+  status              String @default("SUBMITTED")
+
+  @@index([tenantId, placementId], map: "industry_feedback_placement")
+  @@index([tenantId, courseId, academicPeriod], map: "industry_feedback_course_period")
+  @@index([tenantId, companyId], map: "industry_feedback_company")
+  @@map("industry_feedback")
+}
+
+model DemoPrivateHosts {
+  id             String @id
+  tenantId       String @map("tenant_id")
+  createdAt      String @map("created_at")
+  placementId    String @map("placement_id")
+  supervisorName String @map("supervisor_name")
+  supervisorEmail String @map("supervisor_email")
+
+  @@unique([tenantId, placementId], map: "private_host_placement")
+  @@map("private_hosts")
 }
