@@ -7,6 +7,7 @@ import {
   BookOpen,
   BriefcaseBusiness,
   Building2,
+  CalendarDays,
   Clock,
   FileText,
   ChartNoAxesCombined,
@@ -127,9 +128,13 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
           </div>
 
           <div className="ps-landing-actions">
+            <span className="ps-academic-tag">
+              <CalendarDays size={12} className="ps-tag-icon" />
+              <span>A.Y. 2026–2027 · 1st Semester</span>
+            </span>
             <span className="ps-campus-tag">
-              <Building2 size={13} />
-              <span>Mandaluyong &amp; Pasig</span>
+              <Building2 size={12} className="ps-tag-icon" />
+              <span>Boni &amp; Pasig Campuses</span>
             </span>
           </div>
         </div>
@@ -180,9 +185,6 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
           <section className="ps-login-col" ref={loginSectionRef}>
             <div className="ps-login-card">
               <div className="ps-login-card-header">
-                <div className="ps-login-icon-wrap">
-                  <LockKeyhole size={20} />
-                </div>
                 <h2 className="ps-login-title">Welcome to PractiSync</h2>
                 <p className="ps-login-subtitle">
                   Sign in with your RTU institutional account or exploration credentials.
@@ -219,7 +221,13 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               )}
 
               {/* Segmented Mode Selector: Credentials vs Demo */}
-              <div className="ps-login-tabs" role="tablist">
+              <div
+                className="ps-login-tabs"
+                role="tablist"
+                data-active={activeTab}
+                data-tabs={demo ? '2' : '1'}
+              >
+                <div className="ps-tab-glider" aria-hidden="true" />
                 <button
                   type="button"
                   role="tab"
@@ -268,7 +276,10 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                         id="ps-username"
                         type="text"
                         autoComplete="username"
-                        placeholder="e.g. jreyes@rtu.edu.ph or demo.student"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        placeholder="e.g. jreyes or jreyes@rtu.edu.ph"
                         value={username}
                         onChange={(e) => {
                           setUsername(e.target.value);
@@ -278,13 +289,17 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                         }}
                         className="ps-input"
                         aria-invalid={!!formErrors.username}
-                        aria-describedby={formErrors.username ? 'username-error' : undefined}
+                        aria-describedby={formErrors.username ? 'username-error' : 'username-hint'}
                       />
                     </div>
-                    {formErrors.username && (
+                    {formErrors.username ? (
                       <p id="username-error" className="ps-field-error" role="alert">
                         <AlertCircle size={13} />
                         <span>{formErrors.username}</span>
+                      </p>
+                    ) : (
+                      <p id="username-hint" className="ps-field-hint">
+                        Use your university account ID or institutional email.
                       </p>
                     )}
                   </div>
@@ -312,7 +327,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                         id="ps-password"
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="current-password"
-                        placeholder="Enter your password"
+                        placeholder="••••••••••••"
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
@@ -329,6 +344,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                         className="ps-toggle-password-btn"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        title={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -422,15 +438,21 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                 <span>or use university single sign-on</span>
               </div>
 
-              <button
-                type="button"
-                disabled
-                className="ps-google-btn"
-                title="Google Workspace OAuth integration"
-              >
-                <span className="ps-google-icon">G</span>
-                <span>Continue with @rtu.edu.ph Google Account</span>
-              </button>
+              <div className="ps-sso-wrap">
+                <button
+                  type="button"
+                  disabled
+                  className="ps-google-btn"
+                  title="Google Workspace OAuth integration for RTU faculty & students"
+                >
+                  <span className="ps-google-icon">G</span>
+                  <span>Continue with @rtu.edu.ph Google Account</span>
+                  <span className="ps-sso-badge">Coming Soon</span>
+                </button>
+                <p className="ps-sso-note">
+                  Institutional Google Workspace SSO will activate in the next enrollment cycle.
+                </p>
+              </div>
 
               <div className="ps-login-footer-notes">
                 <p>
@@ -453,7 +475,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
           </div>
 
           <div className="ps-features-grid">
-            <div className="ps-feature-card">
+            <div className="ps-feature-card ps-feature-blue">
               <div className="ps-feature-icon-wrap ps-icon-blue">
                 <Clock size={22} />
               </div>
@@ -465,7 +487,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               <span className="ps-feature-tag">Dual-Audit Attendance</span>
             </div>
 
-            <div className="ps-feature-card">
+            <div className="ps-feature-card ps-feature-gold">
               <div className="ps-feature-icon-wrap ps-icon-gold">
                 <FileText size={22} />
               </div>
@@ -477,7 +499,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               <span className="ps-feature-tag">Paperless Processing</span>
             </div>
 
-            <div className="ps-feature-card">
+            <div className="ps-feature-card ps-feature-navy">
               <div className="ps-feature-icon-wrap ps-icon-navy">
                 <ChartNoAxesCombined size={22} />
               </div>
@@ -561,11 +583,11 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                 </li>
                 <li>
                   <strong>Faculty Coordinators:</strong> Access is managed by the College of
-                  Engineering &amp; Technology Dean's Office / Management Information System (MIS).
+                  Engineering &amp; Technology Dean&apos;s Office / Management Information System (MIS).
                 </li>
                 <li>
                   <strong>HTE Industry Supervisors:</strong> Account invitations are issued once
-                  your company's Memorandum of Agreement (MOA) and training profile are verified by
+                  your company&apos;s Memorandum of Agreement (MOA) and training profile are verified by
                   the university.
                 </li>
               </ul>

@@ -189,7 +189,7 @@ export async function seed() {
   // Promote the existing fictional HTE account for password sign-in without reseeding or resetting demo edits.
   await db.prepare("UPDATE users SET is_demo=1 WHERE id=? AND username=? AND role=?").bind('demo-supervisor', 'demo.supervisor', 'SUPERVISOR').run();
 
-  const existingSeed = await db.prepare("SELECT value FROM seed_state WHERE key='seed-v5'").first();
+  const existingSeed = await db.prepare("SELECT value FROM seed_state WHERE key='seed-v6'").first();
   const ensureSchedules = () => db.prepare("INSERT OR IGNORE INTO assessment_schedules (id,tenant_id,created_at,course_id,cadence,updated_at,version) SELECT 'schedule-' || id,tenant_id,datetime('now'),id,'WEEKLY',datetime('now'),1 FROM courses").run();
   if (existingSeed) {
     await ensureSchedules();
@@ -209,6 +209,21 @@ export async function seed() {
     add('users', account.id, { name: account.name, username: account.username, email: `${account.username}@rtu.edu.ph`, role: account.role, password_hash: hash, is_demo: 1, course_id: account.role === 'STUDENT' ? 'course-it' : null, company_id: null, supervisor_verified: 0, can_post: 0 });
   }
   for (const [id, name, course] of [['student-2', 'Sofia Mendoza', 'course-business'], ['student-3', 'Ethan Flores', 'course-it'], ['student-4', 'Mia Garcia', 'course-education'], ['student-5', 'Luca Tan', 'course-it'], ['student-completed', 'Nina Ramos', 'course-it']]) add('users', id, { name, username: id, email: `${id}@example.invalid`, role: 'STUDENT', course_id: course, is_demo: 0 });
+  const additionalStudents = [
+    { id: 'demo-student-06', name: 'Hannah Bautista', courseId: 'course-it', companyId: 'company-northstar', classId: 'class-it', placementId: 'placement-sample-06', requiredMinutes: 28800 },
+    { id: 'demo-student-07', name: 'Miguel Santos', courseId: 'course-it', companyId: 'company-northstar', classId: 'class-it', placementId: 'placement-sample-07', requiredMinutes: 28800 },
+    { id: 'demo-student-08', name: 'Camille Navarro', courseId: 'course-it', companyId: 'company-brightside', classId: 'class-it-b', placementId: 'placement-sample-08', requiredMinutes: 28800 },
+    { id: 'demo-student-09', name: 'Rafael Cruz', courseId: 'course-it', companyId: 'company-northstar', classId: 'class-it-b', placementId: 'placement-sample-09', requiredMinutes: 28800 },
+    { id: 'demo-student-10', name: 'Lea Villanueva', courseId: 'course-it', companyId: 'company-brightside', classId: 'class-it-b', placementId: 'placement-sample-10', requiredMinutes: 28800 },
+    { id: 'demo-student-11', name: 'Diego Reyes', courseId: 'course-business', companyId: 'company-northstar', classId: 'class-business', placementId: 'placement-sample-11', requiredMinutes: 24000 },
+    { id: 'demo-student-12', name: 'Bianca Flores', courseId: 'course-business', companyId: 'company-brightside', classId: 'class-business', placementId: 'placement-sample-12', requiredMinutes: 24000 },
+    { id: 'demo-student-13', name: 'Adrian Lim', courseId: 'course-business', companyId: 'company-northstar', classId: 'class-business', placementId: 'placement-sample-13', requiredMinutes: 24000 },
+    { id: 'demo-student-14', name: 'Clara Aquino', courseId: 'course-education', companyId: 'company-brightside', classId: 'class-ed', placementId: 'placement-sample-14', requiredMinutes: 24000 },
+    { id: 'demo-student-15', name: 'Gabriel Mendoza', courseId: 'course-education', companyId: 'company-brightside', classId: 'class-ed', placementId: 'placement-sample-15', requiredMinutes: 24000 },
+  ] as const;
+  for (const student of additionalStudents) {
+    add('users', student.id, { name: student.name, username: student.id, email: `${student.id}@example.invalid`, role: 'STUDENT', course_id: student.courseId, is_demo: 0 });
+  }
   add('users', 'coordinator-other', { name: 'Patricia Lim', username: 'coordinator.other', email: 'patricia@example.invalid', role: 'COORDINATOR', is_demo: 0 });
   add('users', 'supervisor-northstar', { name: 'Engr. Marc Torres', username: 'supervisor.northstar', email: 'marc.torres@northstar.example.com', role: 'SUPERVISOR', course_id: null, company_id: 'company-northstar', supervisor_verified: 1, is_demo: 0 });
   add('users', 'supervisor-brightside', { name: 'Dr. Elena Cruz', username: 'supervisor.brightside', email: 'elena.cruz@brightside.example.com', role: 'SUPERVISOR', course_id: null, company_id: 'company-brightside', supervisor_verified: 1, is_demo: 0 });
@@ -220,7 +235,15 @@ export async function seed() {
   for (const [id, name, industry, location, status, post, description] of [['company-northstar', 'Northstar Digital', 'Technology', 'Mandaluyong', 'APPROVED', 1, 'A fictional product studio building accessible digital experiences.'], ['company-brightside', 'Brightside Learning', 'Education', 'Pasig', 'APPROVED', 1, 'A fictional learning center offering supervised teaching placements.'], ['company-pending', 'Meridian Ventures', 'Business', 'Makati', 'PENDING', 0, 'Fictional company awaiting university verification.']]) add('companies', String(id), { name, industry, location, status, can_post: post, description });
   add('users', 'demo-supervisor', { name: 'Morgan Lee', username: 'demo.supervisor', email: 'demo.supervisor@example.invalid', role: 'SUPERVISOR', password_hash: hash, is_demo: 1, company_id: 'company-northstar', supervisor_verified: 1, can_post: 1 });
   for (const [course, minutes] of [['course-it', 28800], ['course-business', 24000], ['course-education', 24000]] as const) add('policies', `policy-${course}`, { course_id: course, period: '2026–2027 · First semester', required_minutes: minutes, version: 1, author_id: 'demo-admin' });
-  const placements = [['placement-1', 'demo-student', 'company-northstar', 'class-it', 'course-it', 28800, 'ACTIVE'], ['placement-2', 'student-2', 'company-northstar', 'class-business', 'course-business', 24000, 'ACTIVE'], ['placement-3', 'student-3', 'company-northstar', 'class-it-b', 'course-it', 28800, 'ACTIVE'], ['placement-4', 'student-4', 'company-brightside', 'class-ed', 'course-education', 24000, 'ACTIVE'], ['placement-5', 'student-5', 'company-northstar', 'class-it', 'course-it', null, 'PLANNED'], ['placement-completed', 'student-completed', 'company-northstar', 'class-it', 'course-it', 28800, 'COMPLETED']] as const;
+  const placements = [
+    ['placement-1', 'demo-student', 'company-northstar', 'class-it', 'course-it', 28800, 'ACTIVE'],
+    ['placement-2', 'student-2', 'company-northstar', 'class-business', 'course-business', 24000, 'ACTIVE'],
+    ['placement-3', 'student-3', 'company-northstar', 'class-it-b', 'course-it', 28800, 'ACTIVE'],
+    ['placement-4', 'student-4', 'company-brightside', 'class-ed', 'course-education', 24000, 'ACTIVE'],
+    ['placement-5', 'student-5', 'company-northstar', 'class-it', 'course-it', null, 'PLANNED'],
+    ['placement-completed', 'student-completed', 'company-northstar', 'class-it', 'course-it', 28800, 'COMPLETED'],
+    ...additionalStudents.map((student) => [student.placementId, student.id, student.companyId, student.classId, student.courseId, student.requiredMinutes, 'ACTIVE'] as const),
+  ] as const;
   for (const [id, student, company, classId, course, minutes, status] of placements) {
     add('placements', id, { student_id: student, company_id: company, class_id: classId, course_id: course, period: '2026–2027 · First semester', starts_at: '2026-08-01', ends_at: '2026-12-20', required_minutes: minutes, policy_version: minutes ? 1 : null, status });
     add('enrollments', `enroll-${student}`, { class_id: classId, student_id: student });
@@ -269,7 +292,7 @@ export async function seed() {
   add('industry_feedback', 'ind-feed-2', { placement_id: 'placement-1', company_id: 'company-northstar', supervisor_id: 'supervisor-northstar', course_id: 'course-it', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 4, supervision_support: 4, curriculum_alignment: 3, technical_gaps: 'Automated testing (Vitest/Jest), API contract validation', soft_skill_gaps: 'Client-facing status updates', recommendations: 'Student demonstrates quick learning and good problem solving. More emphasis on test-driven development and API integration would enhance readiness.', status: 'SUBMITTED' });
   add('industry_feedback', 'ind-feed-3', { placement_id: 'placement-3', company_id: 'company-northstar', supervisor_id: 'supervisor-northstar', course_id: 'course-it', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 5, supervision_support: 4, curriculum_alignment: 4, technical_gaps: 'SQL query optimization, Relational indexing', soft_skill_gaps: 'None observed', recommendations: 'Overall well prepared for engineering tasks. Integrating database performance tuning into advanced database subjects would be beneficial.', status: 'SUBMITTED' });
   add('industry_feedback', 'ind-feed-4', { placement_id: 'placement-4', company_id: 'company-brightside', supervisor_id: 'supervisor-brightside', course_id: 'course-education', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 5, supervision_support: 5, curriculum_alignment: 4, technical_gaps: 'Digital lesson planning tools', soft_skill_gaps: 'Parent-teacher conference facilitation', recommendations: 'Very strong pedagogy and classroom presence. Training on blended learning management systems would be a great addition.', status: 'SUBMITTED' });
-  statements.push(db.prepare("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v5','20261011')"));
+  statements.push(db.prepare("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v6','20261014')"));
   for (let index = 0; index < statements.length; index += 80) await db.batch(statements.slice(index, index + 80));
   await ensureSchedules();
 }
