@@ -1677,6 +1677,7 @@ html.dark .sidebar-university {
 html.dark .app-topbar {
   background: #0d1829 !important;
   border-bottom-color: #1b2e47 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
   color: #e2ecf7 !important;
 }
 

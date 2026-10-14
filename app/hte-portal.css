@@ -7,9 +7,13 @@
 }
 
 .hte-header {
+  position: sticky;
+  top: 0;
+  z-index: 25;
   height: 74px;
   background: #ffffff;
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(14, 42, 87, 0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
