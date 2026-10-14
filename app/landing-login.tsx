@@ -29,10 +29,11 @@ import { quickDemoAccounts as demoAccounts } from '@/packages/test-utils/fixture
 interface LoginViewProps {
   demo: boolean;
   configured: boolean;
+  redirectTo?: string;
   onAuthSubmit: (provider: string, values: Record<string, string>) => Promise<unknown>;
 }
 
-export default function LandingLoginView({ demo, configured, onAuthSubmit }: LoginViewProps) {
+export default function LandingLoginView({ demo, configured, redirectTo = '/', onAuthSubmit }: LoginViewProps) {
   const [activeTab, setActiveTab] = useState<'credentials' | 'demo'>('credentials');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -85,7 +86,7 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
         password,
         rememberMe: rememberMe ? '1' : '0',
       });
-      location.assign(location.origin);
+      location.assign('/login/complete?redirect='+encodeURIComponent(redirectTo));
     } catch (err) {
       setGeneralError(
         err instanceof Error
@@ -101,7 +102,7 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
     setGeneralError('');
     try {
       await onAuthSubmit('callback/credentials', { demoId: accountId });
-      location.assign(location.origin);
+      location.assign('/login/complete?redirect='+encodeURIComponent(redirectTo));
     } catch (err) {
       setGeneralError(err instanceof Error ? err.message : 'Demo sign-in failed.');
       setBusyKey('');

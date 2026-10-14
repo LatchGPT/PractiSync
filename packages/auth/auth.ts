@@ -5,6 +5,7 @@ import {verifyPassword} from './password';
 import {quickDemoAccounts} from '../test-utils/fixtures';
 import {DomainError,demoAllowed} from '../domain/policies';
 import type {Identity,Role} from '../validation/contracts';
+import {isRole} from './routes';
 export async function limit(key:string,max=15){
  const now=Date.now(),window=600000;
  await statement('INSERT INTO rate_limits (key,attempts,window_start) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET attempts=CASE WHEN rate_limits.window_start<? THEN 1 ELSE rate_limits.attempts+1 END, window_start=CASE WHEN rate_limits.window_start<? THEN ? ELSE rate_limits.window_start END',key,now,now-window,now-window,now).run();
@@ -12,7 +13,7 @@ export async function limit(key:string,max=15){
 }
 export function config():AuthConfig {
  const cfg=settings();if(!cfg.AUTH_SECRET)throw new DomainError('Sign-in is not configured. The app administrator must set the authentication secret.',503);
- return {secret:cfg.AUTH_SECRET,trustHost:true,basePath:'/api/auth',session:{strategy:'jwt',maxAge:60*60*8},pages:{signIn:'/',error:'/'},providers:[Credentials({id:'credentials',name:'University account',credentials:{username:{},password:{},demoId:{}},async authorize(credentials,request){
+ return {secret:cfg.AUTH_SECRET,trustHost:true,basePath:'/api/auth',session:{strategy:'jwt',maxAge:60*60*8},pages:{signIn:'/login',error:'/login'},providers:[Credentials({id:'credentials',name:'University account',credentials:{username:{},password:{},demoId:{}},async authorize(credentials,request){
   await seed();const clientIp=request.headers.get('x-real-ip')??request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()??'private-demo';await limit('login:'+clientIp);
   const demoId=typeof credentials.demoId==='string'?credentials.demoId:null;
   let user;
@@ -25,6 +26,6 @@ export async function authHandler(request:Request){return Auth(request,config())
 export async function identity(request:Request):Promise<Identity>{
  const url=new URL('/api/auth/session',request.url);const response=await Auth(new Request(url,{headers:request.headers}),config());const session=await response.json() as {user?:{id?:string;sessionVersion?:number}};
  if(!session?.user?.id)throw new DomainError('Please sign in to continue.',401);
- const row=await one('SELECT * FROM users WHERE id=? AND status=\'ACTIVE\'',session.user.id);if(!row||Number(row.sessionVersion)!==session.user.sessionVersion)throw new DomainError('Your session has expired. Please sign in again.',401);
+ const row=await one('SELECT * FROM users WHERE id=? AND status=\'ACTIVE\'',session.user.id);if(!row||Number(row.sessionVersion)!==session.user.sessionVersion)throw new DomainError('Your session has expired. Please sign in again.',401);if(!isRole(row.role))throw new DomainError('This account does not have an assigned PractiSync role.',403);
  return {id:row.id,name:String(row.name),username:String(row.username),email:String(row.email),role:row.role as Role,status:String(row.status),sessionVersion:Number(row.sessionVersion),isDemo:Number(row.isDemo),courseId:row.courseId as string|null,companyId:row.companyId as string|null,tenantId:row.tenantId};
 }

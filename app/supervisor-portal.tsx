@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BriefcaseBusiness, Building2, Clock3, LogOut, RefreshCw, Send, ShieldCheck, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { authSubmit } from './login-client';
 import type { Row, Snapshot } from '@/packages/validation/contracts';
 
 const text = (row: Row | undefined, key: string) => String(row?.[key] ?? '');
@@ -23,6 +24,7 @@ export default function SupervisorPortal({ data, onRefresh }: { data: Snapshot; 
     setBusy(true);
     try {
       const response = await fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, values }) });
+      if (response.status === 401) { location.replace('/login?redirect=' + encodeURIComponent(location.pathname + location.search)); return false; }
       const result = await response.json() as { error?: string; message?: string };
       if (!response.ok) throw new Error(result.error ?? 'The request could not be completed.');
       toast.success(result.message ?? 'Saved.');
@@ -37,10 +39,12 @@ export default function SupervisorPortal({ data, onRefresh }: { data: Snapshot; 
   }
 
   async function signOut() {
-    const csrf = await fetch('/api/auth/csrf', { cache: 'no-store' }).then(result => result.json()) as { csrfToken?: string };
-    if (!csrf.csrfToken) return;
-    await fetch('/api/auth/signout', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Auth-Return-Redirect': '1' }, body: new URLSearchParams({ csrfToken: csrf.csrfToken, callbackUrl: location.origin }) });
-    location.assign(location.origin);
+    try {
+      await authSubmit('signout', {}, '/');
+      location.replace('/login');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Sign out failed.');
+    }
   }
 
   const canPost = Boolean(company && company.status === 'APPROVED' && numeric(company, 'canPost') === 1);
