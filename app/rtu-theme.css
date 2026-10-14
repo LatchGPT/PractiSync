@@ -2279,14 +2279,16 @@ td {
   display: grid;
   grid-template-columns: 1.15fr 1fr;
   gap: clamp(32px, 4vw, 56px);
-  align-items: start;
+  align-items: center;
 }
 
-/* Left Hero Column */
+/* Left Hero Column (Vertically Centered to the Middle) */
 .ps-hero-col {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  justify-content: center;
+  align-self: center;
+  gap: 22px;
   padding-right: 12px;
 }
 
@@ -2380,201 +2382,6 @@ td {
 .ps-hero-secondary-btn:hover {
   background: #f0f6ff;
   border-color: #124c91;
-}
-
-/* Trainee Live Interactive Preview Card */
-.ps-trainee-card {
-  margin-top: 14px;
-  background: #ffffff;
-  border: 1.5px solid #d4e2f2;
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 10px 30px rgba(14, 42, 87, 0.08), 0 1px 3px rgba(14, 42, 87, 0.04);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 580px;
-  position: relative;
-  overflow: hidden;
-}
-
-.ps-trainee-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #124c91 0%, #d7aa3e 100%);
-}
-
-.ps-trainee-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.ps-trainee-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.ps-trainee-avatar {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #154e94 0%, #0c3365 100%);
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 15px;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(14, 42, 87, 0.18);
-}
-
-.ps-trainee-name {
-  display: block;
-  font-size: 15.5px;
-  font-weight: 800;
-  color: #0c2340;
-}
-
-.ps-trainee-course {
-  font-size: 12.5px;
-  color: #557294;
-}
-
-.ps-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 9999px;
-}
-
-.ps-status-verified {
-  background: #edf8f3;
-  color: #166b42;
-  border: 1px solid #c4ebd4;
-}
-
-.ps-trainee-company {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
-  color: #27486e;
-  background: #f4f8fe;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #e1ebf7;
-}
-
-.ps-trainee-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ps-progress-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #3b5676;
-}
-
-.ps-progress-header strong {
-  color: #0e3f79;
-}
-
-.ps-progress-track {
-  height: 10px;
-  background: #e5edf7;
-  border-radius: 9999px;
-  position: relative;
-  overflow: hidden;
-}
-
-.ps-progress-bar-reported {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  background: #124c91;
-  border-radius: 9999px;
-}
-
-.ps-progress-bar-confirmed {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  background: #d7aa3e;
-  border-radius: 9999px;
-}
-
-.ps-progress-legend {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 12px;
-  color: #547192;
-}
-
-.ps-legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ps-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.ps-dot-blue {
-  background: #124c91;
-}
-
-.ps-dot-gold {
-  background: #d7aa3e;
-}
-
-.ps-trainee-stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  background: #fafcff;
-  border: 1px solid #e2ecf7;
-  border-radius: 10px;
-  padding: 12px;
-  text-align: center;
-}
-
-.ps-stat-box strong {
-  display: block;
-  font-size: 18px;
-  font-weight: 800;
-  color: #0c2b53;
-}
-
-.ps-stat-box span {
-  font-size: 11.5px;
-  color: #5c799a;
-}
-
-.ps-trainee-card-footer {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: #718ea9;
 }
 
 /* Right Login Card Column */
@@ -3363,9 +3170,6 @@ td {
   }
   .ps-hero-col {
     padding-right: 0;
-  }
-  .ps-trainee-card {
-    max-width: 100%;
   }
   .ps-features-grid {
     grid-template-columns: 1fr;
