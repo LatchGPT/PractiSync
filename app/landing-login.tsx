@@ -184,9 +184,6 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
           <section className="ps-login-col" ref={loginSectionRef}>
             <div className="ps-login-card">
               <div className="ps-login-card-header">
-                <div className="ps-login-icon-wrap">
-                  <LockKeyhole size={20} />
-                </div>
                 <h2 className="ps-login-title">Welcome to PractiSync</h2>
                 <p className="ps-login-subtitle">
                   Sign in with your RTU institutional account or exploration credentials.

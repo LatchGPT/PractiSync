@@ -2397,18 +2397,6 @@ td {
   gap: 6px;
 }
 
-.ps-login-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 11px;
-  background: #edf4fd;
-  color: #124c91;
-  border: 1px solid #c9dff7;
-  display: grid;
-  place-items: center;
-  margin-bottom: 4px;
-}
-
 .ps-login-title {
   font-size: 24px;
   font-weight: 800;
