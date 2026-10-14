@@ -7,6 +7,7 @@ import {
   BookOpen,
   BriefcaseBusiness,
   Building2,
+  CalendarDays,
   Clock,
   FileText,
   ChartNoAxesCombined,
@@ -126,9 +127,13 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
           </div>
 
           <div className="ps-landing-actions">
+            <span className="ps-academic-tag">
+              <CalendarDays size={12} className="ps-tag-icon" />
+              <span>A.Y. 2026–2027 · 1st Semester</span>
+            </span>
             <span className="ps-campus-tag">
-              <Building2 size={13} />
-              <span>Mandaluyong &amp; Pasig</span>
+              <Building2 size={12} className="ps-tag-icon" />
+              <span>Boni &amp; Pasig Campuses</span>
             </span>
           </div>
         </div>
