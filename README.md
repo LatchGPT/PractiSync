@@ -2,16 +2,35 @@
 
 Login-first cooperative education / OJT workspace for one university with multiple departments. The current development demo runs as a native Next.js application on Node.js with a dedicated PostgreSQL 17 database. All demo accounts and records are fictional.
 
-## Start local development
+## Run with Docker (Full System)
+
+Run the entire system (Next.js web application + PostgreSQL database) with a single command:
 
 ```powershell
-docker compose -f packages/db/docker-compose.yml up -d
-Copy-Item .env.example .env
-pnpm install
-pnpm db:migrate
-pnpm db:seed
-pnpm dev
+docker compose up -d
 ```
+
+- **Web App**: [http://localhost:3000](http://localhost:3000)
+- **Database**: `localhost:5433`
+- Database migrations and demo fixtures are applied automatically on startup.
+
+To stop the containers:
+```powershell
+docker compose down
+```
+
+## Start local development
+
+Ensure Docker Desktop is open and running, then:
+
+```powershell
+npm run db:up
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+*(Alternatively with pnpm: `pnpm run db:up`, `pnpm run db:migrate`, `pnpm run db:seed`, `pnpm dev`)*
 
 The local PostgreSQL demo listens on `localhost:5433`. The `.env` file contains the demo-only database URL and flags; do not replace it with an institutional database URL.
 

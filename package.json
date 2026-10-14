@@ -20,6 +20,8 @@
     "test": "vitest run",
     "db:validate": "prisma validate --schema packages/db/prisma/schema.prisma",
     "db:migrate": "prisma migrate deploy --schema packages/db/prisma/schema.prisma",
+    "db:up": "docker compose -f packages/db/docker-compose.yml up -d",
+    "db:down": "docker compose -f packages/db/docker-compose.yml down",
     "db:bulk-demo": "node scripts/bulk-demo-students.mjs",
     "postinstall": "prisma generate --schema packages/db/prisma/schema.prisma"
   },
