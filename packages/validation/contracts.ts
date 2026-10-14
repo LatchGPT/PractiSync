@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { documentFormAnswerValueSchema, documentFormTypeSchema } from './document-forms';
 export const roles=['SUPER_ADMIN','COORDINATOR','SUPERVISOR','STUDENT'] as const;
 export type Role=typeof roles[number];
 export type Row={id:string;tenantId:string;createdAt:string;[key:string]:string|number|null};
 export interface Identity {id:string;name:string;username:string;email:string;role:Role;status:string;sessionVersion:number;isDemo:number;courseId:string|null;companyId:string|null;tenantId:string;}
 export interface StudentAccountSummary extends Row {courseId:string|null;courseCode:string|null;courseName:string|null;total:number;active:number;disabled:number;}
-export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];outcomeDecisions:Row[];industryFeedback:Row[];completionResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];studentAccountSummary?:StudentAccountSummary[];}
+export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];outcomeDecisions:Row[];industryFeedback:Row[];completionResponses?:Row[];customDocumentTemplates?:Row[];customDocumentResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];studentAccountSummary?:StudentAccountSummary[];}
 const str=(max=500)=>z.string().trim().min(1).max(max);
 export const dtrInput=z.object({placementId:str(),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),startsAt:str(),endsAt:str(),breakMinutes:z.coerce.number().int().min(0),narrative:str(8000),entryId:z.string().optional(),version:z.coerce.number().int().optional(),reason:z.string().max(1000).optional()});
 export const inputs={
@@ -32,7 +33,11 @@ export const inputs={
  industryFinalEvaluation:z.object({placementId:str(),scores:z.object({technicalSkills:z.object({score:z.coerce.number().int().min(1).max(5),evidence:str(1000)}),communication:z.object({score:z.coerce.number().int().min(1).max(5),evidence:str(1000)}),professionalism:z.object({score:z.coerce.number().int().min(1).max(5),evidence:str(1000)}),problemSolving:z.object({score:z.coerce.number().int().min(1).max(5),evidence:str(1000)})})}),
  guestEvaluationLink:z.object({placementId:str(),expiresInDays:z.coerce.number().int().min(1).max(30).default(7)}),
  revokeGuestEvaluationLink:z.object({linkId:str()}),
- completionForm:z.object({placementId:str(),formType:z.enum(['FINAL_SELF_ASSESSMENT','OJT_EXIT_SURVEY']),answers:z.record(z.string(),z.union([z.string().trim().max(5000),z.number().int().min(1).max(5)]))}),
+ completionForm:z.object({placementId:str(),formType:documentFormTypeSchema,mode:z.enum(['SAVE_DRAFT','SUBMIT']).default('SUBMIT'),answers:z.record(z.string(),documentFormAnswerValueSchema),version:z.coerce.number().int().min(0).optional()}),
+ completionFormReview:z.object({responseId:str(),decision:z.enum(['APPROVED','REVISION_REQUESTED']),note:z.string().trim().max(1000).optional()}),
+ documentTemplate:z.object({templateId:str(),title:str(120),instructions:str(2000),category:z.enum(['CLEARANCE','OJT']),fields:z.array(z.object({key:z.string().regex(/^[a-z][a-z0-9_]{1,39}$/),label:str(120),kind:z.enum(['text','textarea','date','email','tel','number','checkbox']),required:z.boolean().default(true),hint:z.string().max(240).optional(),page:z.number().int().min(1).max(100),x:z.number().min(0).max(1),y:z.number().min(0).max(1),width:z.number().positive().max(1),height:z.number().positive().max(1)})).min(1).max(80)}),
+ customDocumentForm:z.object({placementId:str(),templateId:str(),mode:z.enum(['SAVE_DRAFT','SUBMIT']).default('SUBMIT'),answers:z.record(z.string(),z.union([z.string().max(4000),z.number(),z.boolean()])),version:z.coerce.number().int().min(0).optional()}),
+ customDocumentReview:z.object({responseId:str(),decision:z.enum(['APPROVED','REVISION_REQUESTED']),note:z.string().trim().max(1000).optional()}),
  completionDecision:z.object({placementId:str(),decision:z.enum(['APPROVE','REJECT']),note:z.string().trim().max(1000).optional()}),
  privateHost:z.object({studentId:str(),classId:str(),companyName:str(160),industry:str(120),location:str(240),description:str(1000),supervisorName:str(120),supervisorEmail:z.string().email(),startsAt:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),endsAt:z.string().regex(/^\d{4}-\d{2}-\d{2}$/)}),
  announcement:z.object({title:str(160),body:str(8000),classId:z.string().optional()}),

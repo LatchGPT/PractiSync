@@ -34,6 +34,10 @@ npm run dev
 
 The local PostgreSQL demo listens on `localhost:5433`. The `.env` file contains the demo-only database URL and flags; do not replace it with an institutional database URL.
 
+### Run the fictional demo without Docker
+
+With Node.js and dependencies installed, run `pnpm dev:demo` and open [http://localhost:3000](http://localhost:3000). This uses a persistent SQLite database and a locally generated sign-in secret under the ignored `.local/` directory. The four demo accounts are `demo.student`, `demo.coordinator`, `demo.admin`, and `demo.supervisor`; all use `Demo@2026!`. Demo data is seeded automatically at sign-in. Use this isolated mode for local evaluation only.
+
 ## Documentation
 
 - `docs/build-brief.md` — original requirements
@@ -46,7 +50,7 @@ The local PostgreSQL demo listens on `localhost:5433`. The `.env` file contains 
 
 The app provides three quick demo sign-ins: Student, Coordinator, and Super Admin. HTE Supervisors use the normal username/password form (`demo.supervisor` / `Demo@2026!`). HTE access is limited to a verified company, that company’s published posts and applicants, assigned active placements, and time-only DTR confirmation. Coordinators or Super Admins review company posts; HTE selection does not create a placement until a university coordinator confirms it. Placements become active only after coordinator activation on or after the start date.
 
-Students can rate a company after formal placement completion. HTE users see only anonymous approved feedback after five distinct placements in the same academic period; university staff can identify the author. Placements at hosts without company accounts use a coordinator-only private host record and a one-use evaluation link with a separate access code. Students also complete two separate university forms after reported DTR reaches the target; a coordinator still makes the formal completion decision. Demo fixtures are idempotently seeded in PostgreSQL; existing D1 edits are not migrated.
+Students can rate a company after formal placement completion. HTE users see only anonymous approved feedback after five distinct placements in the same academic period; university staff can identify the author. Placements at hosts without company accounts use a coordinator-only private host record and a one-use evaluation link with a separate access code. Students see the two RTU COE forms first, followed by other clearance forms. Super Admins can upload PDFs, drag over the answer areas, label required or optional fields, and publish browser forms. Student answers appear over the original PDF in the live preview and are embedded in that PDF for print and download; coordinator access is limited to submission review. The local demo stores uploaded PDF templates in SQLite; an institution deployment must configure protected persistent file storage before uploading institutional templates. These drafts do not add official signatures or an office seal; the local demo should use fictional personal details. The final competency self-assessment and OJT exit survey also support drafts and coordinator review after reported DTR reaches the target; a coordinator still makes the formal completion decision. Demo fixtures are idempotently seeded in PostgreSQL; existing D1 edits are not migrated.
 
 ## Checks
 

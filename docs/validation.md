@@ -3,7 +3,7 @@
 ## PostgreSQL and Prisma
 
 - Prisma 6.19.3 schema validation and client generation passed.
-- A clean PostgreSQL 17 demo database received the first four migrations during earlier database validation. The limited HTE workflow migration (`202610110003_limited_hte_workflows`) and the outcome/industry-feedback migration (`202610130001_outcome_and_industry_feedback`) have since been applied to the isolated local demo database; all six migrations are present.
+- A clean PostgreSQL 17 demo database received the first four migrations during earlier database validation. The limited HTE workflow migration (`202610110003_limited_hte_workflows`) and the outcome/industry-feedback migration (`202610130001_outcome_and_industry_feedback`) have since been applied to the isolated local demo database; those six migrations are recorded as present. The interactive document form migrations (`202610140001_interactive_document_forms`, `202610140002_coe_document_forms`), Super Admin template migration (`202610140003_admin_document_templates`), and PDF binary/snapshot migration (`202610140004_pdf_document_templates`) have not been applied or verified against PostgreSQL in this change.
 - The guarded demo seed ran twice against the primary local database. Counts stayed stable at 4 demo identities (Student, Coordinator, Super Admin, and HTE Supervisor), 10 fictional users, 120 seeded DTR entries, 8 notifications, and 3 assessment schedules.
 - The seed was tested with the demo tenant temporarily marked `INSTITUTIONAL`; it rejected the run with status 403. The tenant was restored to `DEMO` afterward.
 - The local Postgres service listens on port `5433` to avoid the unrelated Postgres service already using `5432`.
