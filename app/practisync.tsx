@@ -26,6 +26,7 @@ import DatePickerField from './date-picker-field';
 import SettingsView from './settings-view';
 import NotificationCenter from './notification-center';
 import LoginClient,{authSubmit} from './login-client';
+import ErrorPage from './error-page';
 import {canAccessWorkspaceView,dashboardPathForRole} from '@/packages/auth/routes';
 import type {Snapshot,Row,Action} from '@/packages/validation/contracts';
 const titleRole:Record<string,string>={STUDENT:'Student',COORDINATOR:'Coordinator',SUPERVISOR:'HTE Supervisor',SUPER_ADMIN:'Super Admin'};
@@ -109,7 +110,7 @@ export default function PractiSync({initial,initialError,demo,authConfigured}:{i
  async function refresh(){setRefreshing(true);try{const res=await fetch('/api/data',{cache:'no-store'});if(res.status===401){location.replace('/login?redirect='+encodeURIComponent(location.pathname+location.search));return;}const result=await res.json() as Snapshot & {error?:string};if(!res.ok)throw new Error(result.error);setData(result as Snapshot);}catch(e){toast.error(e instanceof Error?e.message:'Unable to refresh records.');}finally{setRefreshing(false);}}
  async function signOut(){try{await authSubmit('signout',{},workspacePath);location.replace('/login');}catch(error){toast.error(error instanceof Error?error.message:'Sign out failed.');}}
  async function act(action:Action,values:Record<string,string|number>){try{const res=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,values})});if(res.status===401){location.replace('/login?redirect='+encodeURIComponent(location.pathname+location.search));return;}const result=await res.json() as {error?:string;message?:string};if(!res.ok)throw new Error(result.error);toast.success(result.message??'Updated.');await refresh();}catch(e){toast.error(e instanceof Error?e.message:'Unable to update.');}}
- if(initialError)return <main className="workspace-load-error" role="alert"><section><span className="chip red"><AlertCircle size={14}/>Workspace unavailable</span><h1>We couldn’t load your workspace</h1><p>{initialError}</p><button type="button" className="primary" onClick={()=>location.reload()}>Try again</button></section></main>;
+ if(initialError)return <ErrorPage status={503} title="Workspace unavailable" description="PractiSync couldn’t load your workspace right now. Check your connection, then try again." retry={()=>location.reload()}/>;
  if(!data||!user)return <><LoginClient demo={demo} configured={authConfigured} redirectTo="/"/><Toaster richColors position="bottom-right"/></>;
   if(role==='SUPERVISOR')return <><SupervisorPortal data={data} onRefresh={refresh}/><Toaster richColors position="bottom-right"/></>;
  const courses=data.courses.map(c=>({value:c.id,label:s(c,'code')+' · '+s(c,'name')}));const classes=data.classes.filter(c=>!n(c,'revoked')).map(c=>({value:c.id,label:s(c,'section')}));
