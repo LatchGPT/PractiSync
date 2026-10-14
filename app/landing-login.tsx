@@ -457,7 +457,7 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
           </div>
 
           <div className="ps-features-grid">
-            <div className="ps-feature-card">
+            <div className="ps-feature-card ps-feature-blue">
               <div className="ps-feature-icon-wrap ps-icon-blue">
                 <Clock size={22} />
               </div>
@@ -469,7 +469,7 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
               <span className="ps-feature-tag">Dual-Audit Attendance</span>
             </div>
 
-            <div className="ps-feature-card">
+            <div className="ps-feature-card ps-feature-gold">
               <div className="ps-feature-icon-wrap ps-icon-gold">
                 <FileText size={22} />
               </div>
@@ -481,7 +481,7 @@ export default function LandingLoginView({ demo, configured, onAuthSubmit }: Log
               <span className="ps-feature-tag">Paperless Processing</span>
             </div>
 
-            <div className="ps-feature-card">
+            <div className="ps-feature-card ps-feature-navy">
               <div className="ps-feature-icon-wrap ps-icon-navy">
                 <ChartNoAxesCombined size={22} />
               </div>
