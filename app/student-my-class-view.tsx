@@ -524,7 +524,7 @@ export default function StudentMyClassView({
               <div className="myclass-directory-empty">
                 <Users size={32} className="myclass-empty-icon" />
                 <h3>No classmates found</h3>
-                <p>No peers match your search filter "{search}". Try searching by another name or company.</p>
+                <p>No peers match your search filter &ldquo;{search}&rdquo;. Try searching by another name or company.</p>
                 <button
                   type="button"
                   className="secondary mt-2"
