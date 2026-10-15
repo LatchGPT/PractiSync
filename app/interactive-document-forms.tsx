@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { documentFormCatalog, documentFormTypes, type DocumentFormAnswer, type DocumentFormField, type DocumentFormType } from '@/packages/validation/document-forms';
 import type { Row, Snapshot } from '@/packages/validation/contracts';
 import CustomDocumentTemplates from './custom-document-templates';
+import RecommendationLetters from './native-document-generator';
 
 const number = (row: Row | undefined, key: string) => Number(row?.[key] ?? 0);
 const text = (row: Row | undefined, key: string) => String(row?.[key] ?? '');
@@ -206,7 +207,6 @@ export default function InteractiveDocumentForms({ data, onRefresh }: { data: Sn
   const isStudent = data.user.role === 'STUDENT';
   const isCoordinator = data.user.role === 'COORDINATOR';
   const customPlacementPdf=(data.customDocumentTemplates??[]).some(row=>text(row,'originalFilename').toLowerCase().includes('placement data')&&text(row,'fieldsJson')!=='[]');
-  const customRecommendationPdf=(data.customDocumentTemplates??[]).some(row=>text(row,'originalFilename').toLowerCase().includes('recommendation form')&&text(row,'fieldsJson')!=='[]');
   const canReview = isCoordinator;
   const currentSubmission = activeType ? ownResponses.find(item => item.formType === activeType) : undefined;
   const activeDefinition = activeType ? documentFormCatalog[activeType] : undefined;
@@ -308,10 +308,11 @@ export default function InteractiveDocumentForms({ data, onRefresh }: { data: Sn
   if (isStudent) {
     if (!placement) return <section className="panel completion-forms-card"><div className="panel-body"><p className="muted">A placement is required before OJT forms can be filled.</p></div></section>;
     const groups = [
-      { id: 'CLEARANCE', title: 'Clearance papers', note: 'The two RTU COE templates appear first, followed by the sample clearance forms.' },
+      { id: 'CLEARANCE', title: 'Clearance papers', note: 'Complete placement data and your other clearance forms.' },
       { id: 'OJT', title: 'End-of-OJT papers', note: 'These forms open after reported DTR reaches the placement target.' },
     ] as const;
     return <>
+      <RecommendationLetters data={data} />
       <CustomDocumentTemplates data={data} onRefresh={onRefresh} />
       <section className="panel completion-forms-card interactive-document-forms">
         <header className="panel-head"><div><span className="chip blue">Interactive forms · demo</span><h2>Clearance and OJT papers</h2><p>Save drafts, submit forms for coordinator review, and download a PDF copy.</p></div><FilePenLine size={22} /></header>
@@ -320,7 +321,7 @@ export default function InteractiveDocumentForms({ data, onRefresh }: { data: Sn
           {groups.map(group => <section className="interactive-form-group" key={group.id}>
             <div className="interactive-form-group-heading"><div><h3>{group.title}</h3><p>{group.note}</p></div>{group.id === 'OJT' && <span className={`chip ${ojtUnlocked ? 'green' : 'orange'}`}>{ojtUnlocked ? 'Available' : targetMinutes ? `${Math.floor(reportedMinutes / 60)} / ${Math.floor(targetMinutes / 60)} hrs` : 'Target not configured'}</span>}</div>
             <div className="interactive-form-grid">
-              {documentFormTypes.filter(type => documentFormCatalog[type].group === group.id && !(type==='COE_PLACEMENT_DATA'&&customPlacementPdf) && !(type==='COE_RECOMMENDATION'&&customRecommendationPdf)).map(type => {
+              {documentFormTypes.filter(type => documentFormCatalog[type].group === group.id && !(type==='COE_PLACEMENT_DATA'&&customPlacementPdf) && (type!=='COE_RECOMMENDATION'||ownResponses.some(row=>row.formType===type))).map(type => {
                 const submission = ownResponses.find(item => item.formType === type);
                 const status = text(submission, 'status');
                 const canEdit = !submission || ['DRAFT', 'REVISION_REQUESTED'].includes(status);
@@ -364,6 +365,7 @@ export default function InteractiveDocumentForms({ data, onRefresh }: { data: Sn
   if (!isCoordinator && data.user.role !== 'SUPER_ADMIN') return null;
   const sortedResponses = [...responses].sort((a, b) => text(b, 'updatedAt').localeCompare(text(a, 'updatedAt')));
   return <>
+    <RecommendationLetters data={data} />
     <CustomDocumentTemplates data={data} onRefresh={onRefresh} />
     <section className="panel completion-forms-card interactive-document-forms">
     <header className="panel-head"><div><span className="chip blue">Student paperwork</span><h2>Interactive form submissions</h2><p>Review submitted clearance and OJT papers for your scoped placements.</p></div><span className="chip orange">{pendingReviews.length} awaiting review</span></header>

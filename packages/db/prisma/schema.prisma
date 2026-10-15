@@ -2026,6 +2026,185 @@ model DemoIndustryFeedback {
   @@map("industry_feedback")
 }
 
+model DocumentTemplate {
+  id               String @id
+  tenantId         String @map("tenant_id")
+  createdAt        String @map("created_at")
+  updatedAt        String @map("updated_at")
+  title            String
+  kind             String @default("RECOMMENDATION")
+  originalFilename String @default("") @map("original_filename")
+  docxBase64       String @default("") @map("docx_base64") @db.Text
+  htmlContent      String @map("html_content") @db.Text
+  layoutJson       String @map("layout_json") @db.Text
+  status           String @default("DRAFT")
+  version          Int @default(1)
+  fields           DocumentTemplateField[]
+  submissions      DocumentTemplateSubmission[]
+
+  @@index([tenantId, kind, status], map: "document_templates_tenant_kind")
+  @@map("document_templates")
+}
+
+model DocumentTemplateField {
+  id            String @id
+  tenantId      String @map("tenant_id")
+  createdAt     String @map("created_at")
+  templateId    String @map("template_id")
+  template      DocumentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  variableKey   String @map("variable_key")
+  label         String
+  inputType     String @map("input_type")
+  dataSource    String @map("data_source")
+  systemMapKey  String? @map("system_map_key")
+  defaultValue  String @default("") @map("default_value")
+  selectOptions String @default("[]") @map("select_options")
+  isEditable    Int @default(1) @map("is_editable")
+  isRequired    Int @default(1) @map("is_required")
+  tooltipText   String @default("") @map("tooltip_text")
+  placeholder   String @default("")
+  displayOrder  Int @default(0) @map("display_order")
+
+  @@unique([templateId, variableKey])
+  @@map("document_template_fields")
+}
+
+model DocumentTemplateSubmission {
+  id              String @id
+  tenantId        String @map("tenant_id")
+  createdAt       String @map("created_at")
+  updatedAt       String @map("updated_at")
+  templateId      String @map("template_id")
+  template        DocumentTemplate @relation(fields: [templateId], references: [id])
+  studentId       String @map("student_id")
+  placementId     String @map("placement_id")
+  templateVersion Int @map("template_version")
+  templateJson    String @map("template_json") @db.Text
+  formData        String @map("form_data") @db.Text
+  pdfBase64       String @default("") @map("pdf_base64") @db.Text
+  status          String
+  version         Int @default(1)
+  reviewNote      String? @map("review_note")
+  reviewerId      String? @map("reviewer_id")
+
+  @@unique([tenantId, placementId, templateId])
+  @@index([tenantId, studentId], map: "document_submissions_student")
+  @@index([tenantId, placementId, status], map: "document_submissions_placement")
+  @@map("document_submissions")
+}
+
+model NativeDocumentSource {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  createdBy String @map("created_by")
+  filename String
+  sha256 String
+  contentBase64 String @map("content_base64") @db.Text
+  fontsJson String @map("fonts_json")
+  scannedAt String @map("scanned_at")
+  versions NativeDocumentVersion[]
+  @@map("native_document_sources")
+}
+model NativeDocumentTemplate {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  createdBy String @map("created_by")
+  name String
+  status String @default("ACTIVE")
+  publishedVersionId String? @map("published_version_id")
+  lastVersion Int @default(1) @map("last_version")
+  versions NativeDocumentVersion[]
+  @@index([tenantId,status],map:"native_templates_tenant")
+  @@map("native_document_templates")
+}
+model NativeDocumentVersion {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  templateId String @map("template_id")
+  template NativeDocumentTemplate @relation(fields:[templateId],references:[id])
+  sourceId String @map("source_id")
+  source NativeDocumentSource @relation(fields:[sourceId],references:[id])
+  version Int
+  revision Int @default(1)
+  status String
+  fieldsJson String @default("[]") @map("fields_json") @db.Text
+  tokenizedBase64 String @default("") @map("tokenized_base64") @db.Text
+  publishedAt String? @map("published_at")
+  originalPages Int @default(0) @map("original_pages")
+  fields NativeDocumentField[]
+  drafts NativeDocumentDraft[]
+  documents NativeGeneratedDocument[]
+  @@unique([templateId,version])
+  @@map("native_document_versions")
+}
+model NativeDocumentField {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  versionId String @map("version_id")
+  version NativeDocumentVersion @relation(fields:[versionId],references:[id])
+  variableKey String @map("variable_key")
+  label String
+  type String
+  configJson String @map("config_json") @db.Text
+  displayOrder Int @map("display_order")
+  occurrences NativeDocumentOccurrence[]
+  @@unique([versionId,variableKey])
+  @@map("native_document_fields")
+}
+model NativeDocumentOccurrence {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  fieldId String @map("field_id")
+  field NativeDocumentField @relation(fields:[fieldId],references:[id],onDelete:Cascade)
+  locationJson String @map("location_json") @db.Text
+  @@map("native_document_occurrences")
+}
+model NativeDocumentDraft {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  userId String @map("user_id")
+  versionId String @map("version_id")
+  version NativeDocumentVersion @relation(fields:[versionId],references:[id])
+  valuesJson String @map("values_json") @db.Text
+  revision Int @default(1)
+  updatedAt String @map("updated_at")
+  documents NativeGeneratedDocument[]
+  @@unique([tenantId,userId,versionId])
+  @@map("native_document_drafts")
+}
+model NativeGeneratedDocument {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  userId String @map("user_id")
+  draftId String @map("draft_id")
+  draft NativeDocumentDraft @relation(fields:[draftId],references:[id])
+  versionId String @map("version_id")
+  version NativeDocumentVersion @relation(fields:[versionId],references:[id])
+  format String
+  valuesJson String @map("values_json") @db.Text
+  fileBase64 String @map("file_base64") @db.Text
+  expiresAt String @map("expires_at")
+  expiredAt String? @map("expired_at")
+  @@index([tenantId,userId,createdAt],map:"native_generated_owner")
+  @@map("native_generated_documents")
+}
+model NativeDocumentRenderCache {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  expiresAt String @map("expires_at")
+  pdfBase64 String @map("pdf_base64") @db.Text
+  pageCount Int @map("page_count")
+  @@map("native_document_render_cache")
+}
+
 model DemoPrivateHosts {
   id             String @id
   tenantId       String @map("tenant_id")
