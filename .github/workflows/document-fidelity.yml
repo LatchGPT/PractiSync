@@ -1,0 +1,31 @@
+name: Native document fidelity
+on:
+  pull_request:
+    paths: ['packages/documents/**', 'app/api/native-documents/**', 'app/native-document-*.tsx', 'tests/native-document*.test.ts', 'scripts/check-document-fidelity.ts', 'infrastructure/documents/**', 'package.json', 'pnpm-lock.yaml', '.github/workflows/document-fidelity.yml']
+  workflow_dispatch:
+jobs:
+  fidelity:
+    # Exact licensed fonts are provisioned on this runner, never substituted.
+    runs-on: [self-hosted, linux, document-fonts]
+    timeout-minutes: 15
+    env:
+      DOCUMENT_FONTS_DIR: ${{ vars.DOCUMENT_FONTS_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable && corepack prepare pnpm@11.25.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Mount provisioned exact fonts
+        run: test -n "$DOCUMENT_FONTS_DIR" && command -v pdftoppm && mkdir -p .local && ln -s "$DOCUMENT_FONTS_DIR" .local/document-fonts
+      - run: docker compose -f infrastructure/documents/compose.yml up -d --wait converter converter-gateway
+      - run: pnpm test -- tests/native-documents.test.ts tests/native-document-routes.test.ts tests/native-document-queue.test.ts
+      - run: pnpm documents:fidelity
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: document-fidelity
+          path: .local/document-fidelity/
+      - if: always()
+        run: docker compose -f infrastructure/documents/compose.yml down

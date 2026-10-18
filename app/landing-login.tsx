@@ -9,7 +9,6 @@ import {
   Building2,
   CalendarDays,
   Clock,
-  FileText,
   ChartNoAxesCombined,
   LockKeyhole,
   UserRound,
@@ -485,18 +484,6 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                 records, ensuring rendered hours are verified at the source before coordinator review.
               </p>
               <span className="ps-feature-tag">Dual-Audit Attendance</span>
-            </div>
-
-            <div className="ps-feature-card ps-feature-gold">
-              <div className="ps-feature-icon-wrap ps-icon-gold">
-                <FileText size={22} />
-              </div>
-              <h3 className="ps-feature-card-title">Interactive Document Clearance</h3>
-              <p className="ps-feature-card-text">
-                Fill out parent waivers, endorsement requests, and progress evaluations directly
-                in-browser with live template formatting and instant status milestone tracking.
-              </p>
-              <span className="ps-feature-tag">Paperless Processing</span>
             </div>
 
             <div className="ps-feature-card ps-feature-navy">

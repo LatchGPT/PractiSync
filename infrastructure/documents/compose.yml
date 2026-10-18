@@ -1,0 +1,67 @@
+name: practisync-documents
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: [redis-server, --appendonly, 'yes', --maxmemory-policy, noeviction]
+    ports: ['127.0.0.1:6386:6379']
+    volumes: [document-redis:/data]
+    restart: unless-stopped
+    networks: [scanner]
+  converter:
+    image: gotenberg/gotenberg:8-libreoffice@sha256:c85f019d6ae4927714507254331cc0ed72da7b619ee798e3a45de01f54372c12
+    command:
+      - gotenberg
+      - --libreoffice-auto-start=true
+      - --libreoffice-restart-after=100
+      - --libreoffice-max-queue-size=20
+      - --libreoffice-deny-list=.*
+      - --api-disable-download-from=true
+      - --webhook-disable=true
+      - --api-timeout=45s
+      - --api-body-limit=12MB
+    volumes: [../../.local/document-fonts:/usr/local/share/fonts/custom:ro]
+    read_only: true
+    tmpfs: ['/tmp:size=768m,uid=1001,gid=1001,mode=1777']
+    environment:
+      HOME: /tmp
+      XDG_CACHE_HOME: /tmp/cache
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 200
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, 'http://localhost:3000/health']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+    networks: [documents]
+  converter-gateway:
+    image: alpine/socat:latest
+    command: ['TCP-LISTEN:3000,fork,reuseaddr', 'TCP:converter:3000']
+    ports: ['127.0.0.1:3008:3000']
+    depends_on:
+      converter:
+        condition: service_healthy
+    networks: [documents, scanner]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 32m
+    restart: unless-stopped
+  scanner:
+    image: clamav/clamav:stable
+    ports: ['127.0.0.1:3318:3310']
+    volumes: [document-antivirus:/var/lib/clamav]
+    mem_limit: 2g
+    restart: unless-stopped
+    networks: [scanner]
+networks:
+  documents:
+    internal: true
+  scanner: {}
+volumes:
+  document-redis: {}
+  document-antivirus: {}

@@ -279,12 +279,12 @@ export async function seed() {
   add('join_requests', 'req-1', { class_id: 'class-it', student_id: 'student-5', status: 'PENDING', note: 'Requesting to join section BSIT 4-A' });
   for (const [id, userId, title, message, type, resourceType, resourceId, linkPage, readAt] of [
     ['notif-1', 'demo-student', 'Attendance Confirmed', 'Coordinator Andrea Santos verified and confirmed your attendance record.', 'DTR', 'entry', 'entry-placement-1-14', 'attendance', null],
-    ['notif-2', 'demo-student', 'Document Clearance Approved', 'Your Training agreement sample submission has been marked as approved.', 'DOCUMENT', 'document', 'doc-placement-1-1', 'documents', null],
+    ['notif-2', 'demo-student', 'Sample Document Record Approved', 'Your fictional document metadata record has been marked as approved.', 'DOCUMENT', 'document', 'doc-placement-1-1', 'documents', null],
     ['notif-3', 'demo-student', 'Welcome to BSIT 4-A', 'You are enrolled in OJT Practicum · BSIT 4-A with coordinator Andrea Santos.', 'CLASS', 'class', 'class-it', 'classes', '2026-10-02T08:00:00Z'],
     ['notif-4', 'demo-student', 'Class Announcement', 'Your October check-in is scheduled for Friday. Bring your latest narratives.', 'ANNOUNCEMENT', 'announcement', 'announcement-1', 'announcements', null],
     ['notif-5', 'demo-coordinator', 'New Class Join Request', 'Luca Tan requested to join practicum section BSIT 4-A.', 'CLASS', 'join_request', 'req-1', 'classes', null],
     ['notif-6', 'demo-coordinator', 'Confidential Support Inquiry', 'Jamie Reyes submitted a request for coordinator guidance.', 'SUPPORT', 'incident', 'case-1', 'incidents', null],
-    ['notif-7', 'demo-coordinator', 'Document Awaiting Review', 'Parent / guardian consent form was submitted in BSIT 4-A.', 'DOCUMENT', 'document', 'doc-placement-1-2', 'documents', '2026-10-02T08:00:00Z'],
+    ['notif-7', 'demo-coordinator', 'Sample Document Record Awaiting Review', 'A fictional document metadata record was submitted in BSIT 4-A.', 'DOCUMENT', 'document', 'doc-placement-1-2', 'documents', '2026-10-02T08:00:00Z'],
     ['notif-8', 'demo-admin', 'Policy Baseline Active', 'Course policy v1 active for Computing & Technology (480 required hours).', 'POLICY', 'policy', 'policy-course-it', 'policies', '2026-10-01T00:00:00Z'],
   ] as const) add('notifications', id, { user_id: userId, title, message, type, resource_type: resourceType, resource_id: resourceId, link_page: linkPage, read_at: readAt });
   add('outcome_decisions', 'outcome-dec-1', { placement_id: 'placement-completed', coordinator_id: 'demo-coordinator', decision: 'EXEMPLARY', rationale: 'Demonstrated exemplary technical mastery and consistent communication across all evaluation periods.', rubric_version: 1, calculated_score: 4.25, calculated_status: 'ACHIEVED' });

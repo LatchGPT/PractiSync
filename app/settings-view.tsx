@@ -681,13 +681,13 @@ export default function SettingsView({
 
               <div className="settings-item-row">
                 <div>
-                  <strong>Document Clearance Workflow</strong>
-                  <p>Alert when coordinator approves or requests changes on sample clearance papers.</p>
+                  <strong>Document Review Updates</strong>
+                  <p>Alert when a coordinator approves or requests changes to a submitted document.</p>
                 </div>
                 <Switch
                   checked={settings.notifyClearance}
-                  onCheckedChange={(c) => updateSetting('notifyClearance', c, 'Clearance alerts updated.')}
-                  aria-label="Document clearance workflow alerts"
+                  onCheckedChange={(c) => updateSetting('notifyClearance', c, 'Document review alerts updated.')}
+                  aria-label="Document review alerts"
                 />
               </div>
 

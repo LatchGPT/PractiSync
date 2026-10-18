@@ -1,0 +1,45 @@
+# Native recommendation letters
+
+Student: **Document clearance → Document generator → Recommendation letter**. Superadmin: **Required OJT documents → Document generator**. Students can discard saved drafts; generated document history is retained.
+
+This replaces the HTML prototype. The uploaded DOCX is stored unchanged with its SHA-256 hash. A separate tokenized copy records single-run tokens and field locations. Every preview/download starts from the immutable original and replaces only marked text in Word XML. It never reconstructs the document or converts it to HTML. Logos, relationships, styles, page setup, tables and other ZIP entries are retained byte-for-byte after decompression. Splits within an affected run clone its properties; mixed character styles such as superscript ordinals are preserved across replacement text. XML values are escaped and never interpreted as template syntax.
+
+JSZip and raw XML offsets are used instead of serializing the whole XML tree through docxtemplater. This preserves unaffected XML bytes and supports visual text selection without asking admins to type tokens. Word field codes and drawings cannot be selected together with text; select ordinary text separately. Locations cover body paragraphs, tables, Word text boxes, headers and footers.
+
+## Local setup
+
+1. `pnpm install` and `pnpm db:migrate` (SQLite demo schemas upgrade automatically to version 6).
+2. Put the **exact licensed font files** in `.local/document-fonts`. The supplied reference uses **Calibri and Times New Roman**. Include regular, bold, italic and bold italic faces. These proprietary files are deliberately not committed. The application reads this same directory to report missing families; the converter mounts it read-only. `DOCUMENT_INSTALLED_FONTS` can declare additional families baked into a deployment image.
+3. `pnpm documents:up` starts Redis, persistent LibreOffice/Gotenberg, its fixed inbound gateway and ClamAV. ClamAV may need several minutes to download initial definitions. Uploads fail closed until it is ready.
+4. Run `pnpm documents:worker` as a separate, supervised Node process, then `pnpm dev`. Web requests and the worker must use the same PostgreSQL database and Redis. The worker's `tsx` runtime is included in production dependencies.
+5. After seeding application accounts, run `pnpm documents:reference` once. It scans and installs the supplied original recommendation DOCX as published version 1. Repeating it is safe.
+
+The reference has 11 logical fields and 13 marked occurrences. Representative and student names update in both places; greetings use surnames, including particles such as San Antonio/Dela Cruz. Pronoun has `his`, `her`, `their`; Year level has `1st` through `5th`. Admins can edit these options in a new working version. Dates use a date picker and configurable rendered format; hours use a numeric input. Original text outside marked fields, including the source's duplicated “you”, is intentionally retained.
+
+## Behavior and persistence
+
+Admins upload a standard DOCX (8 MB maximum), select text directly on the PDF text layer, then mark a new field or another occurrence of an existing field. Ambiguous matches show paragraph context. The searchable field list can remove an editable marking from a working copy; the original document text stays in place. Labels, defaults, validation, order, help, placeholders, dropdown options, date format, transforms, locked fields and replacement text weight are configurable per marked occurrence. Replacement text can inherit the template weight, be regular, or be bold; representative-name fields default to regular text, including newly created fields. Save settings before testing changed configuration. Publication creates an immutable version. Editing creates a working copy; old drafts and history remain pinned to their version.
+
+Students save incomplete drafts, resume, review the clean document at Step 2, and choose PDF or Word. Required/invalid fields block generation. There is no approval step. Generating does not lock the draft. History regeneration uses the saved values snapshot and original template version, even after later edits. Revision checks prevent lost updates. Locked defaults are enforced on the server and hidden in the form. Admins can configure each marked occurrence to begin on a new line when the source template puts adjacent fields in one paragraph. Regular/bold overrides apply to generated values while the original-text fidelity render retains the source formatting.
+
+Original files, tokenized copies, JSON values and generated binaries use the application's existing database storage. PostgreSQL migrations add `native_document_sources`, `native_document_templates`, `native_document_versions`, `native_document_fields`, `native_document_occurrences`, `native_document_drafts`, `native_generated_documents` and `native_document_render_cache`. The earlier prototype migration remains for already-applied migration history; its HTML endpoints and editor are removed. No historical table is dropped.
+
+Generated binaries expire after `DOCUMENT_RETENTION_DAYS` (30 by default). Values, history and originals remain for regeneration. Cleanup runs each minute in the worker and when listing documents. Render PDFs have a ten-minute cache TTL; preview-session deltas expire after one hour.
+
+## Rendering and deployment
+
+Preview and final output use the same DOCX replacement function and warm LibreOffice service. Preview adds green run shading without changing text metrics and shows placeholders for blanks. Final removes marked run highlighting/shading and blanks optional empty fields. PDF conversion disables interactive form export. PDF.js draws all pages on canvas with lazy rendering and a selectable admin text layer. Zoom stays local. Dimensions come from the original document (the supplied sample is about 210 × 302.3 mm), rather than forcing A4. A page-count warning appears if values add pages.
+
+The browser debounces 400 ms, sends changed values, aborts/ignores stale renders and keeps the previous canvas visible. Redis merges deltas atomically by session sequence. BullMQ limits concurrency, deduplicates jobs by tenant/version/revision/values/render-profile hash, and rejects excessive queue depth; preview rate limits default to 90 per user/minute. Conversion times out after 45 seconds. Scale Node workers and independent warm converter instances together and monitor queue depth. One LibreOffice instance serializes conversions, so normal-load latency differs from saturated throughput.
+
+Use the **same pinned converter image and exact font directory** in dev/staging/production. Record font checksums in deployment artifacts; update `DOCUMENT_RENDER_PROFILE` after image/font changes. Do not commit fonts without redistribution rights. The compose converter runs with a read-only root, dropped capabilities, process/memory limits and an internal network. A fixed TCP gateway accepts conversion requests; the converter has no outbound network route. Remote downloads/webhooks and LibreOffice remote resources are disabled. ClamAV uses a separate network for signature updates. Keep service ports private; compose binds them to localhost. Deploy on Node infrastructure; a Cloudflare-only deployment must route these endpoints to a Node service.
+
+Macros, ActiveX, embedded OLE executables, malformed XML and oversized ZIPs are rejected. Uploads are scanned before storage/rendering. Drafts/files are scoped by tenant and owner; template mutations require superadmin and same-origin requests. Validation expressions use linear-time RE2 (lookarounds/backreferences are unsupported).
+
+## Verification
+
+`pnpm test` covers native replacements in body/table/text-box/header/footer, repeated fields, superscript styles, unchanged ZIP entries, XML escaping, macro rejection, locked values, date/dropdown rules, version pinning, authorization, concurrency, both formats, regeneration and retention.
+
+`pnpm documents:fidelity` requires the converter and Poppler (`pdftoppm` on PATH or `PDFTOPPM_PATH`). It restores all original field text, converts baseline/final/preview, and compares rasterized pages at 144 DPI. It independently strips the reference's yellow authoring annotations from the baseline because downloaded highlights must be absent. Other content is unchanged. It checks identical size/count, at most 0.01% differing pixels (channel tolerance 2), green in preview, and no yellow/green annotation pixels in final. Artifacts are saved under ignored `.local/document-fidelity`.
+
+CI runs this test on a self-hosted Linux runner labeled `document-fonts`, where licensed Calibri/Times New Roman are provisioned in `DOCUMENT_FONTS_DIR`. Add each maintained reference DOCX and its field locator to the fixture registry in `scripts/check-document-fidelity.ts`; uploaded runtime templates are separately previewed by admins before publication. LibreOffice/font versions can affect Word layout, so validate the deployment's render profile before rollout.

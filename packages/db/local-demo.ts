@@ -51,7 +51,7 @@ class LocalDemoDatabase implements DemoDatabase {
 }
 
 const sqliteGlobal = globalThis as typeof globalThis & {
-  practiSyncLocalDemo?: { path: string; database: LocalDemoDatabase };
+  practiSyncLocalDemo?: { path: string; database: LocalDemoDatabase; schemaVersion?: number };
 };
 
 function migrate(sql: DatabaseSync) {
@@ -175,7 +175,7 @@ function upgradeToFormTypesV4(sql: DatabaseSync) {
 
 export function openLocalDemoDatabase(): DemoDatabase {
   const path = resolve(process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
-  if (sqliteGlobal.practiSyncLocalDemo?.path === path) return sqliteGlobal.practiSyncLocalDemo.database;
+  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 6) return sqliteGlobal.practiSyncLocalDemo.database;
 
   mkdirSync(dirname(path), { recursive: true });
   const sql = new DatabaseSync(path);
@@ -185,8 +185,23 @@ export function openLocalDemoDatabase(): DemoDatabase {
   else if (version < 2) upgradeToFormTypesV2(sql);
   if (version < 3) upgradeToFormTypesV3(sql);
   if (version < 4) upgradeToFormTypesV4(sql);
+  if (version < 5) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610150001_reflowable_document_templates/migration.sql'), 'utf8'));
+      sql.exec('PRAGMA user_version = 5');
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
 
+  if (version < 6) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610150002_native_document_generator/migration.sql'), 'utf8'));
+      sql.exec('PRAGMA user_version = 6'); sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
   const database = new LocalDemoDatabase(sql);
-  sqliteGlobal.practiSyncLocalDemo = { path, database };
+  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 6 };
   return database;
 }
