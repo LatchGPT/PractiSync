@@ -9,6 +9,7 @@ import {
   LifeBuoy,
   Megaphone,
   Target,
+  CalendarDays,
   Settings,
   Check,
   CheckCircle2,
@@ -81,6 +82,12 @@ function getNotificationVisual(type: string) {
         icon: Target,
         className: 'notif-icon-policy',
         tag: 'Policy',
+      };
+    case 'CALENDAR':
+      return {
+        icon: CalendarDays,
+        className: 'notif-icon-calendar',
+        tag: 'Schedule',
       };
     default:
       return {

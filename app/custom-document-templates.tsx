@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo, useState, type DragEvent } from 'react';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';

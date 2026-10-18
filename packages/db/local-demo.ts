@@ -173,6 +173,48 @@ function upgradeToFormTypesV4(sql: DatabaseSync) {
   }
 }
 
+function upgradeCalendarEventsV5(sql: DatabaseSync) {
+  sql.exec('BEGIN');
+  try {
+    sql.exec(`
+      CREATE TABLE calendar_events (
+        id TEXT PRIMARY KEY NOT NULL, tenant_id TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        event_type TEXT NOT NULL CHECK(event_type IN ('ACADEMIC','HOLIDAY','DEADLINE','APPOINTMENT')),
+        title TEXT NOT NULL, description TEXT, start_date TEXT NOT NULL, end_date TEXT NOT NULL,
+        start_time TEXT, end_time TEXT, all_day INTEGER NOT NULL DEFAULT 0 CHECK(all_day IN (0,1)),
+        location TEXT, meeting_url TEXT, audience TEXT NOT NULL CHECK(audience IN ('UNIVERSITY','CLASS')),
+        class_id TEXT, created_by TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','CANCELLED')),
+        CHECK(end_date >= start_date),
+        CHECK((start_time IS NULL AND end_time IS NULL) OR (start_time IS NOT NULL AND end_time IS NOT NULL))
+      );
+      CREATE INDEX calendar_events_tenant_start ON calendar_events (tenant_id,start_date);
+      CREATE INDEX calendar_events_class_start ON calendar_events (tenant_id,class_id,start_date);
+      PRAGMA user_version = 5;
+    `);
+    sql.exec('COMMIT');
+  } catch (error) {
+    sql.exec('ROLLBACK');
+    throw error;
+  }
+}
+
+function upgradeCalendarEventsV6(sql: DatabaseSync) {
+  sql.exec('BEGIN');
+  try {
+    const tableInfo = sql.prepare("PRAGMA table_info('calendar_events')").all() as { name: string }[];
+    const hasStatus = tableInfo.some((col) => col.name === 'status');
+    if (!hasStatus) {
+      sql.exec("ALTER TABLE calendar_events ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','CANCELLED'))");
+    }
+    sql.exec('PRAGMA user_version = 6');
+    sql.exec('COMMIT');
+  } catch (error) {
+    sql.exec('ROLLBACK');
+    throw error;
+  }
+}
+
 export function openLocalDemoDatabase(): DemoDatabase {
   const path = resolve(process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
   if (sqliteGlobal.practiSyncLocalDemo?.path === path) return sqliteGlobal.practiSyncLocalDemo.database;
@@ -185,6 +227,8 @@ export function openLocalDemoDatabase(): DemoDatabase {
   else if (version < 2) upgradeToFormTypesV2(sql);
   if (version < 3) upgradeToFormTypesV3(sql);
   if (version < 4) upgradeToFormTypesV4(sql);
+  if (version < 5) upgradeCalendarEventsV5(sql);
+  if (version < 6) upgradeCalendarEventsV6(sql);
 
   const database = new LocalDemoDatabase(sql);
   sqliteGlobal.practiSyncLocalDemo = { path, database };

@@ -1599,6 +1599,31 @@ model DemoClasses {
   @@map("classes")
 }
 
+model DemoCalendarEvents {
+  id          String  @id
+  tenantId    String  @map("tenant_id")
+  createdAt   String  @map("created_at")
+  updatedAt   String  @map("updated_at")
+  eventType   String  @map("event_type")
+  title       String
+  description String?
+  startDate   String  @map("start_date")
+  endDate     String  @map("end_date")
+  startTime   String? @map("start_time")
+  endTime     String? @map("end_time")
+  allDay      Int     @default(0) @map("all_day")
+  location    String?
+  meetingUrl  String? @map("meeting_url")
+  audience    String
+  classId     String? @map("class_id")
+  createdBy   String  @map("created_by")
+  status      String  @default("ACTIVE")
+
+  @@index([tenantId, startDate], map: "calendar_events_tenant_start")
+  @@index([tenantId, classId, startDate], map: "calendar_events_class_start")
+  @@map("calendar_events")
+}
+
 model DemoCompanies {
   id          String @id
   tenantId    String @map("tenant_id")
