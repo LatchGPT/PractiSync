@@ -29,6 +29,7 @@ beforeAll(async () => {
   sql = new DatabaseSync(':memory:');
   const migration = readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql', 'utf8').split('INSERT INTO "assessment_schedules"')[0]!;
   sql.exec(migration);
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610150001_calendar_events/migration.sql','utf8'));
   sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql', 'utf8'));
   sql.exec(`ALTER TABLE completion_responses ADD COLUMN status TEXT NOT NULL DEFAULT 'SUBMITTED';
 ALTER TABLE completion_responses ADD COLUMN updated_at TEXT NOT NULL DEFAULT '';

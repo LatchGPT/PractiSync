@@ -27,8 +27,47 @@ CREATE INDEX completion_response_placement ON completion_responses (tenant_id,pl
 CREATE INDEX completion_response_review_queue ON completion_responses (tenant_id,status,updated_at);`);}
 function installCustomDocumentSchema(){sql.exec(`CREATE TABLE custom_document_templates (id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,created_at TEXT NOT NULL,created_by TEXT NOT NULL,title TEXT NOT NULL,instructions TEXT NOT NULL,category TEXT NOT NULL,fields_json TEXT NOT NULL,status TEXT NOT NULL,version INTEGER NOT NULL,original_filename TEXT NOT NULL DEFAULT '',pdf_base64 TEXT NOT NULL DEFAULT '');CREATE TABLE custom_document_responses (id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,created_at TEXT NOT NULL,placement_id TEXT NOT NULL,template_id TEXT NOT NULL,template_version INTEGER NOT NULL,template_json TEXT NOT NULL DEFAULT '{}',response_json TEXT NOT NULL,submitted_at TEXT,updated_at TEXT NOT NULL,status TEXT NOT NULL,review_note TEXT,reviewer_id TEXT,reviewed_at TEXT,version INTEGER NOT NULL,UNIQUE(tenant_id,placement_id,template_id));`);}
 const users={} as Record<string,Identity>;
-beforeAll(async()=>{vi.stubEnv('DEPLOYMENT_MODE','demo');vi.stubEnv('DEMO_ENABLED','true');vi.stubEnv('AUTH_SECRET','test-secret-that-is-not-a-production-secret');sql=new DatabaseSync(':memory:');const migration=readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql','utf8').split('INSERT INTO "assessment_schedules"')[0]!;sql.exec(migration);sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql','utf8'));installInteractiveFormSchema();sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql','utf8').replace(/--> statement-breakpoint/g,''));sql.exec(readFileSync('drizzle/0008_industry_feedback.sql','utf8'));installCustomDocumentSchema();sql.exec(`CREATE TRIGGER test_scoped_entry BEFORE INSERT ON entries BEGIN SELECT RAISE(ABORT, 'Invalid scoped relationship') WHERE NOT EXISTS (SELECT 1 FROM placements WHERE id=NEW.placement_id AND tenant_id=NEW.tenant_id); END; CREATE TRIGGER test_final_application BEFORE UPDATE OF status ON applications WHEN OLD.status IN ('ACCEPTED','REJECTED') AND NEW.status<>OLD.status BEGIN SELECT RAISE(ABORT, 'Application final decision is immutable'); END;`);const database:DemoDatabase={prepare:(query)=>prepared(query),batch:async(statements)=>{sql.exec('BEGIN');try{const values=[];for(const statement of statements)values.push(await statement.run());sql.exec('COMMIT');return values;}catch(e){sql.exec('ROLLBACK');throw e;}}};installTestDatabase(database);await seed();for(const role of ['student','coordinator','admin'])users[role]=await one('SELECT * FROM users WHERE id=?','demo-'+role) as unknown as Identity;users.supervisor=await one('SELECT * FROM users WHERE id=?','demo-supervisor') as unknown as Identity;});
+beforeAll(async()=>{vi.stubEnv('DEPLOYMENT_MODE','demo');vi.stubEnv('DEMO_ENABLED','true');vi.stubEnv('AUTH_SECRET','test-secret-that-is-not-a-production-secret');sql=new DatabaseSync(':memory:');const migration=readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql','utf8').split('INSERT INTO "assessment_schedules"')[0]!;sql.exec(migration);
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610150001_calendar_events/migration.sql','utf8'));
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql','utf8'));installInteractiveFormSchema();sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql','utf8').replace(/--> statement-breakpoint/g,''));sql.exec(readFileSync('drizzle/0008_industry_feedback.sql','utf8'));installCustomDocumentSchema();sql.exec(`CREATE TRIGGER test_scoped_entry BEFORE INSERT ON entries BEGIN SELECT RAISE(ABORT, 'Invalid scoped relationship') WHERE NOT EXISTS (SELECT 1 FROM placements WHERE id=NEW.placement_id AND tenant_id=NEW.tenant_id); END; CREATE TRIGGER test_final_application BEFORE UPDATE OF status ON applications WHEN OLD.status IN ('ACCEPTED','REJECTED') AND NEW.status<>OLD.status BEGIN SELECT RAISE(ABORT, 'Application final decision is immutable'); END;`);const database:DemoDatabase={prepare:(query)=>prepared(query),batch:async(statements)=>{sql.exec('BEGIN');try{const values=[];for(const statement of statements)values.push(await statement.run());sql.exec('COMMIT');return values;}catch(e){sql.exec('ROLLBACK');throw e;}}};installTestDatabase(database);await seed();for(const role of ['student','coordinator','admin'])users[role]=await one('SELECT * FROM users WHERE id=?','demo-'+role) as unknown as Identity;users.supervisor=await one('SELECT * FROM users WHERE id=?','demo-supervisor') as unknown as Identity;});
 afterAll(()=>{installTestDatabase(undefined);vi.unstubAllEnvs();});
+describe('PSS-39 calendar events',()=>{
+ it('shows university and enrolled-class events and schedules a class document deadline',async()=>{
+  const otherClassEvent=await mutate(users.admin,'calendarEvent',{eventType:'ACADEMIC',title:'Other class event',description:'Scope check',startDate:'2026-10-26',endDate:'2026-10-26',audience:'CLASS',classId:'class-ed'});
+  const studentEvents=(await snapshot(users.student)).calendarEvents;
+  expect(studentEvents.map(event=>event.id)).toContain('calendar-midterms-2026');
+  expect(studentEvents.map(event=>event.id)).toContain('calendar-orientation-2026');
+  expect(studentEvents.map(event=>event.id)).not.toContain(otherClassEvent.id);
+  expect((await snapshot(users.coordinator)).calendarEvents.map(event=>event.id)).not.toContain(otherClassEvent.id);
+
+  const deadline=await mutate(users.coordinator,'calendarEvent',{eventType:'DEADLINE',title:'Passing of Notarized MOA',description:'Submit 2 signed original copies to COE Room 204',startDate:'2026-10-29',endDate:'2026-10-29',startTime:'08:00',endTime:'17:00',location:'COE Office Room 204',audience:'CLASS',classId:'class-it'});
+  expect(await one('SELECT * FROM calendar_events WHERE id=?',deadline.id!)).toMatchObject({eventType:'DEADLINE',audience:'CLASS',classId:'class-it',location:'COE Office Room 204'});
+  expect((await snapshot(users.student)).calendarEvents.map(event=>event.id)).toContain(deadline.id);
+  expect((await snapshot(users.admin)).calendarEvents.map(event=>event.id)).toContain(otherClassEvent.id);
+ });
+
+ it('rejects student writes, out-of-scope classes, non-deadline coordinator events, and invalid appointment times',async()=>{
+  const deadline={eventType:'DEADLINE',title:'Permission check',startDate:'2026-10-29',endDate:'2026-10-29',audience:'CLASS',classId:'class-it'};
+  await expect(mutate(users.student,'calendarEvent',deadline)).rejects.toThrow('permission');
+  await expect(mutate(users.coordinator,'calendarEvent',{...deadline,classId:'class-ed'})).rejects.toThrow('allowed to schedule');
+  await expect(mutate(users.coordinator,'calendarEvent',{...deadline,eventType:'APPOINTMENT',startTime:'09:00',endTime:'09:30'})).rejects.toThrow('Coordinators can schedule document submission deadlines for their own classes only.');
+  await expect(mutate(users.coordinator,'calendarEvent',{...deadline,audience:'UNIVERSITY'})).rejects.toThrow('Coordinators can schedule document submission deadlines for their own classes only.');
+  await expect(mutate(users.admin,'calendarEvent',{eventType:'APPOINTMENT',title:'No start time',startDate:'2026-10-29',endDate:'2026-10-29',startTime:'',endTime:'',audience:'UNIVERSITY'})).rejects.toThrow('Appointments need a start time');
+  await expect(mutate(users.admin,'calendarEvent',{eventType:'ACADEMIC',title:'Invalid link',startDate:'2026-10-29',endDate:'2026-10-29',audience:'UNIVERSITY',meetingUrl:'http://meet.example.invalid'})).rejects.toThrow('valid HTTPS');
+ });
+
+ it('allows coordinators and admins to edit, cancel, and delete calendar events',async()=>{
+  const event=await mutate(users.admin,'calendarEvent',{eventType:'DEADLINE',title:'Original Deadline',description:'Submit portfolio draft',startDate:'2026-10-28',endDate:'2026-10-28',audience:'UNIVERSITY'});
+  expect((await one('SELECT * FROM calendar_events WHERE id=?',event.id!))?.title).toBe('Original Deadline');
+  await mutate(users.admin,'calendarEvent',{eventId:event.id!,eventType:'DEADLINE',title:'Extended Deadline',description:'Submit portfolio final',startDate:'2026-10-30',endDate:'2026-10-30',audience:'UNIVERSITY',status:'ACTIVE'});
+  expect((await one('SELECT * FROM calendar_events WHERE id=?',event.id!))?.title).toBe('Extended Deadline');
+  await mutate(users.admin,'cancelCalendarEvent',{eventId:event.id!});
+  expect((await one('SELECT * FROM calendar_events WHERE id=?',event.id!))?.status).toBe('CANCELLED');
+  await mutate(users.admin,'deleteCalendarEvent',{eventId:event.id!});
+  expect(await one('SELECT * FROM calendar_events WHERE id=?',event.id!)).toBeNull();
+ });
+});
+
 describe('foundations and isolation',()=>{
  it('seeds four demo identities idempotently and promotes the password-based HTE fixture',async()=>{const before=await list('SELECT * FROM entries');sql.prepare('UPDATE users SET is_demo=0 WHERE id=?').run('demo-supervisor');await seed();expect((await list('SELECT * FROM users WHERE is_demo=1')).length).toBe(4);expect((await one('SELECT is_demo FROM users WHERE id=?','demo-supervisor'))?.isDemo).toBe(1);expect((await list('SELECT * FROM entries')).length).toBe(before.length);});
  it('fails closed outside isolated demo',()=>{expect(demoAllowed('institutional','true')).toBe(false);expect(demoAllowed('demo','false')).toBe(false);});
