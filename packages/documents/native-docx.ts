@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { DOMParser } from '@xmldom/xmldom';
-import { nativeDisplay, type NativeField, type NativeValues, type Occurrence } from './native-types';
+import { nativeBoldMode, nativeDisplay, type NativeBoldMode, type NativeField, type NativeValues, type Occurrence } from './native-types';
 
 interface XmlNode {name:string;start:number;openEnd:number;closeStart:number;end:number;parent?:XmlNode;children:XmlNode[]}
 interface Unit {node:XmlNode;run:XmlNode;start:number;end:number;text:string;highlighted:boolean}
@@ -67,13 +67,33 @@ export function selectionCandidates(paragraphs:WordParagraph[],quote:string,befo
       candidates.push({id:crypto.randomUUID(),part:p.part,paragraph:p.index,start,end,originalText:p.text.slice(start,end),run:[...new Set(p.units.map(u=>u.run.start))].indexOf(p.units.find(u=>u.start<=start&&u.end>start)!.run.start),display:'value',context:p.text,score});index=n.value.indexOf(needle,index+1);}}
   return candidates.sort((a,b)=>b.score-a.score);
 }
-function propsFor(xml:string,run:XmlNode,field:boolean,mode:'preview'|'final'|'tokenized'){
+function setRunBold(value:string,prefix:string,name:'b'|'bCs',enabled:boolean){
+  if(value.endsWith('/>'))value=value.slice(0,-2)+`></${prefix}rPr>`;
+  const tag=`${prefix}${name}`,pattern=new RegExp(`<${tag}\\b[^>]*(?:\\/\\s*>|>[\\s\\S]*?<\\/${tag}\\s*>)`,'g');
+  const declaration=`<${tag} ${prefix}val="${enabled?'1':'0'}"/>`;
+  const exists=pattern.test(value);pattern.lastIndex=0;
+  return exists?value.replace(pattern,declaration):value.replace(`</${prefix}rPr>`,`${declaration}</${prefix}rPr>`);
+}
+function propsFor(xml:string,run:XmlNode,field:boolean,mode:'preview'|'final'|'tokenized',bold:NativeBoldMode='inherit'){
   const props=run.children.find(c=>local(c)==='rPr');const prefix=run.name.includes(':')?run.name.split(':')[0]+':':'';
   let value=props?xml.slice(props.start,props.end):`<${prefix}rPr></${prefix}rPr>`;
   if(!field)return value;
   value=value.replace(/<w:(highlight|shd)\b[^>]*(?:\/>|>[\s\S]*?<\/w:\1>)/g,'');
+  if(bold!=='inherit'){
+    const enabled=bold==='bold';
+    value=setRunBold(value,prefix,'b',enabled);
+    value=setRunBold(value,prefix,'bCs',enabled);
+  }
   if(mode==='preview'){const shade=`<${prefix}shd ${prefix}val="clear" ${prefix}color="auto" ${prefix}fill="C6EFCE"/>`;value=value.endsWith('/>')?value.slice(0,-2)+`>${shade}</${prefix}rPr>`:value.replace(`</${prefix}rPr>`,`${shade}</${prefix}rPr>`);}
   return value;
+}
+function stripYellowFormatting(xml:string){
+  const root=tree(xml),changes=all(root,'highlight').concat(all(root,'shd')).filter(node=>{
+    const tag=xml.slice(node.start,node.openEnd),attribute=(name:string)=>tag.match(new RegExp(`(?:^|\\s)(?:[\\w.-]+:)?${name}\\s*=\\s*(["'])(.*?)\\1`,'i'))?.[2]?.toLowerCase();
+    return local(node)==='highlight'?['yellow','ffff00'].includes(attribute('val')??''):attribute('fill')==='ffff00';
+  }).sort((a,b)=>b.start-a.start);
+  for(const node of changes)xml=xml.slice(0,node.start)+xml.slice(node.end);
+  return xml;
 }
 export async function buildNativeDocx(source:Uint8Array,fields:NativeField[],values:NativeValues,mode:'preview'|'final'|'tokenized',originalValues=false):Promise<Buffer>{
   const doc=await openNativeDocx(source);const edits=new Map<string,{start:number;end:number;text:string}[]>();
@@ -86,36 +106,39 @@ export async function buildNativeDocx(source:Uint8Array,fields:NativeField[],val
       const units=paragraph.units.filter(u=>u.run===run);const affected=occurrences.filter(o=>units.some(u=>u.start<o.occurrence.end&&u.end>o.occurrence.start));if(!affected.length)continue;
       if(run.children.some(c=>!['rPr','t','br','tab','lastRenderedPageBreak'].includes(local(c))))throw new Error('Select the text separately from drawings or Word field codes.');
       const prefix=run.name.includes(':')?run.name.split(':')[0]+':':'';const open=xml.slice(run.start,run.openEnd),close=`</${run.name}>`;
-      const pieces:{field:boolean;content:string}[]=[];
+      const pieces:{field:boolean;content:string;bold?:NativeBoldMode}[]=[];
       for(const node of run.children.filter(c=>local(c)!=='rPr')){
         const unit=units.find(u=>u.node===node);if(!unit){pieces.push({field:false,content:xml.slice(node.start,node.end)});continue;}
         if(!affected.some(o=>unit.start<o.occurrence.end&&unit.end>o.occurrence.start)){pieces.push({field:false,content:xml.slice(node.start,node.end)});continue;}
         let cursor=unit.start;
-        const addText=(text:string,isField:boolean)=>{if(!text&&!isField)return;const content=text.split('\n').map(escape).map(t=>`<${prefix}t xml:space="preserve">${t}</${prefix}t>`).join(`<${prefix}br/>`);pieces.push({field:isField,content});};
+        const addText=(text:string,isField:boolean,bold:NativeBoldMode='inherit')=>{if(!text&&!isField)return;const content=text.split('\n').map(escape).map(t=>`<${prefix}t xml:space="preserve">${t}</${prefix}t>`).join(`<${prefix}br/>`);pieces.push({field:isField,content,bold});};
         for(const item of affected){const o=item.occurrence;if(o.end<=unit.start||o.start>=unit.end)continue;
           if(o.start>cursor)addText(unit.text.slice(cursor-unit.start,o.start-unit.start),false);
           const start=Math.max(cursor,o.start),end=Math.min(unit.end,o.end);
           const unchanged=item.value===o.originalText&&mode!=='tokenized';
-          if(unchanged)addText(unit.text.slice(start-unit.start,end-unit.start),true);
-          else if(mode==='tokenized'){if(o.start>=unit.start&&o.start<unit.end)addText(item.value,true);}
+          const bold=originalValues?'inherit':nativeBoldMode(item.field,o);
+          if(unchanged)addText(unit.text.slice(start-unit.start,end-unit.start),true,bold);
+          else if(mode==='tokenized'){if(o.start>=unit.start&&o.start<unit.end)addText(item.value,true,bold);}
           else {
             const replacement=item.value||(mode==='preview'?item.field.placeholderText||`[${item.field.label}]`:'');
             // Distribute across the existing character styles, including superscript ordinals.
             const characters=Array.from(replacement),length=o.end-o.start;
-            addText(characters.slice(Math.floor((start-o.start)*characters.length/length),Math.floor((end-o.start)*characters.length/length)).join(''),true);
+            addText(characters.slice(Math.floor((start-o.start)*characters.length/length),Math.floor((end-o.start)*characters.length/length)).join(''),true,bold);
           }
           cursor=end;
         }
         if(cursor<unit.end)addText(unit.text.slice(cursor-unit.start),false);
       }
       // Preserve the exact source run if text/formatting already match the requested final build.
-      const fullyUnchanged=mode==='final'&&affected.every(o=>o.value===o.occurrence.originalText)&&!/<w:(?:highlight|shd)\b/.test(xml.slice(run.start,run.end));
+      const fullyUnchanged=mode==='final'&&affected.every(o=>o.value===o.occurrence.originalText&&nativeBoldMode(o.field,o.occurrence)==='inherit');
       if(fullyUnchanged)continue;
-      const replacement=pieces.map(piece=>open+propsFor(xml,run,piece.field,mode)+piece.content+close).join('');
+      const replacement=pieces.map(piece=>open+propsFor(xml,run,piece.field,mode,piece.bold)+piece.content+close).join('');
       const list=edits.get(paragraph.part)??[];list.push({start:run.start,end:run.end,text:replacement});edits.set(paragraph.part,list);
     }
   }
-  if(!edits.size)return Buffer.from(source);
-  for(const [part,changes]of edits){let xml=doc.parts.get(part)!;const sorted=changes.sort((a,b)=>b.start-a.start);for(let i=1;i<sorted.length;i++)if(sorted[i-1].start<sorted[i].end)throw new Error('Overlapping field runs cannot be edited.');for(const change of sorted)xml=xml.slice(0,change.start)+change.text+xml.slice(change.end);doc.zip.file(part,xml);}
+  let changed=edits.size>0;
+  for(const [part,changes]of edits){let xml=doc.parts.get(part)!;const sorted=changes.sort((a,b)=>b.start-a.start);for(let i=1;i<sorted.length;i++)if(sorted[i-1].start<sorted[i].end)throw new Error('Overlapping field runs cannot be edited.');for(const change of sorted)xml=xml.slice(0,change.start)+change.text+xml.slice(change.end);doc.zip.file(part,xml);doc.parts.set(part,xml);}
+  if(mode==='final')for(const [part,xml]of doc.parts){const clean=stripYellowFormatting(xml);if(clean!==xml){changed=true;doc.parts.set(part,clean);doc.zip.file(part,clean);}}
+  if(!changed)return Buffer.from(source);
   return doc.zip.generateAsync({type:'nodebuffer',compression:'DEFLATE',compressionOptions:{level:6}});
 }

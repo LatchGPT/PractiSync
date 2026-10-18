@@ -17,7 +17,7 @@ for(const fixture of fixtures){
   // intentionally removes it. Independently remove only those annotations for comparison.
   const baseline=await JSZip.loadAsync(original);for(const [part,xml]of source.parts)if(/^word\/(document|header\d+|footer\d+)\.xml$/.test(part))baseline.file(part,xml.replace(/<w:highlight\b[^>]*w:val="yellow"[^>]*\/>/gi,'').replace(/<w:shd\b[^>]*w:fill="FFFF00"[^>]*\/>/gi,''));
   const values=Object.fromEntries(fields.map(field=>[field.key,field.occurrences[0].originalText]));
-  const output=await buildNativeDocx(original,fields,values,'final'),preview=await buildNativeDocx(original,fields,values,'preview');
+  const output=await buildNativeDocx(original,fields,values,'final',true),preview=await buildNativeDocx(original,fields,values,'preview',true);
   const results=await Promise.all([convertDocx(await baseline.generateAsync({type:'nodebuffer'})),convertDocx(output),convertDocx(preview)]);
   if(results.some(result=>result.pageCount!==results[0].pageCount))throw new Error('The preview or final build changed the source page count.');
   const binary=process.env.PDFTOPPM_PATH||'pdftoppm';

@@ -6,7 +6,8 @@ export const occurrenceSchema = z.object({
   id: z.string().max(100), part: z.string().regex(/^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/),
   paragraph: z.number().int().min(0), start: z.number().int().min(0), end: z.number().int().positive(),
   originalText: z.string().min(1).max(2000), run: z.number().int().min(0).default(0),
-  display: z.enum(['value', 'surname']).default('value'),
+  display: z.enum(['value', 'surname']).default('value'), lineBefore:z.boolean().optional(),
+  bold:z.enum(['inherit','normal','bold']).optional(),
   prefix:z.string().max(100).optional(),suffix:z.string().max(100).optional(),
 });
 export const nativeFieldSchema = z.object({
@@ -21,13 +22,19 @@ export const nativeFieldSchema = z.object({
 });
 export type NativeField = z.infer<typeof nativeFieldSchema>;
 export type Occurrence = z.infer<typeof occurrenceSchema>;
+export type NativeBoldMode = 'inherit'|'normal'|'bold';
+export function nativeBoldMode(field:NativeField,occurrence:Occurrence):NativeBoldMode {
+  return occurrence.bold??(/(?:representative.*name|name.*representative)/i.test(`${field.key} ${field.label}`)?'normal':'inherit');
+}
 export type NativeValues = Record<string,string>;
 export interface NativeVersion { id:string;templateId:string;name:string;version:number;revision:number;status:string;filename:string;sourceId:string;sourceHash:string;fonts:string[];missingFonts:string[];originalPages:number;fields:NativeField[] }
-export interface NativeDraft { id:string;versionId:string;values:NativeValues;revision:number;updatedAt:string;templateName:string;templateVersion:number }
-export interface NativeGenerated { id:string;draftId:string;format:'pdf'|'docx';createdAt:string;expiresAt:string;templateName:string;templateVersion:number;expired:boolean }
+export interface NativeDraft { id:string;versionId:string;values:NativeValues;revision:number;updatedAt:string;templateName:string }
+export interface NativeGenerated { id:string;draftId:string|null;format:'pdf'|'docx';createdAt:string;expiresAt:string;templateName:string;expired:boolean }
 export const valuesSchema=z.record(z.string().max(60),z.string().max(2000));
 export function newNativeField(key:string,label:string,occurrences:Occurrence[],order=0):NativeField {
-  return nativeFieldSchema.parse({id:crypto.randomUUID(),key,label,type:'text',order,occurrences,placeholderText:`[${label}]`});
+  const separateRoleTitle=/\b(?:representative|supervisor)\b.*\b(?:position|title)\b|\b(?:position|title)\b.*\b(?:representative|supervisor)\b/i.test(`${key} ${label}`);
+  const representativeName=/(?:representative.*name|name.*representative)/i.test(`${key} ${label}`);
+  return nativeFieldSchema.parse({id:crypto.randomUUID(),key,label,type:'text',order,occurrences:occurrences.map(occurrence=>({...occurrence,lineBefore:occurrence.lineBefore??separateRoleTitle,...(occurrence.bold===undefined&&representativeName?{bold:'normal' as const}:{})})),placeholderText:`[${label}]`});
 }
 export function validateFieldConfiguration(fields:NativeField[]) {
   if(!fields.length||fields.length>80)throw new Error('Mark between 1 and 80 fields before publishing.');
@@ -50,7 +57,7 @@ export function validateFieldConfiguration(fields:NativeField[]) {
   }
 }
 export function resolveNativeValues(fields:NativeField[],input:NativeValues,validate=false):NativeValues {
-  if(Object.keys(input).some(key=>!fields.some(f=>f.key===key)))throw new Error('These values include a field outside this template version.');
+  if(Object.keys(input).some(key=>!fields.some(f=>f.key===key)))throw new Error('These values include a field not available in this template.');
   const result:NativeValues={};
   for(const field of fields){
     const value=field.locked?field.defaultValue:input[field.key]??field.defaultValue;
@@ -70,7 +77,8 @@ export function resolveNativeValues(fields:NativeField[],input:NativeValues,vali
 }
 export function nativeDisplay(field:NativeField,value:string,occurrence?:Occurrence):string {
   if(!value)return '';
-  if(occurrence&&value===field.occurrences[0].originalText)return occurrence.originalText;
+  const lineBefore=occurrence?.lineBefore??(field.key==='representative_position');
+  if(occurrence&&value===field.occurrences[0].originalText)return (lineBefore?'\n':'')+occurrence.originalText;
   let result=value;
   if(field.type==='date'&&/^\d{4}-\d{2}-\d{2}$/.test(value))result=format(parseISO(value),field.dateFormat);
   if(occurrence?.display==='surname'){
@@ -82,5 +90,5 @@ export function nativeDisplay(field:NativeField,value:string,occurrence?:Occurre
   if(field.transform==='uppercase')result=result.toLocaleUpperCase();
   if(field.transform==='lowercase')result=result.toLocaleLowerCase();
   if(field.transform==='titlecase')result=result.toLocaleLowerCase().replace(/(^|[\s-])\p{L}/gu,s=>s.toLocaleUpperCase());
-  return (occurrence?.prefix??'')+result+(occurrence?.suffix??'');
+  return (lineBefore?'\n':'')+(occurrence?.prefix??'')+result+(occurrence?.suffix??'');
 }

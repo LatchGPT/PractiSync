@@ -2183,8 +2183,8 @@ model NativeGeneratedDocument {
   tenantId String @map("tenant_id")
   createdAt String @map("created_at")
   userId String @map("user_id")
-  draftId String @map("draft_id")
-  draft NativeDocumentDraft @relation(fields:[draftId],references:[id])
+  draftId String? @map("draft_id")
+  draft NativeDocumentDraft? @relation(fields:[draftId],references:[id],onDelete:SetNull)
   versionId String @map("version_id")
   version NativeDocumentVersion @relation(fields:[versionId],references:[id])
   format String

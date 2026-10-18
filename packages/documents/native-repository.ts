@@ -9,7 +9,7 @@ import { nativeFieldSchema, validateFieldConfiguration, type NativeField, type N
 export const sha256=(data:Uint8Array|string)=>createHash('sha256').update(data).digest('hex');
 export async function nativeVersion(tenantId:string,id:string):Promise<NativeVersion>{
   const row=await one('SELECT v.*,t.name,s.filename,s.sha256,s.fonts_json FROM native_document_versions v JOIN native_document_templates t ON t.id=v.template_id AND t.tenant_id=v.tenant_id JOIN native_document_sources s ON s.id=v.source_id AND s.tenant_id=v.tenant_id WHERE v.tenant_id=? AND v.id=?',tenantId,id);
-  if(!row)throw new DomainError('Document template version not found.',404);
+  if(!row)throw new DomainError('Document template not found.',404);
   const fonts=JSON.parse(String(row.fontsJson)) as string[];const available=await availableDocumentFonts();
   return{id:row.id,templateId:String(row.templateId),name:String(row.name),version:Number(row.version),revision:Number(row.revision),status:String(row.status),sourceId:String(row.sourceId),sourceHash:String(row.sha256),filename:String(row.filename),fonts,missingFonts:fonts.filter(font=>!available.some(name=>name.toLowerCase()===font.toLowerCase())),originalPages:Number(row.originalPages),fields:(JSON.parse(String(row.fieldsJson)) as unknown[]).map(f=>nativeFieldSchema.parse(f))};
 }
@@ -20,7 +20,7 @@ export async function authorizedVersion(user:Identity,id:string,allowPublished=t
   if(user.role!=='STUDENT')throw new DomainError('You do not have access to the document generator.',403);
   if(allowPublished&&version.status==='PUBLISHED')return version;
   const own=await one('SELECT id FROM native_document_drafts WHERE tenant_id=? AND user_id=? AND version_id=?',user.tenantId,user.id,id);
-  if(!own)throw new DomainError('Document version not found.',404);return version;
+  if(!own)throw new DomainError('Document template not found.',404);return version;
 }
 export async function ownNativeDraft(user:Identity,id:string){const row=await one('SELECT * FROM native_document_drafts WHERE tenant_id=? AND user_id=? AND id=?',user.tenantId,user.id,id);if(!row)throw new DomainError('Draft not found.',404);return row;}
 export async function createNativeTemplate(user:Identity,filename:string,bytes:Uint8Array,fields:NativeField[]=[],name?:string){
@@ -38,7 +38,7 @@ function fieldRows(tenantId:string,versionId:string,fields:NativeField[]){return
   return[insert('native_document_fields',{tenant_id:tenantId,version_id:versionId,variable_key:field.key,label:field.label,type:field.type,config_json:JSON.stringify({...field,occurrences:undefined}),display_order:field.order},id),...field.occurrences.map(o=>insert('native_document_occurrences',{tenant_id:tenantId,field_id:id,location_json:JSON.stringify(o)},`${versionId}-${o.id}`))];
 });}
 export async function saveNativeFields(user:Identity,version:NativeVersion,fields:NativeField[],publish=false){
-  if(version.status!=='WORKING')throw new DomainError('Published versions are immutable. Start a new version to edit.',409);
+  if(version.status!=='WORKING')throw new DomainError('Published templates are immutable. Edit the template to make changes.',409);
   if(publish)validateFieldConfiguration(fields);
   const bytes=await sourceBytes(user.tenantId,version.sourceId);const parsed=await openNativeDocx(bytes);
   const ranges=new Map<string,{start:number;end:number}[]>();
@@ -66,13 +66,15 @@ export async function editNativeVersion(user:Identity,version:NativeVersion){
     ...fieldRows(user.tenantId,id,version.fields),
   ]);return nativeVersion(user.tenantId,id);
 }
-export function draftJson(row:Row){return{id:row.id,versionId:String(row.versionId),values:JSON.parse(String(row.valuesJson)),revision:Number(row.revision),updatedAt:String(row.updatedAt),templateName:String(row.templateName),templateVersion:Number(row.templateVersion)};}
+export function draftJson(row:Row){return{id:row.id,versionId:String(row.versionId),values:JSON.parse(String(row.valuesJson)),revision:Number(row.revision),updatedAt:String(row.updatedAt),templateName:String(row.templateName)};}
 export async function expireNativeFiles(){const now=new Date().toISOString();await statement("UPDATE native_generated_documents SET file_base64='',expired_at=? WHERE expires_at<? AND expired_at IS NULL",now,now).run();await statement('DELETE FROM native_document_render_cache WHERE expires_at<?',now).run();}
 export async function listNativeDocuments(user:Identity){
   await expireNativeFiles();
-  const versions=await list(`SELECT v.id FROM native_document_versions v JOIN native_document_templates t ON t.id=v.template_id AND t.tenant_id=v.tenant_id WHERE v.tenant_id=? ${user.role==='SUPER_ADMIN'?"AND (v.status='WORKING' OR v.id=t.published_version_id)":"AND v.id=t.published_version_id"} ORDER BY v.created_at DESC`,user.tenantId);
+  const versions=user.role==='SUPER_ADMIN'
+    ?await list("SELECT v.id FROM native_document_versions v JOIN native_document_templates t ON t.id=v.template_id AND t.tenant_id=v.tenant_id WHERE v.tenant_id=? AND t.status='ACTIVE' AND v.id=COALESCE((SELECT w.id FROM native_document_versions w WHERE w.tenant_id=t.tenant_id AND w.template_id=t.id AND w.status='WORKING' ORDER BY w.version DESC LIMIT 1),t.published_version_id) ORDER BY v.created_at DESC",user.tenantId)
+    :await list("SELECT v.id FROM native_document_versions v JOIN native_document_templates t ON t.id=v.template_id AND t.tenant_id=v.tenant_id WHERE v.tenant_id=? AND t.status='ACTIVE' AND v.id=t.published_version_id ORDER BY v.created_at DESC",user.tenantId);
   const templates=await Promise.all(versions.map(v=>nativeVersion(user.tenantId,v.id)));
-  const drafts=user.role==='STUDENT'?await list('SELECT d.*,t.name AS template_name,v.version AS template_version FROM native_document_drafts d JOIN native_document_versions v ON v.id=d.version_id AND v.tenant_id=d.tenant_id JOIN native_document_templates t ON t.id=v.template_id AND t.tenant_id=v.tenant_id WHERE d.tenant_id=? AND d.user_id=? ORDER BY d.updated_at DESC LIMIT 100',user.tenantId,user.id):[];
-  const documents=user.role==='STUDENT'?await list('SELECT g.id,g.draft_id,g.format,g.created_at,g.expires_at,g.expired_at,t.name AS template_name,v.version AS template_version FROM native_generated_documents g JOIN native_document_versions v ON v.id=g.version_id AND v.tenant_id=g.tenant_id JOIN native_document_templates t ON t.id=v.template_id AND t.tenant_id=v.tenant_id WHERE g.tenant_id=? AND g.user_id=? ORDER BY g.created_at DESC LIMIT 100',user.tenantId,user.id):[];
-  return{templates,drafts:drafts.map(draftJson),documents:documents.map(d=>({id:d.id,draftId:d.draftId,format:d.format,createdAt:d.createdAt,expiresAt:d.expiresAt,expired:!!d.expiredAt,templateName:d.templateName,templateVersion:Number(d.templateVersion)}))};
+  const drafts=user.role==='STUDENT'?await list('SELECT d.*,t.name AS template_name FROM native_document_drafts d JOIN native_document_versions v ON v.id=d.version_id AND v.tenant_id=d.tenant_id JOIN native_document_templates t ON t.id=v.template_id AND t.tenant_id=v.tenant_id WHERE d.tenant_id=? AND d.user_id=? ORDER BY d.updated_at DESC LIMIT 100',user.tenantId,user.id):[];
+  const documents=user.role==='STUDENT'?await list('SELECT g.id,g.draft_id,g.format,g.created_at,g.expires_at,g.expired_at,t.name AS template_name FROM native_generated_documents g JOIN native_document_versions v ON v.id=g.version_id AND v.tenant_id=g.tenant_id JOIN native_document_templates t ON t.id=v.template_id AND t.tenant_id=v.tenant_id WHERE g.tenant_id=? AND g.user_id=? ORDER BY g.created_at DESC LIMIT 100',user.tenantId,user.id):[];
+  return{templates,drafts:drafts.map(draftJson),documents:documents.map(d=>({id:d.id,draftId:d.draftId,format:d.format,createdAt:d.createdAt,expiresAt:d.expiresAt,expired:!!d.expiredAt,templateName:d.templateName}))};
 }
