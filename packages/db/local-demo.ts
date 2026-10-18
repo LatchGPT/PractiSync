@@ -173,9 +173,51 @@ function upgradeToFormTypesV4(sql: DatabaseSync) {
   }
 }
 
+function upgradeCalendarEventsV5(sql: DatabaseSync) {
+  sql.exec('BEGIN');
+  try {
+    sql.exec(`
+      CREATE TABLE calendar_events (
+        id TEXT PRIMARY KEY NOT NULL, tenant_id TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        event_type TEXT NOT NULL CHECK(event_type IN ('ACADEMIC','HOLIDAY','DEADLINE','APPOINTMENT')),
+        title TEXT NOT NULL, description TEXT, start_date TEXT NOT NULL, end_date TEXT NOT NULL,
+        start_time TEXT, end_time TEXT, all_day INTEGER NOT NULL DEFAULT 0 CHECK(all_day IN (0,1)),
+        location TEXT, meeting_url TEXT, audience TEXT NOT NULL CHECK(audience IN ('UNIVERSITY','CLASS')),
+        class_id TEXT, created_by TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','CANCELLED')),
+        CHECK(end_date >= start_date),
+        CHECK((start_time IS NULL AND end_time IS NULL) OR (start_time IS NOT NULL AND end_time IS NOT NULL))
+      );
+      CREATE INDEX calendar_events_tenant_start ON calendar_events (tenant_id,start_date);
+      CREATE INDEX calendar_events_class_start ON calendar_events (tenant_id,class_id,start_date);
+      PRAGMA user_version = 5;
+    `);
+    sql.exec('COMMIT');
+  } catch (error) {
+    sql.exec('ROLLBACK');
+    throw error;
+  }
+}
+
+function upgradeCalendarEventsV6(sql: DatabaseSync) {
+  sql.exec('BEGIN');
+  try {
+    const tableInfo = sql.prepare("PRAGMA table_info('calendar_events')").all() as { name: string }[];
+    const hasStatus = tableInfo.some((col) => col.name === 'status');
+    if (!hasStatus) {
+      sql.exec("ALTER TABLE calendar_events ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','CANCELLED'))");
+    }
+    sql.exec('PRAGMA user_version = 6');
+    sql.exec('COMMIT');
+  } catch (error) {
+    sql.exec('ROLLBACK');
+    throw error;
+  }
+}
+
 export function openLocalDemoDatabase(): DemoDatabase {
   const path = resolve(process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
-  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 6) return sqliteGlobal.practiSyncLocalDemo.database;
+  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 7) return sqliteGlobal.practiSyncLocalDemo.database;
 
   mkdirSync(dirname(path), { recursive: true });
   const sql = new DatabaseSync(path);
@@ -185,23 +227,28 @@ export function openLocalDemoDatabase(): DemoDatabase {
   else if (version < 2) upgradeToFormTypesV2(sql);
   if (version < 3) upgradeToFormTypesV3(sql);
   if (version < 4) upgradeToFormTypesV4(sql);
-  if (version < 5) {
+  const hasTable = (name: string) => Boolean(sql.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name));
+  if (!hasTable('calendar_events')) upgradeCalendarEventsV5(sql);
+  const calendarColumns = sql.prepare("PRAGMA table_info('calendar_events')").all() as { name: string }[];
+  if (!calendarColumns.some(column => column.name === 'status')) upgradeCalendarEventsV6(sql);
+
+  if (!hasTable('document_templates')) {
     sql.exec('BEGIN');
     try {
       sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610150001_reflowable_document_templates/migration.sql'), 'utf8'));
-      sql.exec('PRAGMA user_version = 5');
       sql.exec('COMMIT');
     } catch (error) { sql.exec('ROLLBACK'); throw error; }
   }
 
-  if (version < 6) {
+  if (!hasTable('native_document_sources')) {
     sql.exec('BEGIN');
     try {
       sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610150002_native_document_generator/migration.sql'), 'utf8'));
-      sql.exec('PRAGMA user_version = 6'); sql.exec('COMMIT');
+      sql.exec('COMMIT');
     } catch (error) { sql.exec('ROLLBACK'); throw error; }
   }
+  sql.exec('PRAGMA user_version = 7');
   const database = new LocalDemoDatabase(sql);
-  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 6 };
+  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 7 };
   return database;
 }

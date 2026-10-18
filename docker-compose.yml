@@ -21,7 +21,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: practisync-app
     restart: unless-stopped
     depends_on:
       postgres:

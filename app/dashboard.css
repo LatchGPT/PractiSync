@@ -3586,6 +3586,11 @@ html.dark .classroom-join-empty p {
   color: #b5862b;
 }
 
+.notif-icon-calendar {
+  background: #edf6fd;
+  color: #1c528f;
+}
+
 .notif-icon-default {
   background: #f0f4f8;
   color: #557091;
@@ -3625,6 +3630,7 @@ html.dark .classroom-join-empty p {
   margin: 0 0 6px 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -3894,5 +3900,6 @@ html.dark .notif-icon-class { background: #1a2942; color: #79aef4; }
 html.dark .notif-icon-support { background: #381f21; color: #f56565; }
 html.dark .notif-icon-announcement { background: #2b1f3c; color: #b794f4; }
 html.dark .notif-icon-policy { background: #352a1b; color: #ecc94b; }
+html.dark .notif-icon-calendar { background: #1a2a40; color: #6da7f1; }
 html.dark .notif-icon-default { background: #1d2b3c; color: #8ba7c7; }
 

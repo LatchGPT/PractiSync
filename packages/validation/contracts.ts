@@ -5,11 +5,14 @@ export type Role=typeof roles[number];
 export type Row={id:string;tenantId:string;createdAt:string;[key:string]:string|number|null};
 export interface Identity {id:string;name:string;username:string;email:string;role:Role;status:string;sessionVersion:number;isDemo:number;courseId:string|null;companyId:string|null;tenantId:string;}
 export interface StudentAccountSummary extends Row {courseId:string|null;courseCode:string|null;courseName:string|null;total:number;active:number;disabled:number;}
-export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];outcomeDecisions:Row[];industryFeedback:Row[];completionResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];studentAccountSummary?:StudentAccountSummary[];classMembers?:Row[];}
+export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];calendarEvents:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];outcomeDecisions:Row[];industryFeedback:Row[];completionResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];studentAccountSummary?:StudentAccountSummary[];classMembers?:Row[];}
 const str=(max=500)=>z.string().trim().min(1).max(max);
 export const dtrInput=z.object({placementId:str(),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),startsAt:str(),endsAt:str(),breakMinutes:z.coerce.number().int().min(0),narrative:str(8000),entryId:z.string().optional(),version:z.coerce.number().int().optional(),reason:z.string().max(1000).optional()});
 export const inputs={
  dtr:dtrInput,
+ calendarEvent:z.object({eventId:z.string().optional(),eventType:z.enum(['ACADEMIC','HOLIDAY','DEADLINE','APPOINTMENT']),title:str(160),description:z.string().trim().max(2000).optional().default(''),startDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),endDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),startTime:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal('')),endTime:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal('')),location:z.string().trim().max(240).optional().default(''),meetingUrl:z.string().trim().max(1000).optional().default(''),audience:z.enum(['UNIVERSITY','CLASS']).optional().default('CLASS'),classId:z.string().trim().max(100).optional().default(''),status:z.enum(['ACTIVE','CANCELLED']).optional().default('ACTIVE')}),
+ cancelCalendarEvent:z.object({eventId:str()}),
+ deleteCalendarEvent:z.object({eventId:str()}),
  confirm:z.object({entryId:str(),version:z.coerce.number().int()}),
  join:z.object({code:z.string().trim().min(4).max(16)}),
  class:z.object({name:str(100),section:str(60),courseId:str()}),
