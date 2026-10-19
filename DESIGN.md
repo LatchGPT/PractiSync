@@ -224,3 +224,15 @@ These are review expectations; this document does not certify an accessibility a
 - Update this document when changing shared tokens or interaction conventions.
 
 For code changes, run the repository checks relevant to the change and visually inspect affected screens. A successful build alone does not verify layout or usability.
+
+## 12. Original Word document generator
+
+The generator is an Operate surface for students completing documents and administrators configuring DOCX templates. Preserve the existing Inter, navy, blue, gold, white, and pale blue-gray tokens; component styles live in `app/native-document-generator.css` and are scoped to `.native-generator-dialog`.
+
+- Use a bounded desktop dialog capped at 1440px wide and 900px tall, with 24px viewport margins, a stable title and close control, independently scrolling work areas, and a full-width footer. Keep save status on the left and the next action on the right.
+- Student actions progress from **Review document** to **Download PDF** or **Download Word**. Saving drafts and editing details are secondary. Show named steps, inline field errors, and clearly selected download formats.
+- Administrators use a quiet preview-mode switch, field search, optional field-management help, collapsible settings, and labeled icon controls for removal. Field row headers show the title beside the drag handle; omit location counts and input-type badges. Keep **Save settings** secondary and **Publish template** primary. The field-selection action takes priority while text is being marked; finish or cancel selection before publishing.
+- At 850px and below, switch between details/settings and document preview instead of stacking a long form beneath the document. Keep both mounted to preserve answers and preview state. The footer remains visible; controls use at least 44px touch targets and phone inputs use 16px text.
+- Fit the document preview to its available width initially. Preserve manual zoom, and provide a labeled fit-to-width control.
+- Keep field help beside its input, retain input after failures, and show persistent action errors inside the modal. Confirm saves in the footer and downloads inside the dialog so floating notifications cannot cover its actions. Explicitly save drafts/settings; warn before closing with unsaved changes and prevent accidental backdrop dismissal. Retain Radix focus trapping and Escape handling.
+- Use a restrained 200ms modal entrance and honor the application's reduced-motion setting. Reuse existing field drag and keyboard reordering, server actions, document rendering, and permission rules.
