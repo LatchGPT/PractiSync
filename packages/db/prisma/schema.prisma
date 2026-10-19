@@ -1625,6 +1625,7 @@ model DemoCalendarEvents {
 }
 
 model DemoCompanies {
+  version Int @default(1)
   id          String @id
   tenantId    String @map("tenant_id")
   createdAt   String @map("created_at")
@@ -1770,6 +1771,7 @@ model DemoIntervals {
 }
 
 model DemoJobs {
+  version Int @default(1)
   id          String @id
   tenantId    String @map("tenant_id")
   createdAt   String @map("created_at")
@@ -1787,6 +1789,7 @@ model DemoJobs {
 }
 
 model DemoPlacements {
+  dtrRevision Int @default(0) @map("dtr_revision")
   id              String @id
   tenantId        String @map("tenant_id")
   createdAt       String @map("created_at")
@@ -2240,4 +2243,111 @@ model DemoPrivateHosts {
 
   @@unique([tenantId, placementId], map: "private_host_placement")
   @@map("private_hosts")
+}
+
+model DemoHteRequests {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  requesterId String @map("requester_id")
+  companyId String @map("company_id")
+  resourceId String @map("resource_id")
+  kind String
+  payloadJson String @map("payload_json")
+  baseVersion Int @default(1) @map("base_version")
+  status String @default("PENDING")
+  note String?
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt String? @map("reviewed_at")
+  version Int @default(1)
+  @@map("hte_requests")
+}
+
+model DemoFinalDtrs {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  placementId String @map("placement_id")
+  version Int @default(1)
+  attendanceRevision Int @map("attendance_revision")
+  snapshotJson String @map("snapshot_json")
+  totalMinutes Int @map("total_minutes")
+  status String
+  submittedBy String @map("submitted_by")
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt String? @map("reviewed_at")
+  note String?
+  @@unique([tenantId, placementId])
+  @@map("final_dtrs")
+}
+
+model DemoFinalDtrHistory {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  finalDtrId String @map("final_dtr_id")
+  version Int
+  recordJson String @map("record_json")
+  @@unique([tenantId, finalDtrId, version])
+  @@map("final_dtr_history")
+}
+
+model DemoFinalDtrReopens {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  placementId String @map("placement_id")
+  finalDtrVersion Int @map("final_dtr_version")
+  studentId String @map("student_id")
+  reason String
+  status String @default("PENDING")
+  note String?
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt String? @map("reviewed_at")
+  version Int @default(1)
+  @@map("final_dtr_reopens")
+}
+
+model DemoHteEvaluationTemplates {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  createdBy String @map("created_by")
+  title String
+  filename String
+  pdfBase64 String @map("pdf_base64")
+  questionsJson String @default("[]") @map("questions_json")
+  status String @default("DRAFT")
+  version Int @default(1)
+  @@map("hte_evaluation_templates")
+}
+
+model DemoHteEvaluationResponses {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  placementId String @map("placement_id")
+  evaluatorId String @map("evaluator_id")
+  templateId String @map("template_id")
+  finalDtrVersion Int @map("final_dtr_version")
+  answersJson String @map("answers_json")
+  status String
+  note String?
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt String? @map("reviewed_at")
+  updatedAt String @map("updated_at")
+  version Int @default(1)
+  @@unique([tenantId, placementId])
+  @@map("hte_evaluation_responses")
+}
+
+model DemoHteEvaluationHistory {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  responseId String @map("response_id")
+  version Int
+  recordJson String @map("record_json")
+  @@unique([tenantId, responseId, version])
+  @@map("hte_evaluation_history")
 }

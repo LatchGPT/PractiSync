@@ -480,10 +480,10 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               </div>
               <h3 className="ps-feature-card-title">HTE Supervisor Time Verification</h3>
               <p className="ps-feature-card-text">
-                Company supervisors directly review and confirm intern Time-In and Time-Out
-                records, ensuring rendered hours are verified at the source before coordinator review.
+                Company supervisors review one complete DTR at the end of the internship,
+                verify its accuracy or return it for correction, then complete the school evaluation.
               </p>
-              <span className="ps-feature-tag">Dual-Audit Attendance</span>
+              <span className="ps-feature-tag">Final DTR Verification</span>
             </div>
 
             <div className="ps-feature-card ps-feature-navy">
@@ -599,6 +599,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
         </div>
       )}
 
+      <div className="hte-register-link"><a href="/register/hte">HTE supervisor? Register your company for approval</a></div>
       {/* Account Registration Modal */}
       {registerModalOpen && (
         <div className="ps-help-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="register-dialog-title">
@@ -629,7 +630,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                   <strong>Class Section Join Codes:</strong> If your class coordinator gave you a section code (e.g. <code>SYNC4A</code>), you can enter it immediately after signing in to link your training section.
                 </li>
                 <li>
-                  <strong>Host Training Establishments (HTE):</strong> Industry supervisors receive direct onboarding credentials upon verification of the university Memorandum of Agreement (MOA).
+                  <strong>Host Training Establishments (HTE):</strong> <a href="/register/hte">Register your HTE</a>. Industry supervisors can submit company and account details for Super Admin approval.
                 </li>
               </ul>
               <div className="ps-help-demo-tip">

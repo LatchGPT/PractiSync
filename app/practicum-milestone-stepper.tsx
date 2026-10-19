@@ -176,7 +176,7 @@ export default function PracticumMilestoneStepper({
           {label: 'Reported', value: hours(goal.reported)},
           {label: 'Required', value: goal.target ? hours(goal.target) : 'Not set'},
           {label: 'Remaining', value: goal.target ? hours(goal.remaining) : '—'},
-          {label: 'Awaiting review', value: `${hours(pendingMinutes)} · ${pendingEntries.length} DTRs`},
+          {label: 'Awaiting final HTE verification', value: hours(pendingMinutes)},
           {label: 'Submitted DTRs', value: String(ownEntries.length)},
           {label: 'Days on record', value: String(daysOnRecord)},
           {label: 'Average per day', value: daysOnRecord ? hours(goal.averagePerDay) : '—'},
@@ -244,7 +244,7 @@ export default function PracticumMilestoneStepper({
     const confirmedMinutes = data.entries.filter(e => e.confirmedVersion === e.version)
       .reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
     const reportedMinutes = data.entries.reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
-    const dtrsToConfirm = data.entries.filter(e => e.confirmedVersion !== e.version).length;
+    const dtrsToConfirm = (data.finalDtrReopens ?? []).filter(r => r.status === 'PENDING').length;
     const averageProgress = data.placements.length
       ? Math.round(data.placements.reduce((sum, placement) => {
           const entries = data.entries.filter(entry => entry.placementId === placement.id);
@@ -289,7 +289,7 @@ export default function PracticumMilestoneStepper({
           {label: 'Average reported progress', value: `${averageProgress}%`},
           {label: 'Reported hours · all records', value: hours(reportedMinutes)},
           {label: 'Confirmed hours · all records', value: hours(confirmedMinutes)},
-          {label: 'DTRs to confirm', value: String(dtrsToConfirm)},
+          {label: 'DTR reopening requests', value: String(dtrsToConfirm)},
         ],
       },
       {

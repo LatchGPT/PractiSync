@@ -217,7 +217,7 @@ function upgradeCalendarEventsV6(sql: DatabaseSync) {
 
 export function openLocalDemoDatabase(): DemoDatabase {
   const path = resolve(process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
-  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 7) return sqliteGlobal.practiSyncLocalDemo.database;
+  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 8) return sqliteGlobal.practiSyncLocalDemo.database;
 
   mkdirSync(dirname(path), { recursive: true });
   const sql = new DatabaseSync(path);
@@ -247,8 +247,15 @@ export function openLocalDemoDatabase(): DemoDatabase {
       sql.exec('COMMIT');
     } catch (error) { sql.exec('ROLLBACK'); throw error; }
   }
-  sql.exec('PRAGMA user_version = 7');
+  if (!hasTable('final_dtrs')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610190001_hte_approvals_final_dtr/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  sql.exec('PRAGMA user_version = 8');
   const database = new LocalDemoDatabase(sql);
-  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 7 };
+  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 8 };
   return database;
 }

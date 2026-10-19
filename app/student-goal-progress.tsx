@@ -11,7 +11,6 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
  const goal=studentGoal(entries,requiredMinutes);
  const reportedFraction=goal.target?Math.min(goal.reported,goal.target)/goal.target:0;
  const pendingMinutes=Math.max(0,goal.reported-goal.confirmed);
- const pendingEntries=entries.filter(entry=>entry.confirmedVersion!==entry.version).length;
  const latestEntry=entries.map(entry=>String(entry.date??'')).filter(Boolean).sort((a,b)=>b.localeCompare(a))[0];
  const latestDate=latestEntry?formatLogDate(latestEntry):'No entries yet';
  const forecast=!goal.target?'Set a required-hours target to see an estimate':goal.remaining===0?'Hours target reached':goal.daysOnRecord<3?'Available after 3 logged days':goal.predictedDays?`About ${goal.predictedDays} more logged days`:'Log attendance to estimate';
@@ -31,7 +30,7 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
    <div className="goal-hero-metrics">
     <div className="goal-hero-metric logged"><strong>{hours(goal.reported)}</strong><span>Logged</span></div>
     <div className="goal-hero-metric remaining"><strong>{goal.target?hours(goal.remaining):'—'}</strong><span>Remaining</span></div>
-    <div className="goal-hero-metric pending"><strong>{pendingEntries}</strong><span>Pending DTRs</span></div>
+    <div className="goal-hero-metric pending"><strong>{entries.length}</strong><span>DTR entries</span></div>
    </div>
   </section>
 
@@ -53,11 +52,11 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
     <div className="goal-section-heading"><div><span className="goal-card-eyebrow">Attendance summary</span><h3>DTR activity</h3></div><ClipboardList size={18}/></div>
     <div className="goal-activity-metrics">
      <div className="goal-activity-metric"><strong>{entries.length}</strong><span>Submitted entries</span></div>
-     <div className="goal-activity-metric waiting"><strong>{hours(pendingMinutes)}</strong><span>Hours awaiting review</span></div>
+     <div className="goal-activity-metric waiting"><strong>{hours(pendingMinutes)}</strong><span>Awaiting final HTE verification</span></div>
      <div className="goal-activity-metric"><strong>{goal.daysOnRecord?hours(goal.averagePerDay):'—'}</strong><span>Average per logged day</span></div>
      <div className="goal-activity-metric"><strong>{latestDate}</strong><span>Most recent log</span></div>
     </div>
-    <div className="goal-activity-foot"><span>{pendingEntries} {pendingEntries===1?'entry':'entries'} awaiting coordinator review</span><span>{goal.target?`${goal.percent}% of required hours reported`:'Set a target to track progress'}</span></div>
+    <div className="goal-activity-foot"><span>{entries.length && !pendingMinutes ? 'Complete DTR verified by the HTE' : 'One final HTE verification covers your complete DTR'}</span><span>{goal.target?`${goal.percent}% of required hours reported`:'Set a target to track progress'}</span></div>
    </section>
 
    <div className="goal-bottom-cards">

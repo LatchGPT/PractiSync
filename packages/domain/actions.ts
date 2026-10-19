@@ -7,9 +7,11 @@ import {hashPassword} from '../auth/password';
 import {assessmentPeriod,cadenceAllows,manilaToday} from './assessment-period';
 import {calculateOutcomeEvaluation} from './outcome-evaluation';
 import {mutateIndustry} from './industry-workflows';
+import {mutateHte,attendanceGuard} from './hte-workflows';
 const digest=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');
 export async function placementFor(user:Identity,id:string){const s=scope(user);const p=await one(`SELECT p.* FROM placements p WHERE ${s.sql} AND p.id=?`,...s.args,id);if(!p)throw new DomainError('Training placement not found or access denied.',403);return p;}
 export async function mutate(user:Identity,action:Action,payload:unknown):Promise<{message:string;id?:string;url?:string;accessCode?:string;expiresAt?:string}>{
+ const hteResult=await mutateHte(user,action,payload);if(hteResult)return hteResult;
  const industryResult=await mutateIndustry(user,action,payload);if(industryResult)return industryResult;
  const parse=<A extends Action>(a:A)=>(inputs[a].parse(payload)) as z.infer<(typeof inputs)[A]>;
   const tx:PreparedStatement[]=[];let resourceId=crypto.randomUUID();let message='Saved successfully.';
@@ -19,6 +21,8 @@ export async function mutate(user:Identity,action:Action,payload:unknown):Promis
   switch(action){
   case 'dtr':{
    requireRole(user,'STUDENT');const d=parse('dtr');const p=await placementFor(user,d.placementId);if(p.status!=='ACTIVE')throw new DomainError('Attendance requires an active placement.');
+   if(await one("SELECT id FROM final_dtrs WHERE tenant_id=? AND placement_id=? AND status IN ('SUBMITTED','VERIFIED')",user.tenantId,p.id))throw new DomainError('Attendance is locked during final review or after verification. Request reopening for a verified DTR.',409);
+   tx.push(attendanceGuard(user,p,true));
    const start=d.startsAt.match(/(?:Z|[+-]\d{2}:\d{2})$/)?d.startsAt:d.startsAt+':00+08:00';const end=d.endsAt.match(/(?:Z|[+-]\d{2}:\d{2})$/)?d.endsAt:d.endsAt+':00+08:00';
    if(!start.startsWith(d.date))throw new DomainError('The entry date must match the time-in date.');
    const minutes=calculateMinutes(start,end,d.breakMinutes,String(p.startsAt),String(p.endsAt));

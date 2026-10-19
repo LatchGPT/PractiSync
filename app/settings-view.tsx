@@ -494,7 +494,7 @@ export default function SettingsView({
               <strong>Philippine Standard Time (PHT, UTC+8) Mandatory Anchor</strong>
               <p>
                 To adhere to Philippine higher education internship policies, all daily training
-                records, attendance time-in/out timestamps, and coordinator confirmations are
+                records, attendance time-in/out timestamps, and final HTE verifications are
                 calculated strictly in <strong>Asia/Manila (UTC+8)</strong>.
               </p>
             </div>
@@ -630,7 +630,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.showConfirmedBadge}
                   onCheckedChange={(c) => updateSetting('showConfirmedBadge', c, 'Confirmation badge setting saved.')}
-                  aria-label="Highlight coordinator confirmations"
+                  aria-label="Highlight final HTE verifications"
                 />
               </div>
             </div>

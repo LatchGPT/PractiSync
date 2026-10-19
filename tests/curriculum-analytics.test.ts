@@ -93,6 +93,7 @@ beforeAll(async () => {
   sql.exec(migration);
   sql.exec(readFileSync('packages/db/prisma/migrations/202610150001_calendar_events/migration.sql','utf8'));
   sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql', 'utf8'));
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610190001_hte_approvals_final_dtr/migration.sql','utf8'));
   sql.exec(`ALTER TABLE completion_responses ADD COLUMN status TEXT NOT NULL DEFAULT 'SUBMITTED';
 ALTER TABLE completion_responses ADD COLUMN updated_at TEXT NOT NULL DEFAULT '';
 ALTER TABLE completion_responses ADD COLUMN review_note TEXT;

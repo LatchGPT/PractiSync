@@ -14,7 +14,7 @@ The interface should feel orderly, reassuring, and focused on practical work:
 - Place white surfaces on a pale blue-gray background.
 - Make progress, outstanding work, and the next useful action easy to find.
 - Use compact tables and summaries while preserving readable labels and values.
-- Explain statuses precisely. Reported hours, company-confirmed hours, document approval, and formal completion are separate concepts.
+- Explain statuses precisely. Reported hours, HTE-verified hours, document approval, and formal completion are separate concepts.
 - Keep sample data and unavailable services visibly identified.
 
 Gradients, gentle shadows, and small movement give the interface depth. Reserve stronger decoration for the sign-in identity panel, overview greeting, brand mark, and key actions.
@@ -158,7 +158,7 @@ Reuse primitives from `components/ui` and application patterns before introducin
 | --- | --- |
 | Student | Placement context, daily attendance and narratives, target progress, document clearance, competency development, support, and portfolio |
 | Coordinator | Class membership, student progress, document review, scoped announcements, and student support queues |
-| Supervisor | Assigned interns, optional attendance confirmation, evaluations, authorized hour policies, and company internship postings |
+| Supervisor | Assigned interns, whole-internship final DTR verification, evaluations, authorized hour policies, and company internship postings |
 | Super Admin | University office administration, account access, institution structure, and partner approvals |
 
 Super Admin navigation focuses on overview, accounts and roles, university structure, the internship board, and university announcements. Coordinator-facing class management, attendance review, document review, competency workflows, student portfolios, and support queues stay out of the office menu. Institutional read access still follows the permissions matrix. Other roles see modules according to their permissions and scope.
@@ -236,3 +236,7 @@ The generator is an Operate surface for students completing documents and admini
 - Fit the document preview to its available width initially. Preserve manual zoom, and provide a labeled fit-to-width control.
 - Keep field help beside its input, retain input after failures, and show persistent action errors inside the modal. Confirm saves in the footer and downloads inside the dialog so floating notifications cannot cover its actions. Explicitly save drafts/settings; warn before closing with unsaved changes and prevent accidental backdrop dismissal. Retain Radix focus trapping and Escape handling.
 - Use a restrained 200ms modal entrance and honor the application's reduced-motion setting. Reuse existing field drag and keyboard reordering, server actions, document rendering, and permission rules.
+
+## HTE approval and final review extension
+
+The Operate surface and existing blue-and-gold identity remain authoritative. See `docs/hte-workflows.md` for the design contract. Use a compact approval queue with requested/current values, explicit reasons for rejection, and a single primary action per review. Whole-internship DTR verification replaces daily confirmation controls and queue counts. The school evaluation placeholder reads “Waiting for evaluation form” and explains that Super Admin must upload and publish the document for every course and program. Preserve the school’s wording and scale labels when configuring its online answer fields; no sample questionnaire is seeded.

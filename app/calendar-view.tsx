@@ -974,9 +974,9 @@ export default function CalendarView({
       if (!totals.minutes) continue;
       const status =
         totals.pending === 0
-          ? 'Coordinator confirmed'
+          ? 'HTE verified'
           : totals.confirmed === 0
-          ? 'Pending confirmation'
+          ? 'Awaiting final HTE verification'
           : `${hours(totals.confirmed)} confirmed; ${hours(totals.pending)} pending`;
       lines.push(
         'BEGIN:VEVENT',
@@ -1416,7 +1416,7 @@ export default function CalendarView({
                 e.stopPropagation();
                 setInspectingDay(dateKey);
               }}
-              title={`${hours(totals.minutes)} rendered · ${confirmedOnly ? 'Coordinator confirmed' : `${hours(totals.confirmed)} confirmed, ${hours(totals.pending)} pending`}`}
+              title={`${hours(totals.minutes)} rendered · ${confirmedOnly ? 'HTE verified' : `${hours(totals.confirmed)} confirmed, ${hours(totals.pending)} pending`}`}
             >
               <Clock3 size={11} />
               <span>{hours(totals.minutes)}</span>
@@ -1806,7 +1806,7 @@ export default function CalendarView({
                     </div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <span className={`chip ${totals.pending === 0 ? 'green' : 'orange'}`}>
-                        {totals.pending === 0 ? 'Coordinator confirmed' : `${hours(totals.pending)} pending verification`}
+                        {totals.pending === 0 ? 'HTE verified' : `${hours(totals.pending)} pending verification`}
                       </span>
                       {totals.confirmed > 0 && totals.pending > 0 && (
                         <span className="chip green">{hours(totals.confirmed)} confirmed</span>

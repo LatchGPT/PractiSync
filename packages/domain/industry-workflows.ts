@@ -4,6 +4,7 @@ import { inputs, type Action, type Identity } from '../validation/contracts';
 import { documentFormAnswerSchemas, documentFormCatalog, type DocumentFormAnswer, type DocumentFormType } from '../validation/document-forms';
 import { DomainError, requireRole } from './policies';
 import { manilaToday } from './assessment-period';
+import { attendanceGuard, requireFinalCompletion } from './hte-workflows';
 
 const tenantId = 'fictional-university';
 const hash = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), (byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -240,9 +241,13 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
   }
 
   if (action === 'completionDecision') {
-    requireRole(user, 'COORDINATOR', 'SUPER_ADMIN');
+    requireRole(user, 'COORDINATOR');
     const placement = await one(`SELECT p.* FROM placements p WHERE p.tenant_id=? AND p.id=? ${user.role === 'COORDINATOR' ? 'AND p.class_id IN (SELECT id FROM classes WHERE tenant_id=? AND coordinator_id=?)' : ''}`, user.tenantId, String(d.placementId), ...(user.role === 'COORDINATOR' ? [user.tenantId, user.id] : []));
     if (!placement) throw new DomainError('Placement is outside your university scope.', 403);
+    if (d.decision === 'APPROVE') {
+      const final = await requireFinalCompletion(user, placement);
+      tx.push(attendanceGuard(user, placement), statement('UPDATE final_dtrs SET attendance_revision=? WHERE tenant_id=? AND id=?', Number(placement.dtrRevision) + 1, user.tenantId, final.id));
+    }
     const forms = await one('SELECT COUNT(*) AS count FROM completion_responses WHERE tenant_id=? AND placement_id=? AND form_type IN (\'FINAL_SELF_ASSESSMENT\',\'OJT_EXIT_SURVEY\') AND status IN (\'SUBMITTED\',\'APPROVED\')', user.tenantId, placement.id);
     if (d.decision === 'APPROVE' && Number(forms?.count ?? 0) !== 2) throw new DomainError('Both the final competency self-assessment and OJT exit survey are required before approval.', 409);
     id = String(placement.id);

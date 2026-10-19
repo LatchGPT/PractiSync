@@ -1,88 +1,51 @@
 'use client';
 
 import { useState } from 'react';
-import { BriefcaseBusiness, Building2, Clock3, LogOut, RefreshCw, Send, ShieldCheck, Users } from 'lucide-react';
+import { BriefcaseBusiness, Building2, GraduationCap, LogOut, RefreshCw, Send, ShieldCheck, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { authSubmit } from './login-client';
-import DtrPagination from './dtr-pagination';
+import { FinalDtrCard, HteEvaluationForm, HteRequestQueue, HteStatus, SchoolEvaluationLibrary, useHteAction } from './hte-workflows';
 import type { Row, Snapshot } from '@/packages/validation/contracts';
 
-const text = (row: Row | undefined, key: string) => String(row?.[key] ?? '');
-const numeric = (row: Row | undefined, key: string) => Number(row?.[key] ?? 0);
-const badge = (value: string) => <span className={`chip ${['APPROVED', 'PUBLISHED', 'ACCEPTED'].includes(value) ? 'green' : ['PENDING', 'DRAFT', 'SUBMITTED'].includes(value) ? 'orange' : 'blue'}`}>{value.toLowerCase().replaceAll('_', ' ')}</span>;
+const text = (r: Row | undefined, k: string) => String(r?.[k] ?? '');
+const num = (r: Row | undefined, k: string) => Number(r?.[k] ?? 0);
+const jobValues = (r?: Row) => ({ title:text(r,'title'), description:text(r,'description'), location:text(r,'location'), courseId:text(r,'courseId'), skills:text(r,'skills'), openings:String(r?.openings ?? 1) });
 
-function RubricField({ name, label }: { name: string; label: string }) {
-  return <fieldset className="hte-rubric-field"><legend>{label}</legend><label>Rating<select name={`${name}Score`} defaultValue="3">{[1, 2, 3, 4, 5].map(score => <option key={score} value={score}>{score} / 5</option>)}</select></label><label>Evidence<textarea required name={`${name}Evidence`} maxLength={1000} /></label></fieldset>;
+function JobEditor({ data, job, onRefresh }: { data: Snapshot; job?: Row; onRefresh: () => Promise<void> }) {
+ const [values,setValues] = useState(() => jobValues(job));
+ const { busy,error,act } = useHteAction(onRefresh);
+ return <form className="hte-form" onSubmit={e => {e.preventDefault();void act(job ? 'hteJobChange' : 'job',{...values,openings:Number(values.openings),...(job ? {jobId:job.id,version:num(job,'version')} : {})}).then(ok => {if(ok && !job)setValues(jobValues());});}}>
+ <label>Position title<input required maxLength={160} value={values.title} onChange={e => setValues({...values,title:e.target.value})}/></label><label>Target course<select required value={values.courseId} onChange={e => setValues({...values,courseId:e.target.value})}><option value="">Choose a course</option>{data.courses.map(c => <option key={c.id} value={c.id}>{text(c,'code')} · {text(c,'name')}</option>)}</select></label><label>Location<input required maxLength={160} value={values.location} onChange={e => setValues({...values,location:e.target.value})}/></label><label>Openings<input type="number" min="1" max="1000" required value={values.openings} onChange={e => setValues({...values,openings:e.target.value})}/></label><label className="hte-full">Skills<input required maxLength={400} value={values.skills} onChange={e => setValues({...values,skills:e.target.value})}/></label><label className="hte-full">Description<textarea required maxLength={8000} value={values.description} onChange={e => setValues({...values,description:e.target.value})}/></label>{error && <p className="hte-error hte-full" role="alert">{error}</p>}<button className="primary" disabled={busy}><Send size={15}/>{busy ? 'Submitting…' : job ? 'Request post changes' : 'Submit post for approval'}</button></form>;
 }
 
-function DtrEntryHistory({ entries, onConfirm }: { entries: Row[]; onConfirm: (entry: Row) => void }) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const totalPages = Math.max(1, Math.ceil(entries.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pageEntries = entries.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  return <>
-    <ul className="hte-times">{pageEntries.map(entry => <li key={entry.id}>{text(entry, 'date')} · {text(entry, 'startsAt')}–{text(entry, 'endsAt')} · {numeric(entry, 'minutes')} minutes · {entry.confirmedVersion === entry.version ? 'Confirmed' : 'Reported'}{entry.confirmedVersion !== entry.version && <button type="button" className="textbutton" onClick={() => onConfirm(entry)}>Confirm time only</button>}</li>)}</ul>
-    {entries.length === 0 && <p className="small muted">No DTR logs are recorded for this placement yet.</p>}
-    <DtrPagination page={currentPage} pageSize={pageSize} totalItems={entries.length} itemLabel="DTRs" onPageChange={setPage} onPageSizeChange={size => { setPageSize(size); setPage(1); }} />
-  </>;
+function CompanyProfile({ company, onRefresh }: { company?: Row; onRefresh: () => Promise<void> }) {
+ const [values,setValues] = useState(() => ({name:text(company,'name'),industry:text(company,'industry'),location:text(company,'location'),description:text(company,'description')}));
+ const { busy,error,act } = useHteAction(onRefresh);
+ return <form className="hte-form" onSubmit={e => {e.preventDefault();void act(company?.status === 'APPROVED' ? 'hteProfileChange' : 'companyProfile',{...values,...(company?.status === 'APPROVED' ? {version:num(company,'version')} : {})});}}><label>Company name<input required maxLength={160} value={values.name} onChange={e => setValues({...values,name:e.target.value})}/></label><label>Industry<input required maxLength={120} value={values.industry} onChange={e => setValues({...values,industry:e.target.value})}/></label><label className="hte-full">Location<input required maxLength={240} value={values.location} onChange={e => setValues({...values,location:e.target.value})}/></label><label className="hte-full">Company description<textarea required maxLength={2000} value={values.description} onChange={e => setValues({...values,description:e.target.value})}/></label>{error && <p className="hte-error hte-full" role="alert">{error}</p>}<button className="primary" disabled={busy}>{busy ? 'Submitting…' : 'Submit for Super Admin approval'}</button></form>;
 }
-export default function SupervisorPortal({ data, onRefresh }: { data: Snapshot; onRefresh: () => Promise<void> }) {
-  const company = data.companies.find(item => item.id === data.user.companyId);
-  const [busy, setBusy] = useState(false);
-  const [profile, setProfile] = useState(() => ({ name: text(company, 'name'), industry: text(company, 'industry'), location: text(company, 'location'), description: text(company, 'description') }));
-  const [post, setPost] = useState({ title: '', description: '', location: '', courseId: '', skills: '', openings: '1' });
 
-  async function act(action: string, values: Record<string, unknown>) {
-    setBusy(true);
-    try {
-      const response = await fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, values }) });
-      if (response.status === 401) { location.replace('/login?redirect=' + encodeURIComponent(location.pathname + location.search)); return false; }
-      const result = await response.json() as { error?: string; message?: string };
-      if (!response.ok) throw new Error(result.error ?? 'The request could not be completed.');
-      toast.success(result.message ?? 'Saved.');
-      await onRefresh();
-      return true;
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'The request could not be completed.');
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function signOut() {
-    try {
-      await authSubmit('signout', {}, '/');
-      location.replace('/login');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Sign out failed.');
-    }
-  }
-
-  const canPost = Boolean(company && company.status === 'APPROVED' && numeric(company, 'canPost') === 1);
-  return <main className="hte-portal">
-    <header className="hte-header"><div className="brand"><span className="brand-icon">PS</span><span>PractiSync<span style={{ color: '#d7aa3e' }}>.</span></span></div><div className="hte-account"><span>{data.user.name} · HTE Supervisor</span><button className="secondary" onClick={() => void onRefresh()} disabled={busy}><RefreshCw size={15} />Refresh</button><button className="secondary" onClick={() => void signOut()}><LogOut size={15} />Sign out</button></div></header>
-    <section className="hte-intro"><span className="chip blue"><ShieldCheck size={13} />Limited external partner access</span><h1>{company ? text(company, 'name') : 'Company profile'}</h1><p>This workspace provides access only to your company’s approved posts, applicants, assigned placements, time-only DTR confirmations, and privacy-protected student feedback.</p></section>
-
-    {(!company || company.status === 'REJECTED') && <section className="hte-card"><h2>{company ? 'Revise your company profile' : 'Create your company profile'}</h2><p className="muted">The university must verify the profile before your account can post or view assigned placement records.</p><form className="hte-form" onSubmit={event => { event.preventDefault(); void act('companyProfile', profile).then(ok => { if (ok) setProfile({ name: '', industry: '', location: '', description: '' }); }); }}>
-      <label>Company name<input required maxLength={160} value={profile.name} onChange={event => setProfile({ ...profile, name: event.target.value })} /></label><label>Industry<input required maxLength={120} value={profile.industry} onChange={event => setProfile({ ...profile, industry: event.target.value })} /></label><label>Location<input required maxLength={240} value={profile.location} onChange={event => setProfile({ ...profile, location: event.target.value })} /></label><label>Company description<textarea required maxLength={2000} value={profile.description} onChange={event => setProfile({ ...profile, description: event.target.value })} /></label><button className="primary" disabled={busy}><Building2 size={15} />Submit for verification</button>
-    </form></section>}
-
-    {company && company.status === 'PENDING' && <section className="hte-notice"><Building2 size={18} /><div><strong>University verification pending</strong><p>Your company profile is not public and posting remains unavailable until the university verifies it.</p></div>{badge(text(company, 'status'))}</section>}
-
-    {company && <>
-      {canPost && <section className="hte-card"><h2>Create an internship post</h2><p className="muted">The university reviews every post before students can see it.</p><form className="hte-form" onSubmit={event => { event.preventDefault(); void act('job', { ...post, openings: Number(post.openings) }).then(ok => { if (ok) setPost({ title: '', description: '', location: '', courseId: '', skills: '', openings: '1' }); }); }}>
-        <label>Position title<input required maxLength={160} value={post.title} onChange={event => setPost({ ...post, title: event.target.value })} /></label><label>Target course<select required value={post.courseId} onChange={event => setPost({ ...post, courseId: event.target.value })}><option value="">Choose a course</option>{data.courses.map(course => <option key={course.id} value={course.id}>{text(course, 'code')} · {text(course, 'name')}</option>)}</select></label><label>Location<input required maxLength={160} value={post.location} onChange={event => setPost({ ...post, location: event.target.value })} /></label><label>Openings<input required type="number" min="1" max="1000" value={post.openings} onChange={event => setPost({ ...post, openings: event.target.value })} /></label><label>Skills<input required maxLength={400} value={post.skills} onChange={event => setPost({ ...post, skills: event.target.value })} placeholder="Comma-separated" /></label><label className="hte-full">Description<textarea required maxLength={8000} value={post.description} onChange={event => setPost({ ...post, description: event.target.value })} /></label><button className="primary" disabled={busy}><Send size={15} />Submit post for review</button>
-      </form></section>}
-
-      <div className="hte-grid">
-        <section className="hte-card"><h2><BriefcaseBusiness size={18} />Your internship posts</h2>{data.jobs.length ? <div className="hte-list">{data.jobs.map(job => <article key={job.id}><div><strong>{text(job, 'title')}</strong><p>{text(job, 'location')} · {job.openings} openings</p></div>{badge(text(job, 'status'))}</article>)}</div> : <p className="muted">No posts yet.</p>}</section>
-        <section className="hte-card"><h2><Users size={18} />Applicants to your posts</h2>{data.applications.length ? <div className="hte-list">{data.applications.map(application => <article key={application.id}><div><strong>{text(application, 'studentName')}</strong><p>{text(application, 'title')} · Submitted {new Date(text(application, 'createdAt')).toLocaleDateString()}</p><details><summary>View application</summary><p>{text(application, 'coverLetter')}</p></details></div><div className="hte-actions">{badge(text(application, 'status'))}{application.status === 'SUBMITTED' && <><button className="primary" disabled={busy} onClick={() => void act('selectApplication', { applicationId: application.id, decision: 'SHORTLISTED' })}>Select</button><button className="secondary" disabled={busy} onClick={() => void act('selectApplication', { applicationId: application.id, decision: 'REJECTED' })}>Decline</button></>}</div></article>)}</div> : <p className="muted">There are no applications for your company’s posts.</p>}</section>
-        <section className="hte-card"><h2><Clock3 size={18} />Assigned placements and time</h2>{data.placements.length ? <div className="hte-list">{data.placements.map(placement => { const ownEvaluation = data.evaluations.find(item => item.placementId === placement.id); return <article key={placement.id}><div><strong>{text(placement, 'studentName')}</strong><p>{text(placement, 'courseCode')} · {text(placement, 'period')}</p><DtrEntryHistory entries={data.entries.filter(entry => entry.placementId === placement.id)} onConfirm={entry => void act('confirm', { entryId: entry.id, version: numeric(entry, 'version') })} />{ownEvaluation && ownEvaluation.status !== 'REVISION_REQUESTED' ? <p className="hte-evaluation-receipt">Your final evaluation is {text(ownEvaluation, 'status').toLowerCase().replaceAll('_', ' ')}.{ownEvaluation.reviewNote ? ` Coordinator note: ${text(ownEvaluation, 'reviewNote')}` : ''}</p> : <details className="hte-evaluation-form"><summary>{ownEvaluation ? 'Revise requested evaluation' : 'Submit final competency evaluation'}</summary><form className="hte-form" onSubmit={event => { event.preventDefault(); const values = new FormData(event.currentTarget); const scores = { technicalSkills: { score: Number(values.get('technicalSkillsScore')), evidence: String(values.get('technicalSkillsEvidence') ?? '') }, communication: { score: Number(values.get('communicationScore')), evidence: String(values.get('communicationEvidence') ?? '') }, professionalism: { score: Number(values.get('professionalismScore')), evidence: String(values.get('professionalismEvidence') ?? '') }, problemSolving: { score: Number(values.get('problemSolvingScore')), evidence: String(values.get('problemSolvingEvidence') ?? '') } }; void act('industryFinalEvaluation', { placementId: placement.id, scores }); }}><RubricField name="technicalSkills" label="Technical skills" /><RubricField name="communication" label="Communication" /><RubricField name="professionalism" label="Professionalism" /><RubricField name="problemSolving" label="Problem solving" /><button className="primary" disabled={busy}>Submit for university review</button></form></details>}</div>{badge(text(placement, 'status'))}</article>; })}</div> : <p className="muted">No active placements are assigned to your account.</p>}</section>
-        <section className="hte-card"><h2><ShieldCheck size={18} />Student feedback about your company</h2>{data.reviews.length ? <><p className="muted">Anonymous comments are shown only after at least five distinct placements in the same academic period have approved reviews.</p><div className="hte-list">{data.reviews.map(review => <article key={review.id}><div><strong>{numeric(review, 'rating')}/5</strong><p>{text(review, 'body')}</p></div></article>)}</div></> : <p className="muted">Feedback is hidden until the privacy threshold is met. University staff can review identified responses.</p>}</section>
-      </div>
-    </>}
-  </main>;
+export default function SupervisorPortal({ data,onRefresh }: { data: Snapshot; onRefresh: () => Promise<void> }) {
+ const router = useRouter();
+ const company = data.companies.find(c => c.id === data.user.companyId);
+ const verified = company?.status === 'APPROVED' && num(company,'canPost') === 1;
+ const { busy,error,act } = useHteAction(onRefresh);
+ async function signOut() { try {await authSubmit('signout',{},'/');router.replace('/login');}catch(e){toast.error(e instanceof Error ? e.message : 'Sign out failed.');} }
+ return <main className="hte-portal hte-workspace"><header className="hte-header"><div className="brand"><span className="brand-icon"><GraduationCap size={23}/></span><span>PractiSync.</span></div><div className="hte-account"><span>{data.user.name} · HTE Supervisor</span><button className="secondary" onClick={() => void onRefresh().catch(() => toast.error('Refresh failed. Try again.'))} disabled={busy}><RefreshCw size={15}/>Refresh</button><button className="secondary" onClick={() => void signOut()}><LogOut size={15}/>Sign out</button></div></header>
+ <section className="hte-intro"><span className="chip blue"><ShieldCheck size={13}/>{verified ? 'Approved partner access' : 'Partner approval required'}</span><h1>{text(company,'name') || 'Your HTE account'}</h1><p>{verified ? 'Manage approval requests and support your assigned interns. Verify attendance once at the end, then complete the school evaluation.' : 'Your company and account require Super Admin approval. Track your request below; posting and student records unlock after approval.'}</p>{company && <HteStatus value={text(company,'status')}/>}</section>
+ <nav className="hte-portal-nav" aria-label="HTE sections"><a href="#hte-requests">Requests</a>{verified && <><a href="#hte-interns">Assigned interns</a><a href="#hte-posts">Internship posts</a><a href="#hte-applicants">Applicants</a></>}<a href="#hte-account">Account</a></nav>
+ {error && <p className="hte-error" role="alert">{error}</p>}
+ {(!company || company.status === 'REJECTED') && <section className="hte-card"><h2><Building2 size={18}/>{company ? 'Correct your registration details' : 'Submit your company details'}</h2><CompanyProfile key={`${company?.id}:${company?.version}`} company={company} onRefresh={onRefresh}/></section>}
+ <HteRequestQueue data={data} onRefresh={onRefresh}/>
+ {verified && <>
+ <section className="hte-card" id="hte-interns"><h2><Users size={18}/>Assigned interns</h2><p className="muted">Review the complete final DTR, then answer the university’s evaluation for each assigned intern.</p>{data.placements.length ? data.placements.map(p => <details className="hte-placement" key={p.id}><summary>{text(p,'studentName')} · {text(p,'courseCode')} · {text(p,'period')}</summary><FinalDtrCard data={data} placement={p} onRefresh={onRefresh}/><HteEvaluationForm data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">No students are assigned to your account yet. The university confirms placements and supervisor assignments.</p>}</section>
+ <SchoolEvaluationLibrary data={data} onRefresh={onRefresh}/>
+ <section className="hte-card" id="hte-posts"><div className="hte-section-heading"><div><h2><BriefcaseBusiness size={18}/>Internship posts</h2><p className="muted">New posts, changes and closures require Super Admin approval.</p></div></div><details><summary>Create an internship post</summary><JobEditor data={data} onRefresh={onRefresh}/></details>
+ {data.jobs.length ? data.jobs.map(job => { const pending = data.hteRequests?.some(r => r.resourceId === job.id && r.status === 'PENDING');return <article className="hte-request" key={job.id}><div className="hte-section-heading"><div><h3>{text(job,'title')}</h3><p>{text(job,'location')} · {job.openings} openings</p></div><HteStatus value={pending ? 'PENDING' : text(job,'status')}/></div>{pending ? <p className="small muted">A request for this post is awaiting Super Admin approval.</p> : <><details><summary>{job.status === 'ARCHIVED' ? 'Revise and request publication' : 'Request post changes'}</summary><JobEditor key={`${job.id}:${job.version}`} data={data} job={job} onRefresh={onRefresh}/></details>{job.status === 'PUBLISHED' && <button className="secondary" disabled={busy} onClick={() => void act('hteJobClose',{jobId:job.id,version:num(job,'version')})}>Request closure</button>}</>}</article>;}) : <p className="hte-empty">No posts yet. Submit an internship opportunity for approval.</p>}</section>
+ <section className="hte-card" id="hte-applicants"><h2>Applicants</h2>{data.applications.length ? data.applications.map(a => <article className="hte-request" key={a.id}><div className="hte-section-heading"><div><h3>{text(a,'studentName')}</h3><p>{text(a,'title')}</p></div><span className="chip">{text(a,'status').toLowerCase().replaceAll('_',' ')}</span></div><details><summary>Read application</summary><p>{text(a,'coverLetter')}</p></details>{a.status === 'SUBMITTED' && <div className="hte-actions"><button className="primary" disabled={busy} onClick={() => void act('selectApplication',{applicationId:a.id,decision:'SHORTLISTED'})}>Select for placement review</button><button className="secondary" disabled={busy} onClick={() => void act('selectApplication',{applicationId:a.id,decision:'REJECTED'})}>Decline application</button></div>}</article>) : <p className="hte-empty">Applications to your published posts will appear here.</p>}</section>
+ <section className="hte-card"><h2>Company profile</h2><p className="muted">The approved profile remains visible while a proposed change is reviewed.</p>{data.hteRequests?.some(r => r.resourceId === company?.id && r.status === 'PENDING') ? <p className="hte-review-note">Profile changes are awaiting Super Admin approval.</p> : <details><summary>Request profile changes</summary><CompanyProfile key={`${company?.id}:${company?.version}`} company={company} onRefresh={onRefresh}/></details>}</section>
+ <section className="hte-card"><h2>Student feedback</h2>{data.reviews.length ? <><p className="muted">Anonymous feedback is shown after at least five distinct placements in the same academic period have approved reviews.</p>{data.reviews.map(r => <article className="hte-request" key={r.id}><strong>{r.rating}/5</strong><p>{text(r,'body')}</p></article>)}</> : <p className="hte-empty">Feedback is hidden until the privacy threshold is met.</p>}</section>
+ </>}
+ <section className="hte-card" id="hte-account"><h2>Sign-in details</h2>{data.user.isDemo ? <p className="muted">This is a fixed demonstration account.</p> : <details><summary>Change name and password</summary><form className="hte-form" onSubmit={e => {e.preventDefault();const values=Object.fromEntries(new FormData(e.currentTarget));void act('hteCredentials',values).then(ok => {if(ok)router.replace('/login');});}}><label className="hte-full">Full name<input name="name" defaultValue={data.user.name} maxLength={120} autoComplete="name" required/></label><label>Current password<input name="currentPassword" type="password" autoComplete="current-password" required/></label><label>New password<input name="newPassword" type="password" minLength={12} maxLength={128} autoComplete="new-password" required/></label><button className="primary" disabled={busy}>Update sign-in details</button></form></details>}</section>
+ </main>;
 }

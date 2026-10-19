@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Check, Clipboard, FileCheck2, Link2, ShieldCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
+import {SchoolEvaluationReviews} from './hte-workflows';
 import type { Action, Row, Snapshot } from '@/packages/validation/contracts';
 
 const text = (row: Row | undefined, key: string) => String(row?.[key] ?? '');
@@ -36,9 +37,9 @@ export function UniversityWorkflowPanel({ data, onRefresh }: { data: Snapshot; o
     finally { setBusyId(''); }
   }
 
-  const pendingCompanies = data.companies.filter(company => company.status === 'PENDING');
+  const pendingCompanies = data.companies.filter(company => company.status === 'PENDING' && !data.hteRequests?.some(r=>r.resourceId===company.id && r.status==='PENDING'));
   const coordinatorCourses = new Set(data.classes.map(item => text(item, 'courseId')));
-  const pendingPosts = data.jobs.filter(job => job.status === 'DRAFT' && (data.user.role !== 'COORDINATOR' || coordinatorCourses.has(text(job, 'courseId'))));
+  const pendingPosts = data.jobs.filter(job => job.status === 'DRAFT' && !data.hteRequests?.some(r=>r.resourceId===job.id && r.status==='PENDING') && (data.user.role !== 'COORDINATOR' || coordinatorCourses.has(text(job, 'courseId'))));
   const selectedApplications = data.applications.filter(application => application.status === 'SHORTLISTED');
   const plannedPlacements = data.placements.filter(placement => text(placement, 'status') === 'PLANNED');
   const privateHosts = data.privateHosts ?? [];
@@ -48,9 +49,9 @@ export function UniversityWorkflowPanel({ data, onRefresh }: { data: Snapshot; o
   return <section className="university-workflows">
     {data.user.role === 'SUPER_ADMIN' && <section className="hte-card"><h2><Building2Icon />Company profiles awaiting verification</h2>{pendingCompanies.length ? pendingCompanies.map(company => <article className="workflow-row" key={company.id}><div><strong>{text(company, 'name')}</strong><p>{text(company, 'industry')} · {text(company, 'location')}</p><p>{text(company, 'description')}</p></div><div className="hte-actions"><button className="primary" disabled={!!busyId} onClick={() => void run(company.id, 'companyVerification', { companyId: company.id, decision: 'APPROVE' })}><Check size={14} />Verify</button><button className="secondary" disabled={!!busyId} onClick={() => void run(company.id, 'companyVerification', { companyId: company.id, decision: 'REJECT' })}><X size={14} />Decline</button></div></article>) : <p className="muted">No company profiles are waiting for verification.</p>}</section>}
 
-    {(data.user.role === 'SUPER_ADMIN' || pendingPosts.length > 0) && <section className="hte-card"><h2><FileCheck2 size={18} />Internship posts awaiting approval</h2>{pendingPosts.length ? pendingPosts.map(job => <article className="workflow-row" key={job.id}><div><strong>{text(job, 'title')}</strong><p>{text(job, 'companyName')} · {text(job, 'courseId')} · {text(job, 'location')}</p><p>{text(job, 'description')}</p></div><div className="hte-actions"><button className="primary" disabled={!!busyId} onClick={() => void run(job.id, 'jobReview', { jobId: job.id, decision: 'APPROVE' })}><Check size={14} />Approve post</button><button className="secondary" disabled={!!busyId} onClick={() => void run(job.id, 'jobReview', { jobId: job.id, decision: 'REJECT', note: 'Please revise this post and resubmit.' })}><X size={14} />Decline</button></div></article>) : <p className="muted">No posts are waiting for approval.</p>}</section>}
+    {data.user.role === 'SUPER_ADMIN' && <section className="hte-card"><h2><FileCheck2 size={18} />Internship posts awaiting approval</h2>{pendingPosts.length ? pendingPosts.map(job => <article className="workflow-row" key={job.id}><div><strong>{text(job, 'title')}</strong><p>{text(job, 'companyName')} · {text(job, 'courseId')} · {text(job, 'location')}</p><p>{text(job, 'description')}</p></div><div className="hte-actions"><button className="primary" disabled={!!busyId} onClick={() => void run(job.id, 'jobReview', { jobId: job.id, decision: 'APPROVE' })}><Check size={14} />Approve post</button><button className="secondary" disabled={!!busyId} onClick={() => void run(job.id, 'jobReview', { jobId: job.id, decision: 'REJECT', note: 'Please revise this post and resubmit.' })}><X size={14} />Decline</button></div></article>) : <p className="muted">No posts are waiting for approval.</p>}</section>}
 
-    {data.user.role === 'COORDINATOR' && <>
+    {data.user.role === 'COORDINATOR' && <><SchoolEvaluationReviews data={data} onRefresh={onRefresh}/>
       <section className="hte-card"><h2><ShieldCheck size={18} />HTE selections awaiting university confirmation</h2>{selectedApplications.length ? selectedApplications.map(application => {
         const courseId = text(application, 'courseId') || text(data.jobs.find(job => job.id === application.jobId), 'courseId');
         const classes = data.classes.filter(item => item.courseId === courseId);
@@ -77,12 +78,14 @@ export function UniversityWorkflowPanel({ data, onRefresh }: { data: Snapshot; o
 
       <section className="hte-card"><h2><FileCheck2 size={18} />Completion forms awaiting review</h2>{data.placements.filter(placement => (data.completionResponses ?? []).some(response => response.placementId === placement.id && ['FINAL_SELF_ASSESSMENT', 'OJT_EXIT_SURVEY'].includes(text(response, 'formType')))).map(placement => {
         const responses = (data.completionResponses ?? []).filter(response => response.placementId === placement.id && ['FINAL_SELF_ASSESSMENT', 'OJT_EXIT_SURVEY'].includes(text(response, 'formType')));
-        const allForms = ['FINAL_SELF_ASSESSMENT', 'OJT_EXIT_SURVEY'].every(type => responses.some(response => response.formType === type && ['SUBMITTED', 'APPROVED'].includes(text(response, 'status'))));
+        const finalDtr = data.finalDtrs?.find(f=>f.placementId===placement.id && f.status==='VERIFIED');
+        const hteApproved = finalDtr && data.hteEvaluationResponses?.some(r=>r.placementId===placement.id && r.finalDtrVersion===finalDtr.version && r.status==='APPROVED');
+        const allForms = Boolean(hteApproved) && ['FINAL_SELF_ASSESSMENT', 'OJT_EXIT_SURVEY'].every(type => responses.some(response => response.formType === type && ['SUBMITTED', 'APPROVED'].includes(text(response, 'status'))));
         const received = responses.filter(response => ['SUBMITTED', 'APPROVED'].includes(text(response, 'status'))).length;
-        return <article className="workflow-row" key={placement.id}><div><strong>{text(placement, 'studentName')} · {received}/2 forms received</strong>{responses.map(response => <details key={response.id}><summary>{text(response, 'formType').replaceAll('_', ' ')} · {text(response, 'status')}</summary><pre>{JSON.stringify(JSON.parse(text(response, 'responseJson') || '{}'), null, 2)}</pre>{text(response, 'reviewNote') && <p>{text(response, 'reviewNote')}</p>}</details>)}</div><div className="hte-actions"><button className="primary" disabled={!!busyId || !allForms} onClick={() => void run(placement.id, 'completionDecision', { placementId: placement.id, decision: 'APPROVE' })}><Check size={14} />Approve completion</button>{!allForms && <span className="small muted">Both forms must be submitted and clear of revision requests.</span>}</div></article>;
+        return <article className="workflow-row" key={placement.id}><div><strong>{text(placement, 'studentName')} · {received}/2 forms received</strong>{responses.map(response => <details key={response.id}><summary>{text(response, 'formType').replaceAll('_', ' ')} · {text(response, 'status')}</summary><pre>{JSON.stringify(JSON.parse(text(response, 'responseJson') || '{}'), null, 2)}</pre>{text(response, 'reviewNote') && <p>{text(response, 'reviewNote')}</p>}</details>)}</div><div className="hte-actions"><button className="primary" disabled={!!busyId || !allForms} onClick={() => void run(placement.id, 'completionDecision', { placementId: placement.id, decision: 'APPROVE' })}><Check size={14} />Approve completion</button>{!allForms && <span className="small muted">Both student forms, verified final DTR, and an approved school HTE evaluation are required.</span>}</div></article>;
       })}{!data.placements.some(placement => (data.completionResponses ?? []).some(response => response.placementId === placement.id && ['FINAL_SELF_ASSESSMENT', 'OJT_EXIT_SURVEY'].includes(text(response, 'formType')))) && <p className="muted">No student completion forms have been submitted yet.</p>}</section>
     </>}
   </section>;
 }
 
-function Building2Icon() { return <span className="workflow-building" aria-hidden="true">🏢</span>; }
+function Building2Icon() { return <ShieldCheck size={18}/>; }
