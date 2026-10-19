@@ -1,6 +1,6 @@
 'use client';
 import { useEffect,useMemo,useRef,useState } from 'react';
-import { LoaderCircle,ZoomIn,ZoomOut } from 'lucide-react';
+import { LoaderCircle,ScanLine,ZoomIn,ZoomOut } from 'lucide-react';
 import type { PDFDocumentProxy,PDFDocumentLoadingTask,RenderTask } from 'pdfjs-dist/types/src/display/api';
 import type { TextLayer } from 'pdfjs-dist/types/src/display/text_layer';
 import 'pdfjs-dist/web/pdf_viewer.css';
@@ -38,6 +38,7 @@ function PdfPage({pdf,pageNumber,zoom,selectable,onSelection}:{pdf:PDFDocumentPr
 export default function NativeDocumentPreview({version,values,fields,original=false,clean=false,onSelection}:{version:NativeVersion;values:NativeValues;fields?:NativeField[];original?:boolean;clean?:boolean;onSelection?:(selection:DocumentSelection)=>void}){
   const[zoom,setZoom]=useState(.85),[pdf,setPdf]=useState<PDFDocumentProxy|null>(null),[updating,setUpdating]=useState(true),[error,setError]=useState(''),[originalPages,setOriginalPages]=useState(version.originalPages),[paperSize,setPaperSize]=useState('');
   const[retry,setRetry]=useState(0);
+  const scrollRoot=useRef<HTMLDivElement>(null),fitWidth=useRef(.85),fitting=useRef(true);
   const previewFields=fields??version.fields;
   const effectiveValues=useMemo(()=>Object.fromEntries(previewFields.map(field=>[field.key,values[field.key]??field.defaultValue])),[previewFields,values]);
   const request=useRef<{key:string;sessionId:string;sequence:number;ack:NativeValues}>({key:'',sessionId:'',sequence:0,ack:{}});const loaded=useRef<PDFDocumentLoadingTask|null>(null);
@@ -61,9 +62,20 @@ export default function NativeDocumentPreview({version,values,fields,original=fa
     return()=>{window.clearTimeout(timer);controller.abort();};
   },[version.id,version.revision,version.originalPages,effectiveValues,previewFields,fields,original,clean,retry]);
   useEffect(()=>()=>{void loaded.current?.destroy();},[]);
-  return <section className="recommendation-preview native-document-preview" aria-label="Original Word document preview"><div className="recommendation-toolbar"><span title={version.filename}>{pdf?`${pdf.numPages} page${pdf.numPages===1?'':'s'}`:'Document'} · {paperSize||version.filename}</span><div>{updating&&<span className="native-updating" role="status"><LoaderCircle size={13} className="spin"/>Updating</span>}<button type="button" aria-label="Zoom out" disabled={zoom<=.4} onClick={()=>setZoom(n=>Math.max(.4,n-.1))}><ZoomOut size={16}/></button><span>{Math.round(zoom*100)}%</span><button type="button" aria-label="Zoom in" disabled={zoom>=1.8} onClick={()=>setZoom(n=>Math.min(1.8,n+.1))}><ZoomIn size={16}/></button></div></div>
+  useEffect(()=>{
+    const node=scrollRoot.current;if(!node||!pdf)return;
+    let canceled=false,observer:ResizeObserver|undefined;
+    void pdf.getPage(1).then(page=>{
+      if(canceled)return;
+      const pageWidth=page.getViewport({scale:1}).width;
+      const fit=()=>{if(!node.clientWidth)return;const next=Math.max(.25,Math.min(1.2,(node.clientWidth-40)/pageWidth));fitWidth.current=next;if(fitting.current)setZoom(next);};
+      fit();observer=new ResizeObserver(fit);observer.observe(node);
+    });
+    return()=>{canceled=true;observer?.disconnect();};
+  },[pdf]);
+  return <section className="recommendation-preview native-document-preview" aria-label="Original Word document preview"><div className="recommendation-toolbar"><span title={version.filename}>{pdf?`${pdf.numPages} page${pdf.numPages===1?'':'s'}`:'Document'} · {paperSize||version.filename}</span><div>{updating&&<span className="native-updating" role="status"><LoaderCircle size={13} className="spin"/>Updating</span>}<button type="button" aria-label="Zoom out" disabled={zoom<=.25} onClick={()=>{fitting.current=false;setZoom(n=>Math.max(.25,n-.1));}}><ZoomOut size={16}/></button><span>{Math.round(zoom*100)}%</span><button type="button" aria-label="Zoom in" disabled={zoom>=1.8} onClick={()=>{fitting.current=false;setZoom(n=>Math.min(1.8,n+.1));}}><ZoomIn size={16}/></button><button type="button" aria-label="Fit document to width" title="Fit to width" disabled={!pdf} onClick={()=>{fitting.current=true;setZoom(fitWidth.current);}}><ScanLine size={16}/></button></div></div>
     {pdf&&originalPages>0&&pdf.numPages!==originalPages&&<p className="native-page-warning">The filled document has {pdf.numPages} pages; the original has {originalPages}. Longer values have changed the page count.</p>}
     {error&&<p role="alert" className="native-preview-error">{error} <button type="button" className="textbutton" onClick={()=>setRetry(n=>n+1)}>Retry preview</button></p>}
-    <div className="recommendation-scroll native-pdf-scroll">{!pdf&&!error&&<div className="native-preview-loading"><LoaderCircle size={20} className="spin"/><p>Rendering the original Word document…</p></div>}{pdf&&Array.from({length:pdf.numPages},(_,index)=><PdfPage key={index} pdf={pdf} pageNumber={index+1} zoom={zoom} selectable={!!onSelection&&!updating} onSelection={onSelection}/>)}</div>
+    <div ref={scrollRoot} className="recommendation-scroll native-pdf-scroll">{!pdf&&!error&&<div className="native-preview-loading"><LoaderCircle size={20} className="spin"/><p>Rendering the original Word document…</p></div>}{pdf&&Array.from({length:pdf.numPages},(_,index)=><PdfPage key={index} pdf={pdf} pageNumber={index+1} zoom={zoom} selectable={!!onSelection&&!updating} onSelection={onSelection}/>)}</div>
   </section>;
 }

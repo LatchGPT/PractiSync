@@ -1,0 +1,521 @@
+{
+  "name": "Recommendation Letter",
+  "filename": "Recommendation Letter.docx",
+  "sha256": "09bcfbbfa6ca0210c777384e6a4ddb29282210a1f9425426c51abdbdd135e5e4",
+  "fields": [
+    {
+      "id": "bd714f0b-b8e9-49a3-bc34-c3b650afb163",
+      "key": "date",
+      "label": "Date",
+      "helpText": "",
+      "type": "date",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 0,
+      "occurrences": [
+        {
+          "id": "afbc37b0-e642-4085-b48b-d176c5bdd0ff",
+          "part": "word/document.xml",
+          "paragraph": 11,
+          "start": 0,
+          "end": 20,
+          "originalText": "June 13, 2023 (Date)",
+          "run": 0,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "91c80a26-2aa5-4b1c-b6fa-a442a07adf53",
+      "key": "name_of_representative",
+      "label": "Name of Representative",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "",
+      "maxLength": 160,
+      "transform": "uppercase",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 1,
+      "occurrences": [
+        {
+          "id": "39140617-9a12-45a1-8dbb-9b28121ac616",
+          "part": "word/document.xml",
+          "paragraph": 14,
+          "start": 0,
+          "end": 61,
+          "originalText": "MS. MARINELLA N. SAN ANTONIO (Name of Company Representative)",
+          "run": 0,
+          "display": "value",
+          "lineBefore": false,
+          "bold": "bold"
+        }
+      ]
+    },
+    {
+      "id": "62805eb9-c041-422e-9672-b066d8a1b03c",
+      "key": "position_of_the_representative",
+      "label": "Position of the Representative",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Position of the Representative]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 2,
+      "occurrences": [
+        {
+          "id": "90ff237a-9dd0-4162-a8b2-9120254f2c12",
+          "part": "word/document.xml",
+          "paragraph": 15,
+          "start": 0,
+          "end": 40,
+          "originalText": "HR Head (Position of the Representative)",
+          "run": 0,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "c9266f8a-2966-4333-b72e-0f5fd976c4dc",
+      "key": "company",
+      "label": "Company",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Company]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 3,
+      "occurrences": [
+        {
+          "id": "7eeef119-8c27-473b-81df-54424475b9a6",
+          "part": "word/document.xml",
+          "paragraph": 16,
+          "start": 0,
+          "end": 25,
+          "originalText": "ABC Engineering (Company)",
+          "run": 0,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "3f26b27f-dc39-478e-8997-b1ab1b0d087c",
+      "key": "company_address",
+      "label": "Company Address",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Company Address]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 4,
+      "occurrences": [
+        {
+          "id": "d44f2981-6e67-430a-aeb9-11a9a8521c33",
+          "part": "word/document.xml",
+          "paragraph": 17,
+          "start": 0,
+          "end": 68,
+          "originalText": "ABC Compound Brgy Malamig, Mandaluyong City (Address of the Company)",
+          "run": 0,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "3a157cca-92a8-4fc8-ab79-806b53c401a8",
+      "key": "representative_title",
+      "label": "Representative title",
+      "helpText": "",
+      "type": "dropdown",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Representative title]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [
+        "Ms",
+        "Mrs",
+        "Mr"
+      ],
+      "validationRegex": null,
+      "locked": false,
+      "order": 5,
+      "occurrences": [
+        {
+          "id": "b41a2c58-1f5c-478d-8c3b-f3a40cd5d7a7",
+          "part": "word/document.xml",
+          "paragraph": 20,
+          "start": 5,
+          "end": 7,
+          "originalText": "Ms",
+          "run": 2,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "3b825fc7-1012-49f1-b0ee-578b480301dd",
+      "key": "representative_surname",
+      "label": "Representative Surname",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Representative Surname]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 6,
+      "occurrences": [
+        {
+          "id": "68c273cf-fb60-47c5-9a4a-e80f8ccfa313",
+          "part": "word/document.xml",
+          "paragraph": 20,
+          "start": 9,
+          "end": 20,
+          "originalText": "San Antonio",
+          "run": 4,
+          "display": "value",
+          "lineBefore": false,
+          "bold": "normal"
+        }
+      ]
+    },
+    {
+      "id": "71760a46-406d-469f-a10c-4ec052ccf519",
+      "key": "student_title",
+      "label": "Student Title",
+      "helpText": "",
+      "type": "dropdown",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Student Title]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [
+        "Ms.",
+        "Mrs.",
+        "Mr."
+      ],
+      "validationRegex": null,
+      "locked": false,
+      "order": 7,
+      "occurrences": [
+        {
+          "id": "fc9dae9f-c9e7-4ec8-b30b-762673e8aa8e",
+          "part": "word/document.xml",
+          "paragraph": 22,
+          "start": 29,
+          "end": 32,
+          "originalText": "Ms.",
+          "run": 12,
+          "display": "value",
+          "lineBefore": false,
+          "bold": "bold"
+        },
+        {
+          "id": "d3a2862e-9edf-46a3-b67e-4fdaa3d20b8d",
+          "part": "word/document.xml",
+          "paragraph": 24,
+          "start": 52,
+          "end": 55,
+          "originalText": "Ms.",
+          "run": 1,
+          "display": "value",
+          "lineBefore": false,
+          "bold": "inherit"
+        }
+      ]
+    },
+    {
+      "id": "a84919d7-0960-41b5-8e4f-47a87c3ea71a",
+      "key": "student_gender",
+      "label": "Student Gender",
+      "helpText": "",
+      "type": "dropdown",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Student Gender]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [
+        "her",
+        "his"
+      ],
+      "validationRegex": null,
+      "locked": false,
+      "order": 9,
+      "occurrences": [
+        {
+          "id": "3955203a-121b-472c-8caa-2cfbd68e1bfd",
+          "part": "word/document.xml",
+          "paragraph": 22,
+          "start": 83,
+          "end": 86,
+          "originalText": "her",
+          "run": 32,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "124afb80-e2d8-4603-8d2e-3e5cdec578ed",
+      "key": "field_4th",
+      "label": "Year Level",
+      "helpText": "",
+      "type": "dropdown",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[4th]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [
+        "3rd",
+        "4th",
+        "5th"
+      ],
+      "validationRegex": null,
+      "locked": false,
+      "order": 10,
+      "occurrences": [
+        {
+          "id": "a412cfb2-6acd-4b87-ac8b-6a3c8e572470",
+          "part": "word/document.xml",
+          "paragraph": 22,
+          "start": 87,
+          "end": 90,
+          "originalText": "4th",
+          "run": 32,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "150f9253-6585-4ac1-8fc2-e7dd48193991",
+      "key": "course",
+      "label": "College / Institute",
+      "helpText": "",
+      "type": "dropdown",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Course]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [
+        "College",
+        "Institute"
+      ],
+      "validationRegex": null,
+      "locked": false,
+      "order": 11,
+      "occurrences": [
+        {
+          "id": "1fb06350-e809-4d01-96dc-e61fd0b3c033",
+          "part": "word/document.xml",
+          "paragraph": 22,
+          "start": 97,
+          "end": 104,
+          "originalText": "College",
+          "run": 34,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "aa3eb740-cecb-48be-8ef6-b0ec4346d4b4",
+      "key": "course_13",
+      "label": "Course",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Course]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 12,
+      "occurrences": [
+        {
+          "id": "297950df-5643-456c-9197-3bc4f842a3c7",
+          "part": "word/document.xml",
+          "paragraph": 22,
+          "start": 108,
+          "end": 125,
+          "originalText": "Arts and Sciences",
+          "run": 34,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "3deab535-9075-4a9f-8d9d-c69ac55a06c2",
+      "key": "major",
+      "label": "Major",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Major]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 13,
+      "occurrences": [
+        {
+          "id": "1e3b3c87-f589-4ebf-80ad-c6d348110f7f",
+          "part": "word/document.xml",
+          "paragraph": 22,
+          "start": 135,
+          "end": 145,
+          "originalText": "Psychology",
+          "run": 34,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "ca7f3f17-44e0-46c8-b7c0-68e770cff396",
+      "key": "required_hours",
+      "label": "Required hours",
+      "helpText": "",
+      "type": "number",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Required hours]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 14,
+      "occurrences": [
+        {
+          "id": "a4383db3-890b-4c03-b878-55713b3f14d0",
+          "part": "word/document.xml",
+          "paragraph": 22,
+          "start": 176,
+          "end": 179,
+          "originalText": "300",
+          "run": 36,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    },
+    {
+      "id": "d267e9bd-2626-4800-be05-ad8f0094c4c8",
+      "key": "name_of_student",
+      "label": "Name of student",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Name of student]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 8,
+      "occurrences": [
+        {
+          "id": "38ca251d-bb42-4af2-9798-8b0437035c30",
+          "part": "word/document.xml",
+          "paragraph": 22,
+          "start": 33,
+          "end": 75,
+          "originalText": "Janella C. Dela Cruz (Name of the student)",
+          "run": 14,
+          "display": "value",
+          "lineBefore": false,
+          "bold": "bold"
+        }
+      ]
+    },
+    {
+      "id": "5821a454-a8c0-4cce-84a5-89c32932e00b",
+      "key": "student_surname",
+      "label": "Student Surname",
+      "helpText": "",
+      "type": "text",
+      "required": true,
+      "defaultValue": "",
+      "placeholderText": "[Student Surname]",
+      "maxLength": 160,
+      "transform": "none",
+      "dateFormat": "MMMM d, yyyy",
+      "options": [],
+      "validationRegex": null,
+      "locked": false,
+      "order": 15,
+      "occurrences": [
+        {
+          "id": "a69e9965-e145-4d8d-a78c-c223fa913b41",
+          "part": "word/document.xml",
+          "paragraph": 24,
+          "start": 56,
+          "end": 65,
+          "originalText": "Dela Cruz",
+          "run": 1,
+          "display": "value",
+          "lineBefore": false
+        }
+      ]
+    }
+  ]
+}
