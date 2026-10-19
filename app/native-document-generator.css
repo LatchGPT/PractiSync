@@ -1,0 +1,169 @@
+/* Original Word document workspace. Inherits the application's blue-and-gold theme. */
+.native-generator-dialog {
+  --document-space: 24px;
+  width: calc(100vw - 48px);
+  max-width: 1440px;
+  height: min(900px, calc(100dvh - 48px));
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--rtu-navy) 24%, transparent);
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(.23, 1, .32, 1);
+}
+.native-dialog-heading {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 14px;
+  padding: 22px var(--document-space);
+  border-bottom: 1px solid var(--border);
+}
+.native-dialog-icon { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--rtu-ice); color: var(--primary); }
+.native-dialog-heading [data-slot=dialog-header] { flex: 1; min-width: 0; gap: 6px; text-align: left; }
+.native-dialog-heading [data-slot=dialog-title] { margin: 0; color: var(--rtu-navy); font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -.4px; overflow-wrap: anywhere; }
+.native-dialog-heading [data-slot=dialog-description] { margin: 0; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.native-dialog-close { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border: 1px solid var(--border); border-radius: var(--radius-btn); background: var(--card); color: var(--muted-foreground); cursor: pointer; }
+.native-generator-dialog button { touch-action: manipulation; }
+.native-generator-dialog button:disabled { cursor: not-allowed; }
+.native-generator-dialog button:focus-visible,.native-generator-dialog summary:focus-visible { outline: 2px solid var(--rtu-gold); outline-offset: 2px; }
+.native-generator-dialog :is(input,select,textarea):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-color: var(--primary); }
+.native-generator-dialog :is(input,select,textarea) { accent-color: var(--primary); caret-color: var(--primary); }
+.native-generator-dialog ::selection { background: color-mix(in srgb, var(--rtu-gold) 38%, transparent); color: var(--rtu-navy); }
+.native-generator-dialog :is(.recommendation-student-form-content,.recommendation-admin-form-content,.native-pdf-scroll) { overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.native-generator-dialog .recommendation-workspace { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) minmax(340px,420px); grid-template-rows: minmax(0,1fr); gap: 0; padding: 0; overflow: hidden; }
+.native-generator-dialog .native-preview-pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; padding: 18px; background: var(--background); overflow: hidden; }
+.native-preview-heading { display: flex; flex: none; align-items: center; gap: 8px; min-height: 30px; margin-bottom: 10px; color: var(--primary); font-size: 12px; }
+.native-preview-heading strong { color: var(--rtu-navy); font-weight: 600; }
+.native-preview-heading>span { margin-left: auto; color: var(--muted-foreground); font-size: 11px; }
+.native-generator-dialog .recommendation-preview { flex: 1; height: auto; min-height: 0; border-radius: 10px; background: var(--muted); }
+.native-generator-dialog .recommendation-toolbar { flex-wrap: wrap; gap: 8px; min-height: 52px; padding: 8px 12px; border-color: var(--border); background: var(--card); color: var(--muted-foreground); }
+.native-generator-dialog .recommendation-toolbar>span { min-width: 0; max-width: 100%; flex: 1 1 140px; font-size: 11px; }
+.native-generator-dialog .recommendation-toolbar>div { flex: none; gap: 7px; font-variant-numeric: tabular-nums; }
+.native-generator-dialog .recommendation-toolbar button { width: 32px; height: 32px; padding: 0; border-color: var(--border); color: var(--primary); }
+.native-generator-dialog .native-updating { color: var(--muted-foreground); }
+.native-generator-dialog .native-pdf-scroll { min-height: 0; max-height: none; padding: 20px; }
+.native-generator-dialog .native-preview-loading { margin: auto; padding: 40px 16px; color: var(--muted-foreground); text-align: center; }
+.native-generator-dialog .native-pdf-page { box-shadow: var(--shadow-md); }
+.native-generator-dialog .recommendation-form-panel { height: 100%; min-height: 0; max-height: none; overflow: hidden; padding: 0; border-left: 1px solid var(--border); background: var(--card); }
+.native-generator-dialog :is(.recommendation-student-form-content,.recommendation-admin-form-content) { flex: 1; min-height: 0; overflow-y: auto; padding: 24px; scroll-padding-block: 24px; }
+.native-form-intro { margin-bottom: 24px; }
+.native-generator-dialog .native-form-intro h3 { margin: 0 0 8px; font-size: 18px; font-weight: 650; line-height: 1.4; color: var(--rtu-navy); outline: none; }
+.native-form-intro p { margin: 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.6; }
+.native-form-intro>small { display: block; margin-top: 12px; font-size: 11px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.native-generator-dialog .interactive-form-field { gap: 7px; margin-bottom: 20px; }
+.native-generator-dialog .recommendation-field-label { color: var(--foreground); font-size: 13px; line-height: 1.5; }
+.native-generator-dialog .recommendation-form-panel :is(input:not([type=checkbox]):not([type=radio]),textarea,select) { min-height: 44px; border-radius: var(--radius-btn); background: var(--card); font-size: 14px; }
+.native-generator-dialog .recommendation-form-panel :is(input,textarea,select):focus { outline-color: var(--primary); border-color: var(--primary); }
+.native-generator-dialog .recommendation-form-panel [aria-invalid=true] { border-color: #ae3726; }
+.native-input-help { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.native-input-error { color: #ae3726; font-size: 12px; line-height: 1.5; }
+.native-action-error { flex: none; margin: 0; padding: 12px 24px; background: #fdf3f1; border-bottom: 1px solid #f9d4ce; color: #ae3726; font-size: 13px; overflow-wrap: anywhere; }
+.native-action-success { display: flex; flex: none; align-items: flex-start; gap: 8px; margin: 0; padding: 10px var(--document-space); border-bottom: 1px solid var(--border); background: var(--rtu-ice); color: var(--primary); font-size: 12px; line-height: 1.5; }
+.native-action-success svg { flex: none; margin-top: 1px; }
+.native-dialog-footer { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 16px; padding: 16px var(--document-space); border-top: 1px solid var(--border); background: var(--card); }
+.native-save-status { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.native-save-status svg { flex: none; color: var(--primary); }
+.native-unsaved-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--rtu-gold-deep); }
+.native-footer-actions { display: flex; flex: none; align-items: center; gap: 10px; }
+.native-generator-dialog .native-footer-actions :is(.primary,.secondary) { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 11px 18px; border-radius: var(--radius-btn); font-size: 13px; line-height: 1.5; white-space: nowrap; }
+.native-document-steps { display: flex; flex: none; align-items: center; gap: 32px; list-style: none; padding: 14px var(--document-space); margin: 0; border-bottom: 1px solid var(--border); }
+.native-document-steps li { display: flex; align-items: center; gap: 9px; color: var(--muted-foreground); font-size: 12px; font-weight: 500; }
+.native-document-steps li>span { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 50%; font-variant-numeric: tabular-nums; }
+.native-document-steps [aria-current=step] { color: var(--primary); font-weight: 650; }
+.native-document-steps [aria-current=step]>span { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground,#fff); }
+.native-document-steps [data-complete=true]>span { border-color: var(--border); background: var(--rtu-ice); color: var(--primary); }
+.native-generator-dialog .native-format-choice { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0; margin: 0 0 16px; border: 0; }
+.native-generator-dialog .native-format-choice legend { padding: 0; margin-bottom: 10px; color: var(--foreground); font-size: 13px; }
+.native-generator-dialog .native-format-choice label { display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-btn); cursor: pointer; }
+.native-generator-dialog .native-format-choice label[data-selected=true] { border-color: var(--primary); background: var(--rtu-ice); box-shadow: inset 0 0 0 1px var(--primary); }
+.native-generator-dialog .native-format-choice input { flex: none; width: 16px; height: 16px; margin: 0; padding: 0; }
+.native-format-choice label>span { display: grid; gap: 3px; }
+.native-format-choice strong { font-size: 13px; font-weight: 600; }
+.native-format-choice small { font-size: 12px; color: var(--muted-foreground); }
+.native-download-note { display: flex; align-items: flex-start; gap: 8px; margin: 14px 0 24px; color: var(--muted-foreground); font-size: 12px; line-height: 1.6; }
+.native-download-note svg { flex: none; margin-top: 2px; }
+.native-generator-dialog .recommendation-review-values { margin: 0; }
+.native-generator-dialog .recommendation-review-values>div { padding: 12px 0; }
+.native-generator-dialog .recommendation-review-values dt { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.native-generator-dialog .recommendation-review-values dt small { font-size: 10px; }
+.native-generator-dialog .native-editor-mode { display: flex; flex: none; gap: 4px; margin-bottom: 14px; padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-btn); background: var(--muted); }
+.native-editor-mode button { flex: 1; min-height: 36px; border: 0; border-radius: 5px; background: transparent; color: var(--muted-foreground); font-size: 12px; font-weight: 500; cursor: pointer; }
+.native-editor-mode button[aria-pressed=true] { background: var(--card); color: var(--primary); box-shadow: var(--shadow-sm); }
+.native-generator-dialog .native-field-manager { gap: 16px; }
+.native-generator-dialog .native-field-manager-heading h3 { font-size: 18px; }
+.native-generator-dialog .native-field-manager-heading .muted { font-size: 12px; line-height: 1.6; }
+.native-generator-dialog .native-field-guidance { padding: 0 0 16px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: transparent; }
+.native-generator-dialog .native-field-guidance summary { display: flex; align-items: center; gap: 8px; min-height: 36px; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; }
+.native-generator-dialog .native-field-guidance summary::-webkit-details-marker { display: none; }
+.native-generator-dialog .native-field-guidance p { font-size: 12px; line-height: 1.6; }
+.native-generator-dialog .native-field-search-section { padding: 0; border: 0; background: transparent; }
+.native-generator-dialog .native-field-search { background: var(--card); }
+.native-generator-dialog .native-config-field-row { background: var(--card); }
+.native-generator-dialog .native-occurrence-settings { border: 0; background: var(--muted); }
+.native-generator-dialog .native-selection { border: 1px solid var(--border); background: var(--rtu-ice); }
+.native-generator-dialog .native-selection>.recommendation-actions { position: static; background: transparent; }
+.native-generator-dialog .native-field-drop-placeholder { border-color: var(--primary); background: var(--rtu-ice); box-shadow: none; }
+.native-generator-dialog .native-field-drag-handle:focus-visible { outline-color: var(--rtu-gold); }
+.native-generator-dialog .native-field-flags .recommendation-toggle { background: var(--card); }
+.native-generator-dialog .native-remove-field { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-color: transparent !important; background: transparent; color: var(--muted-foreground) !important; box-shadow: none; }
+.native-mobile-switch { display: none; }
+@media (hover:hover) and (pointer:fine) {
+  .native-dialog-close:hover { background: var(--muted); color: var(--primary); }
+  .native-editor-mode button:hover,.native-mobile-switch button:hover { color: var(--primary); }
+  .native-generator-dialog .native-field-flags .recommendation-toggle:hover { background: var(--rtu-ice); border-color: var(--border); }
+  .native-generator-dialog .native-remove-field:hover:not(:disabled) { border-color: #f9d4ce !important; background: #fdf3f1 !important; color: #ae3726 !important; }
+}
+@media (max-width:1000px) {
+  .native-generator-dialog .recommendation-workspace { grid-template-columns: minmax(0,1fr) minmax(320px,380px); }
+  .native-generator-dialog .native-preview-pane { padding: 12px; }
+  .native-generator-dialog :is(.recommendation-student-form-content,.recommendation-admin-form-content) { padding: 20px; }
+}
+@media (max-width:850px) {
+  .native-generator-dialog { --document-space: 20px; display: flex; width: calc(100vw - 24px); height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); overflow: hidden; border-radius: 12px; }
+  .native-dialog-heading { padding-block: 16px; }
+  .native-dialog-icon { width: 38px; height: 38px; }
+  .native-dialog-heading [data-slot=dialog-title] { font-size: 18px; }
+  .native-generator-dialog .recommendation-workspace { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+  .native-generator-dialog .recommendation-workspace>:is(.native-preview-pane,.recommendation-form-panel) { flex: 1; width: 100%; min-height: 0; height: 100%; overflow: hidden; border-left: 0; }
+  .native-generator-dialog .recommendation-preview { height: auto; min-height: 0; }
+  .native-generator-dialog :is(.recommendation-student-form-content,.recommendation-admin-form-content) { flex: 1; min-height: 0; overflow-y: auto; }
+  .native-generator-dialog[data-mobile-view=form] .native-preview-pane,.native-generator-dialog[data-mobile-view=preview] .recommendation-form-panel { display: none; }
+  .native-mobile-switch { display: flex; flex: none; gap: 4px; padding: 6px var(--document-space); border-bottom: 1px solid var(--border); background: var(--card); }
+  .native-mobile-switch button { display: flex; flex: 1; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px; border: 0; border-radius: var(--radius-btn); background: transparent; color: var(--muted-foreground); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .native-mobile-switch button[aria-pressed=true] { background: var(--rtu-ice); color: var(--primary); }
+  .native-generator-dialog .recommendation-toolbar button { width: 44px; height: 44px; }
+  .native-generator-dialog .native-field-drag-handle { width: 36px; height: 44px; margin-left: 0; }
+  .native-generator-dialog .native-remove-field { width: 44px; height: 44px; }
+  .native-generator-dialog .native-field-search-clear { width: 44px; height: 44px; }
+  .native-generator-dialog .native-field-guidance summary { min-height: 44px; }
+  .native-generator-dialog .native-editor-mode button { min-height: 44px; }
+}
+@media (max-width:540px) {
+  .native-generator-dialog { --document-space: 16px; }
+  .native-dialog-heading { align-items: flex-start; gap: 10px; }
+  .native-dialog-icon { display: none; }
+  .native-dialog-heading [data-slot=dialog-description] { font-size: 12px; }
+  .native-document-steps { gap: 20px; padding-block: 12px; }
+  .native-document-steps li { gap: 7px; font-size: 11px; }
+  .native-dialog-footer { align-items: stretch; flex-direction: column; gap: 10px; padding: 12px var(--document-space) max(12px, env(safe-area-inset-bottom)); }
+  .native-save-status { font-size: 11px; }
+  .native-footer-actions { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 8px; }
+  .native-generator-dialog .native-footer-actions :is(.primary,.secondary) { min-width: 0; padding-inline: 12px; font-size: 12px; }
+  .native-generator-dialog :is(.recommendation-student-form-content,.recommendation-admin-form-content) { padding: 20px 16px; }
+  .native-generator-dialog .recommendation-form-panel :is(input:not([type=checkbox]):not([type=radio]),textarea,select) { font-size: 16px; }
+  .native-generator-dialog .recommendation-config-grid { grid-template-columns: 1fr; gap: 0; }
+  .native-generator-dialog .native-field-flags { grid-template-columns: 1fr; }
+  .native-preview-heading>span { display: none; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .native-generator-dialog { animation: none !important; transition: none !important; }
+  .native-generator-dialog * { scroll-behavior: auto !important; transition: none !important; }
+}

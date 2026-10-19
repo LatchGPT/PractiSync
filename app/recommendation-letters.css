@@ -124,8 +124,10 @@
 .native-field-drag-handle:active { cursor:grabbing; }
 .native-field-drag-handle:hover { background:#edf3fb; color:var(--primary); }
 .native-field-drag-handle:focus-visible { outline:2px solid #059669; outline-offset:1px; }
-.native-config-field-row[data-dragging=true] { opacity:.55; }
-.native-config-field-row[data-drop-target=true] { border-color:#059669; background:#f0fdf4; }
+.native-config-field-row[data-dragging=true] { position:absolute; inset:0 0 auto; opacity:0; pointer-events:none; }
+.native-field-drop-placeholder { position:relative; box-sizing:border-box; min-height:52px; border:2px dashed #059669; border-radius:9px; background:color-mix(in srgb, #059669 10%, var(--background)); box-shadow:inset 0 2px 8px #05966918; }
+.native-field-drop-label { display:block; padding:14px 12px; color:var(--foreground); font-size:13px; font-weight:600; overflow-wrap:anywhere; }
+.native-field-drop-label small { display:block; margin-top:4px; color:var(--muted-foreground); font-size:11px; font-weight:400; }
 .native-config-field-row .recommendation-config-field { min-width:0; margin:0; padding:0; border:0; border-radius:9px; }
 .native-config-field-row .recommendation-config-field>summary { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin:0; padding:11px 10px; list-style:none; }
 .native-config-field-row .recommendation-config-field>summary::-webkit-details-marker { display:none; }

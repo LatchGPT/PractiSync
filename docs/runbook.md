@@ -11,6 +11,8 @@ pnpm install
 pnpm db:migrate
 pnpm db:seed
 docker compose -f infrastructure/documents/compose.yml up -d
+# After the document scanner is available, install the published Word template:
+pnpm documents:template
 # In a second terminal:
 pnpm documents:worker
 # In a third terminal:
@@ -53,7 +55,7 @@ pnpm start
 Use a dedicated fictional-demo PostgreSQL database for Vercel Preview. Set `DATABASE_URL`, `AUTH_SECRET`, `DEPLOYMENT_MODE=demo`, and `DEMO_ENABLED=true` in Preview only. Apply Prisma migrations before the first sign-in. Do not point Preview at the future institutional database. Run all four quick sign-ins, the HTE username/password sign-in, and the demo acceptance flows before retiring the previously hosted Cloudflare build. No Vercel project connection or hosted database credentials are configured in this checkout, so preview deployment remains outstanding.
 Host `documents:worker` as a separate long-running service with access to the same PostgreSQL database, Redis, and converter as the deployed web app. The web deployment alone cannot process Word preview jobs.
 
-Word sources and uploaded PDFs are stored in PostgreSQL, not in the deployment filesystem. Keep `DATABASE_URL` pointed at persistent storage across redeployments. A new hosted database will start without files uploaded to the local demo database; transfer those records as part of deployment if they must appear there. The PDF list includes older uploads from `custom_document_templates`, and Super Admin can add more PDFs in Required OJT documents.
+After migrations and `pnpm db:seed`, start the document scanner and run `pnpm documents:template` once against the persistent fictional-demo PostgreSQL database. This installs the packaged published Recommendation Letter DOCX and its 16 configured fields only when that active template is missing; it preserves any existing database version and later admin edits. Students see it once it is published. A Git push alone does not transfer database uploads. Keep `DATABASE_URL` pointed at persistent storage across redeployments. The PDF list includes older uploads from `custom_document_templates`, and Super Admin can add more PDFs in Required OJT documents.
 PDF and Word uploads are limited to 4 MB so their requests fit within Vercel's 4.5 MB Function payload limit. Larger documents require a direct storage upload flow before increasing this limit.
 
 ## Data and service boundaries
