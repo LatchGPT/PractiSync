@@ -429,6 +429,10 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                       );
                     })}
                   </div>
+                  <button type="button" className="ps-first-login-demo" disabled={!!busyKey || !configured} onClick={() => handleDemoSignIn('demo-new-student')}>
+                    {busyKey === 'demo-new-student' ? <LoaderCircle size={17} className="spin"/> : <UserPlus size={17}/>}
+                    <span><strong>Try first-time student setup</strong><small>Fictional identity · join with a class code</small></span><ArrowRight size={16}/>
+                  </button>
                 </div>
               )}
 
@@ -449,7 +453,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                   <span className="ps-sso-badge">Coming Soon</span>
                 </button>
                 <p className="ps-sso-note">
-                  Institutional Google Workspace SSO will activate in the next enrollment cycle.
+                  Google Workspace sign-in is unavailable in this fictional demo.
                 </p>
               </div>
 
@@ -624,10 +628,10 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               </p>
               <ul>
                 <li>
-                  <strong>RTU Students:</strong> Student accounts are automatically provisioned upon enrollment in your practicum / OJT section. You can sign in using your official <code>@rtu.edu.ph</code> university credentials.
+                  <strong>RTU Students:</strong> The university provisions your account. On your first sign-in, enter your school details and the class code from your coordinator. The code identifies your program and practicum section. Completing registration opens your workspace immediately; no coordinator approval is needed. Student access requires an @rtu.edu.ph email or an explicitly authorized manual account.
                 </li>
                 <li>
-                  <strong>Class Section Join Codes:</strong> If your class coordinator gave you a section code (e.g. <code>SYNC4A</code>), you can enter it immediately after signing in to link your training section.
+                  <strong>Class Section Join Codes:</strong> A coordinator-provided code (e.g. <code>SYNC4A</code>) identifies a practicum section during first-time setup. Verified students can also use it in My class when they need to request enrollment.
                 </li>
                 <li>
                   <strong>Host Training Establishments (HTE):</strong> <a href="/register/hte">Register your HTE</a>. Industry supervisors can submit company and account details for Super Admin approval.
@@ -637,7 +641,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                 <Sparkles size={14} />
                 <span>
                   Testing the system? You can jump straight in using the{' '}
-                  <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab to explore student, coordinator, or supervisor workflows immediately.
+                  <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab. Choose &ldquo;Try first-time student setup&rdquo; to explore student registration, or use a role card to open an established workspace.
                 </span>
               </div>
             </div>

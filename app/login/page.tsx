@@ -1,3 +1,4 @@
+import {StudentVerificationRequired} from '@/packages/domain/student-verification';
 import {forbidden,redirect} from 'next/navigation';
 import LoginClient from '@/app/login-client';
 import {pageIdentity} from '@/app/server-identity';
@@ -17,6 +18,7 @@ export default async function LoginPage({searchParams}:{searchParams:Promise<{re
  try{
   user=await pageIdentity();
  }catch(error){
+  if(error instanceof StudentVerificationRequired)redirect('/student-verification');
   if(error instanceof DomainError&&error.status===403)forbidden();
   unavailable=!(error instanceof DomainError&&(error.status===401||error.status===503));
  }

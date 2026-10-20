@@ -57,7 +57,7 @@ UPDATE completion_responses SET updated_at=COALESCE(submitted_at,created_at);`);
     },
   };
   installTestDatabase(database);
-  await seed();
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));await seed();
   for (const role of ['student', 'coordinator', 'admin']) {
     users[role] = ((await one('SELECT * FROM users WHERE id=?', 'demo-' + role)) as unknown) as Identity;
   }

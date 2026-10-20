@@ -44,7 +44,6 @@ export default function StudentMyClassView({
 
   // 1. Identify enrolled class or fallback
   const myClass = data.classes.find(c => c.id === ownPlacement?.classId) ?? data.classes[0];
-  const myPending = (data.joinRequests ?? []).find(r => r.studentId === user.id && r.status === 'PENDING');
 
   // 2. Resolve Course & Department Details
   const course = data.courses.find(co => co.id === myClass?.courseId);
@@ -150,25 +149,6 @@ export default function StudentMyClassView({
 
   return (
     <div className="student-classroom-container">
-      {/* Pending Join Request Alert */}
-      {myPending && (
-        <div className="join-requests-alert">
-          <div className="join-requests-alert-left">
-            <div className="join-requests-alert-icon">
-              <Clock size={20} />
-            </div>
-            <div>
-              <strong>Class Join Request Pending Review</strong>
-              <p>
-                You requested to join <b>{String(myPending.classSection || myPending.section || 'class')}</b>. Your
-                practicum coordinator will review and verify your eligibility shortly.
-              </p>
-            </div>
-          </div>
-          <span className="chip orange">Pending Approval</span>
-        </div>
-      )}
-
       {/* Main Classroom View */}
       {myClass ? (
         <div className="myclass-layout-wrap">
@@ -505,7 +485,7 @@ export default function StudentMyClassView({
                           <span className="truncate">{peer.studentEmail}</span>
                         </a>
 
-                        {onViewStudent && (
+                        {onViewStudent && data.placements.some(placement => placement.studentId === peer.studentId) && (
                           <button
                             type="button"
                             className="textbutton myclass-view-profile-btn"

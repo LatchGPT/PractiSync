@@ -10,7 +10,8 @@ Every request obtains identity from the Auth.js encrypted JWT, reloads the curre
 | Final DTR submission | Own active placement at required hours target | Read own class | Read assigned placements, time only | Read institution |
 | Final DTR verification | Denied | Denied | Verify or return submitted complete DTR for active assigned placement | Denied |
 | Verified DTR reopening | Request with reason | Approve/decline own class with reason | Denied | Read institution |
-| Classes/create | Join eligible own course | Own classes | Denied | Institution |
+| Classes/create | Join eligible own course by active code, without approval | Own classes; remove enrolled students | Denied | Institution |
+| Student registration | Complete own details; fresh profile only | No approval/rejection permission | Denied | Provision accounts and explicit email exceptions |
 | Hours policy | Read target snapshot | Read | Granted course scope | Grant scope only |
 | Documents/read | Own seeded metadata and Word templates | Own class metadata | Denied | Institution metadata and Word templates |
 | SOS/read/write | Own report | Assigned class cases | Denied | Denied unless explicit handler (not implemented) |

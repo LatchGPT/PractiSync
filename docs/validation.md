@@ -1,5 +1,22 @@
 # Validation record
 
+## Student registration and RTU access — October 20, 2026
+
+- Replaces the earlier coordinator approval flow with immediate registration into an active class. The complete suite passes 102 tests across 14 files; the 10 registration/access checks also pass after the final changes, including direct API denial before setup, fresh-profile isolation, duplicate-number handling, atomic rollback, exact email-domain checks, manual exceptions, retired review actions, scoped removal and immediate enrollment in another eligible class.
+- TypeScript and the production build pass. Targeted lint has zero errors and seven existing warnings. Repository lint still has nine errors in unchanged app/calendar-view.tsx and scripts/apply_layout_improvements.cjs. The build retains the two known local-SQLite tracing warnings. Prisma schema validation and client generation pass.
+- Applied 202610200003_student_registration to the confirmed local PostgreSQL practisync_demo database on localhost:5433. Confirmed all five supplied yopmail accounts have explicit email exceptions. Existing completed registrations were preserved. The document worker and port-3000 preview were restarted after releasing the Windows Prisma engine lock; the worker reports ready.
+- Browser checks at 390px, 820px and 1440px covered registration validation and alignment, a long name, keyboard focus trapping, Escape protection, class-code preview and immediate entry into the student workspace. The new student appeared in the coordinator roster without a placement. Roster search/no-results, removal confirmation/cancel, mobile action visibility and the RTU-only/manual-exception provisioning control were checked. The final phone roster has no horizontal page overflow; screenshots are in .local/student-registration-qa/. No new browser errors appeared after handling the optional navigation-tool cancellation.
+- Real Google Workspace sign-in and institutional activation remain disabled. No production identity verification was exercised.
+
+
+## Student verification — October 20, 2026 (superseded; retained as history)
+
+- All 101 Vitest tests across 14 files passed, including nine new checks for first-login access denial, section routing, correction/resubmission, rejection/reopening, record linking, duplicate/stale decisions and linked-session revocation.
+- Browser walkthroughs passed at 390px, 820px and 1440px widths: form validation, pending lock, direct-page/API denial, logout and persistent status, coordinator corrections, resubmission, approval unlock, rejection, Super Admin reopening, keyboard focus trapping, reduced motion and input retention after a failed submission. No browser runtime errors were reported. Screenshots are local QA artifacts in `.local/verification-qa/`.
+- Prisma schema validation/client generation passed. The verification migrations and the previously pending final-DTR migration were applied to the confirmed local fictional PostgreSQL demo on localhost:5433. A disposable PostgreSQL fixture verified that only one concurrent review commits and that the losing transaction leaves no profile or audit writes; fixture records were removed afterward.
+- Production build and TypeScript checks passed. The build retains the existing local SQLite dynamic-filesystem tracing warnings. Targeted lint passes for the new verification files; full-repository lint still reports nine errors in unchanged `app/calendar-view.tsx` and `scripts/apply_layout_improvements.cjs`.
+- These results verify the fictional demo phase. Institutional Google Workspace authentication and a live university data adapter remain disabled and are not claimed as tested.
+
 ## PostgreSQL and Prisma
 
 - Prisma 6.19.3 schema validation and client generation passed.

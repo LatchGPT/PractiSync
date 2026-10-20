@@ -4,6 +4,8 @@ PractiSync is a login-first cooperative education and on-the-job training worksp
 
 This document describes the current visual system and gives conventions for extending it. Values marked as current come from the repository; review guidance describes expectations for future changes, not a claim that every existing screen already meets them.
 
+Student registration is an Operate surface using the existing Inter and RTU blue-and-gold system. Its contract is in `docs/student-verification-design.md`. Keep the required first-login form in a bounded, internally scrolling dialog with labels, retained input, inline errors and a single primary action: Complete registration. The class-code preview shows the program, section and coordinator; successful registration opens the student workspace immediately. There is no student approval queue or waiting dialog. Class rosters include students without placements and offer a quieter destructive Remove action with a confirmation naming the student and section. Preserve account access and records when removing class membership. On phones, keep student details and actions visible, with placement information beneath the student name. Styles are scoped in `app/student-verification.css`.
+
 ## 1. Design direction
 
 The visual identity is inspired by Rizal Technological University's blue and gold. The product is a fictional demonstration, and the visual inspiration does not imply institutional endorsement. Demo content currently uses Rizal Technological University and fictional people, companies, policies, and records.

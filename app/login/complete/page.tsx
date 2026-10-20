@@ -1,3 +1,4 @@
+import {StudentVerificationRequired} from '@/packages/domain/student-verification';
 import {forbidden,redirect} from 'next/navigation';
 import {pageIdentity} from '@/app/server-identity';
 import {postLoginPath,safeInternalPath} from '@/packages/auth/routes';
@@ -14,6 +15,7 @@ export default async function LoginCompletePage({searchParams}:{searchParams:Pro
  try{
   user=await pageIdentity();
  }catch(error){
+  if(error instanceof StudentVerificationRequired)redirect('/student-verification');
   if(error instanceof DomainError&&error.status===403)forbidden();
   if(error instanceof DomainError&&error.status===401)redirect('/login?redirect='+encodeURIComponent(returnTo));
   throw error;

@@ -34,7 +34,7 @@ beforeAll(async () => {
  sql.exec(readFileSync('drizzle/0008_industry_feedback.sql','utf8'));
  sql.exec("ALTER TABLE completion_responses ADD COLUMN status TEXT NOT NULL DEFAULT 'SUBMITTED'; ALTER TABLE completion_responses ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''; ALTER TABLE completion_responses ADD COLUMN review_note TEXT; ALTER TABLE completion_responses ADD COLUMN reviewer_id TEXT; ALTER TABLE completion_responses ADD COLUMN reviewed_at TEXT;");
  installTestDatabase({prepare:q => prepared(q),batch:async statements => {sql.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sql.exec('COMMIT');return out;}catch(e){sql.exec('ROLLBACK');throw e;}}});
- await seed(); for(const role of ['student','coordinator','admin','supervisor'])users[role]=await fresh('demo-'+role);
+ sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));await seed(); for(const role of ['student','coordinator','admin','supervisor'])users[role]=await fresh('demo-'+role);
 });
 afterAll(() => {installTestDatabase(undefined);sql.close();vi.unstubAllEnvs();});
 

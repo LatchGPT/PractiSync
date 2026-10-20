@@ -370,6 +370,7 @@ model StudentProfile {
   tenant                  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
+  yearLevel               Int?
   studentNumber           String
   userId                  String
   courseId                String
@@ -1901,6 +1902,7 @@ model DemoUsers {
   name               String
   username           String
   email              String
+  emailDomainException Int   @default(0) @map("email_domain_exception")
   role               String
   status             String  @default("ACTIVE")
   passwordHash       String? @map("password_hash")
@@ -2350,4 +2352,40 @@ model DemoHteEvaluationHistory {
   recordJson String @map("record_json")
   @@unique([tenantId, responseId, version])
   @@map("hte_evaluation_history")
+}
+
+// Fictional runtime verification tables. Institutional records remain separate.
+model DemoStudentProfiles {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  userId String @map("user_id")
+  studentNumber String @map("student_number")
+  yearLevel Int @map("year_level")
+  @@unique([tenantId,userId])
+  @@unique([tenantId,studentNumber])
+  @@map("student_profiles")
+}
+model DemoStudentVerifications {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  requesterId String @map("requester_id")
+  status String @default("DRAFT")
+  legalName String @default("") @map("legal_name")
+  studentNumber String @default("") @map("student_number")
+  courseId String? @map("course_id")
+  yearLevel Int? @map("year_level")
+  classId String? @map("class_id")
+  approvedStudentId String? @map("approved_student_id")
+  reviewNote String? @map("review_note")
+  reviewerId String? @map("reviewer_id")
+  submittedAt String? @map("submitted_at")
+  reviewedAt String? @map("reviewed_at")
+  updatedAt String @map("updated_at")
+  version Int @default(1)
+  @@unique([tenantId,requesterId])
+  @@unique([tenantId,approvedStudentId])
+  @@index([tenantId,classId,status,submittedAt],map:"student_verification_queue")
+  @@map("student_verifications")
 }

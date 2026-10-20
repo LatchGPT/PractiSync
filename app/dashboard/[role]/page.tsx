@@ -1,3 +1,4 @@
+import {StudentVerificationRequired} from '@/packages/domain/student-verification';
 import {forbidden,notFound,redirect} from 'next/navigation';
 import PractiSync from '@/app/practisync';
 import {pageIdentity} from '@/app/server-identity';
@@ -30,6 +31,7 @@ export default async function DashboardPage({params,searchParams}:{params:Promis
  try{
   user=await pageIdentity();
  }catch(error){
+  if(error instanceof StudentVerificationRequired)redirect('/student-verification');
   if(error instanceof DomainError&&error.status===401){
    const returnTo=dashboardPathForRole(expectedRole)+queryString(search);
    redirect('/login?redirect='+encodeURIComponent(returnTo));
