@@ -68,6 +68,8 @@
 .goal-forecast-card>.goal-card-eyebrow{gap:6px}
 .goal-forecast-card>.goal-card-eyebrow svg{color:#1684c6}
 .goal-forecast-card>strong{color:#1684c6;font-size:15px;line-height:1.25;font-weight:750}
+.goal-forecast-card.completed{background:var(--success-muted);border-color:var(--success-border)}
+.goal-forecast-card.completed>.goal-card-eyebrow svg,.goal-forecast-card.completed>strong{color:var(--success)}
 .goal-footer-bar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f6f8fb;border-radius:8px;border:1px solid #e9eef5}
 .footer-icon{flex-shrink:0;color:#69809c}
 .goal-disclaimer-text{margin:0;color:#586f8a;font-size:10.5px;line-height:1.45}

@@ -29,6 +29,7 @@ interface StudentMyClassViewProps {
   ownPlacement?: Row | null;
   openJoinModal: () => void;
   onViewStudent?: (studentId: string) => void;
+  onReachOut?: () => void;
 }
 
 export default function StudentMyClassView({
@@ -37,6 +38,7 @@ export default function StudentMyClassView({
   ownPlacement,
   openJoinModal,
   onViewStudent,
+  onReachOut,
 }: StudentMyClassViewProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PLACED' | 'PENDING'>('ALL');
@@ -265,11 +267,25 @@ export default function StudentMyClassView({
                   </div>
 
                   <div className="myclass-coordinator-details">
-                    <div className="myclass-coord-detail-item">
-                      <Mail size={13} className="myclass-coord-icon" />
-                      <a href={`mailto:${coordinatorEmail}`} className="myclass-coord-link">
-                        {coordinatorEmail}
-                      </a>
+                    <div className="myclass-coord-detail-item" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Mail size={13} className="myclass-coord-icon" />
+                        <a href={`mailto:${coordinatorEmail}`} className="myclass-coord-link">
+                          {coordinatorEmail}
+                        </a>
+                      </div>
+                      {onReachOut && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          style={{ fontSize: 11, padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                          onClick={onReachOut}
+                          title="Open verified email reach out dialog"
+                        >
+                          <Mail size={11} />
+                          <span>Email coordinator</span>
+                        </button>
+                      )}
                     </div>
                     <div className="myclass-coord-detail-item">
                       <Building size={13} className="myclass-coord-icon" />

@@ -51,6 +51,8 @@ export const inputs={
  role:z.object({userId:str(),role:z.enum(roles),status:z.enum(['ACTIVE','DISABLED'])}),
  profile:z.object({name:str(120)}),
  structure:z.object({kind:z.enum(['DEPARTMENT','COURSE']),name:str(120),code:str(20),departmentId:z.string().optional()}),
+ studentSelfAssessment:z.object({placementId:str(),scores:z.object({technicalSkills:z.object({score:z.coerce.number().int().min(1).max(5),evidence:z.string().trim().max(1000).optional().default('')}),communication:z.object({score:z.coerce.number().int().min(1).max(5),evidence:z.string().trim().max(1000).optional().default('')}),professionalism:z.object({score:z.coerce.number().int().min(1).max(5),evidence:z.string().trim().max(1000).optional().default('')}),problemSolving:z.object({score:z.coerce.number().int().min(1).max(5),evidence:z.string().trim().max(1000).optional().default('')})}),version:z.coerce.number().int().min(1).optional()}),
+ reachOutAudit:z.object({placementId:z.string().optional(),coordinatorEmail:z.string().email(),channel:z.enum(['MAILTO','COPY_EMAIL','COPY_TEMPLATE']).default('MAILTO')}),
  markNotificationRead:z.object({notificationId:str()}),
  markAllNotificationsRead:z.object({}),
 };

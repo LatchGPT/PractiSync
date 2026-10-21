@@ -2071,6 +2071,20 @@ body.high-contrast .item-card {
   flex-direction: column;
   justify-content: center;
 }
+.student-completion-forecast {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  align-items: start;
+  gap: 2px 7px;
+  margin-top: 9px;
+  color: var(--primary);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.student-completion-forecast svg { grid-row: span 2; margin-top: 1px; }
+.student-completion-forecast span { font-weight: 650; overflow-wrap: anywhere; }
+.student-completion-forecast small { color: var(--muted-foreground); font-size: 10px; overflow-wrap: anywhere; }
+.student-completion-forecast.is-completed,.student-completion-forecast.is-completed small { color: var(--success); }
 
 .student-bars-header {
   display: flex;

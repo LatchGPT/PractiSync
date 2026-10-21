@@ -22,8 +22,10 @@ import {
   GraduationCap,
   Lock,
   PlusCircle,
+  Eye,
   X,
 } from 'lucide-react';
+import SelfAssessmentModal from './self-assessment-modal';
 import type { Action, Row, Snapshot } from '@/packages/validation/contracts';
 import {
   assessmentPeriod,
@@ -178,7 +180,7 @@ export default function AssessmentWorkspace({
   onAction,
 }: {
   data: Snapshot;
-  onAction: (action: Action, values: Record<string, string | number>) => Promise<void>;
+  onAction?: (action: Action, values: Record<string, unknown>) => Promise<unknown>;
 }) {
   const { user } = data;
   const ownedClasses = data.classes.filter((item) => item.coordinatorId === user.id);
@@ -219,6 +221,7 @@ export default function AssessmentWorkspace({
   const [fbTechnicalGaps, setFbTechnicalGaps] = useState<string>('');
   const [fbSoftSkillGaps, setFbSoftSkillGaps] = useState<string>('');
   const [fbRecommendations, setFbRecommendations] = useState<string>('');
+  const [showSelfAssessmentModal, setShowSelfAssessmentModal] = useState<boolean>(false);
 
   const placement = data.placements.find((item) => item.studentId === user.id);
   const selectedCourse =
@@ -338,7 +341,7 @@ export default function AssessmentWorkspace({
   async function run(action: Action, values: Record<string, string | number>) {
     setBusy(true);
     try {
-      await onAction(action, values);
+      if (onAction) await onAction(action, values);
     } finally {
       setBusy(false);
     }
@@ -472,6 +475,62 @@ export default function AssessmentWorkspace({
               </div>
             </section>
           )}
+
+          {/* Baseline Self-Assessment Gating & Status Banner */}
+          {currentOutcomePlacement && (() => {
+            const baselineEval = data.evaluations.find(
+              (e) => e.placementId === currentOutcomePlacement.id && e.kind === 'BASELINE'
+            );
+            if (!baselineEval) {
+              return (
+                <div className="notice" role="alert" style={{ background: '#fffcf6', borderColor: '#f7e0b1', color: '#966914', marginBottom: 16 }}>
+                  <ShieldAlert size={18} style={{ color: '#d97706', flexShrink: 0 }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 12 }}>
+                    <div>
+                      <strong>HTE Evaluation Gate: Baseline Self-Assessment Pending.</strong>{' '}
+                      {user.role === 'STUDENT'
+                        ? 'You have not yet submitted your baseline Self-Assessment Competency Report. Host company evaluations cannot begin until this report is recorded in your portfolio.'
+                        : `Student ${text(currentOutcomePlacement, 'studentName')} has not yet submitted their baseline Self-Assessment Competency Report. Company evaluation remains gated until the student records their perceived skill baseline.`}
+                    </div>
+                    {user.role === 'STUDENT' && (
+                      <button
+                        type="button"
+                        className="primary"
+                        style={{ fontSize: 12, padding: '6px 14px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                        onClick={() => setShowSelfAssessmentModal(true)}
+                      >
+                        <Sparkles size={13} />
+                        <span>Complete self-assessment</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div className="notice" role="status" style={{ background: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534', marginBottom: 16 }}>
+                <CheckCircle2 size={18} style={{ color: '#16a34a', flexShrink: 0 }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <strong>Student Competency Baseline Established:</strong>{' '}
+                    Baseline self-assessment (v{Number(baselineEval.version ?? 1)}) submitted on{' '}
+                    {dateLabel(text(baselineEval, 'createdAt').slice(0, 10))}. Evaluators compare self-perception with observed workplace performance.
+                  </div>
+                  {user.role === 'STUDENT' && (
+                    <button
+                      type="button"
+                      className="secondary"
+                      style={{ fontSize: 12, padding: '6px 14px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                      onClick={() => setShowSelfAssessmentModal(true)}
+                    >
+                      <Eye size={13} />
+                      <span>View / Update baseline</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {outcome && currentOutcomePlacement ? (
             <>
@@ -1781,6 +1840,28 @@ export default function AssessmentWorkspace({
             </div>
           )}
         </div>
+      )}
+
+      {showSelfAssessmentModal && currentOutcomePlacement && (
+        <SelfAssessmentModal
+          placement={currentOutcomePlacement}
+          data={data}
+          isLocked={
+            !!data.evaluations.find(
+              (e) => e.placementId === currentOutcomePlacement.id && e.kind === 'FINAL'
+            )
+          }
+          onClose={() => setShowSelfAssessmentModal(false)}
+          onSubmit={async (scores, version) => {
+            if (!onAction) return false;
+            await onAction('studentSelfAssessment', {
+              placementId: currentOutcomePlacement.id,
+              scores,
+              version,
+            });
+            return true;
+          }}
+        />
       )}
     </div>
   );

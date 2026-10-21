@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   BookOpen,
+  CalendarDays,
   CheckCircle2,
   Clock,
   Download,
@@ -14,6 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 import type {Snapshot} from '@/packages/validation/contracts';
+import {studentForecastDetail, studentForecastLabel, studentGoal} from './student-goal';
 
 interface OverviewGreetingBannerProps {
   data: Snapshot;
@@ -64,12 +66,25 @@ export default function OverviewGreetingBanner({
     const hasLoggedToday = data.entries.some(
       e => e.placementId === placement?.id && e.date === todayManila
     );
+    const completionForecast = placement
+      ? studentGoal(
+          data.entries.filter(entry => entry.placementId === placement.id),
+          Number(placement.requiredMinutes ?? 0),
+          data.calendarEvents
+        ).forecast
+      : null;
 
     const pendingDocs = placement
       ? data.documents.filter(
           d => d.placementId === placement.id && d.status !== 'APPROVED'
         )
       : [];
+
+    const baselineEvaluation = placement
+      ? data.evaluations.find(
+          e => e.placementId === placement.id && e.kind === 'BASELINE'
+        )
+      : null;
 
     const isPlacementActive = placement?.status === 'ACTIVE';
 
@@ -131,6 +146,18 @@ export default function OverviewGreetingBanner({
               )
             )}
 
+            {completionForecast?.date && (
+              <span
+                className={`banner-pill ${completionForecast.status === 'completed' ? 'pill-green' : 'pill-glass'}`}
+                title={studentForecastDetail(completionForecast)}
+              >
+                {completionForecast.status === 'completed'
+                  ? <CheckCircle2 size={13} aria-hidden="true" />
+                  : <CalendarDays size={13} aria-hidden="true" />}
+                <span>{studentForecastLabel(completionForecast)}</span>
+              </span>
+            )}
+
             {/* Pending Document Alert */}
             {pendingDocs.length > 0 ? (
               <button
@@ -148,10 +175,39 @@ export default function OverviewGreetingBanner({
                 <span>Documents on track</span>
               </span>
             )}
+            {/* Baseline Self-Assessment Gate Status */}
+            {!baselineEvaluation ? (
+              <button
+                type="button"
+                className="banner-pill pill-amber clickable"
+                onClick={() => navigate('portfolio')}
+                title="Establish your baseline competency self-assessment before supervisor grading"
+              >
+                <Sparkles size={13} />
+                <span>Self-assessment required</span>
+              </button>
+            ) : (
+              <span className="banner-pill pill-glass" title="Baseline competency self-assessment completed">
+                <ShieldCheck size={13} style={{ color: '#6ee7b7' }} />
+                <span>Baseline recorded</span>
+              </span>
+            )}
           </div>
         </div>
 
         <div className="banner-actions">
+          {!baselineEvaluation && (
+            <button
+              type="button"
+              className="overview-btn secondary"
+              style={{ borderColor: '#f7e0b1', color: '#966914', background: '#fffdf8' }}
+              onClick={() => navigate('portfolio')}
+              title="Complete your competency self-assessment baseline"
+            >
+              <Sparkles size={14} color="#d97706" />
+              <span>Self-assessment</span>
+            </button>
+          )}
           <button
             type="button"
             className="overview-btn primary"

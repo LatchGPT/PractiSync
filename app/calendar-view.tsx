@@ -2024,7 +2024,7 @@ export default function CalendarView({
         )}
 
         <div className={user.role === 'STUDENT' && studentOverallStats ? styles.monthPacingDivider : ''}>
-          <div className={styles.legendCardHeader}>
+          <div className={styles.monthPacingHeader}>
             <h4 className={styles.monthPacingTitle}>
               <Clock3 size={14} color="var(--rtu-blue)" />
               {format(cursor, 'MMMM')} Shift Pacing

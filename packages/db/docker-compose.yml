@@ -1,3 +1,5 @@
+name: practisync
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -10,7 +12,7 @@ services:
     ports:
       - '5433:5432'
     volumes:
-      - practisync-pg:/var/lib/postgresql/data
+      - practisync-data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U practisync -d practisync_demo']
       interval: 3s
@@ -18,4 +20,6 @@ services:
       retries: 10
 
 volumes:
-  practisync-pg:
+  practisync-data:
+    name: practisync_practisync-data
+

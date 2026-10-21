@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import {
   ArrowRight,
+  CalendarDays,
   UserCheck,
   Eye,
 } from 'lucide-react';
 import type { Row, Snapshot } from '@/packages/validation/contracts';
+import {studentForecastDetail, studentForecastLabel, studentGoal} from './student-goal';
 
 const s = (row: Row, key: string) => String(row[key] ?? '');
 const n = (row: Row, key: string) => Number(row[key] ?? 0);
@@ -145,6 +147,7 @@ export default function OverallStudentsProgress({
             const targetMins = n(placement, 'requiredMinutes');
             const percentReported = targetMins > 0 ? Math.min(100, Math.round((repMins / targetMins) * 100)) : 0;
             const percentConfirmed = targetMins > 0 ? Math.min(100, Math.round((confMins / targetMins) * 100)) : 0;
+            const forecast = studentGoal(studentEntries(placement.id), targetMins, data.calendarEvents).forecast;
 
             return (
               <div className="student-progress-item" key={placement.id}>
@@ -199,6 +202,13 @@ export default function OverallStudentsProgress({
                       style={{ width: `${percentConfirmed}%` }}
                     />
                   </div>
+                  {targetMins > 0 && (
+                    <div className={`student-completion-forecast${forecast.status === 'completed' ? ' is-completed' : ''}`}>
+                      <CalendarDays size={13} aria-hidden="true" />
+                      <span>{studentForecastLabel(forecast)}</span>
+                      <small>{studentForecastDetail(forecast)}</small>
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}

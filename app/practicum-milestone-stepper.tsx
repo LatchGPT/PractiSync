@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import {Popover, PopoverTrigger, PopoverContent} from '@/components/ui/popover';
 import type {Snapshot} from '@/packages/validation/contracts';
-import {studentGoal} from './student-goal';
+import {studentForecastDetail, studentForecastLabel, studentGoal} from './student-goal';
 
 interface MilestoneStepperProps {
   data: Snapshot;
@@ -69,7 +69,7 @@ export default function PracticumMilestoneStepper({
 
     const ownEntries = data.entries.filter(e => e.placementId === placement?.id);
     const targetMinutes = Number(placement?.requiredMinutes ?? 0);
-    const goal = studentGoal(ownEntries, targetMinutes);
+    const goal = studentGoal(ownEntries, targetMinutes, data.calendarEvents);
     const reportedMinutes = goal.reported;
     const percent = goal.percent;
 
@@ -94,16 +94,6 @@ export default function PracticumMilestoneStepper({
     const pendingMinutes = pendingEntries.reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
     const latestLogValue = ownEntries.map(e => String(e.date ?? '')).filter(Boolean).sort().at(-1);
     const latestLog = latestLogValue ? formatLogDate(latestLogValue) : 'No entries yet';
-    const estimate = !goal.target
-      ? 'Target not set'
-      : goal.remaining === 0
-      ? 'Hours target met'
-      : goal.daysOnRecord < 3
-      ? 'After 3 logged days'
-      : goal.predictedDays
-      ? `About ${goal.predictedDays} more logged days`
-      : 'Not available yet';
-
     // Step 1: Pre-Deployment & Prerequisite Clearances
     const step1Complete =
       Boolean(placement) &&
@@ -113,7 +103,7 @@ export default function PracticumMilestoneStepper({
       : placement ? 'current' : 'empty';
 
     // Step 2: Active Training & DTR Hours
-    const step2Complete = targetMinutes > 0 && reportedMinutes >= targetMinutes;
+    const step2Complete = targetMinutes > 0 && goal.verifiedRemaining === 0;
     const step2Status: StepStatus = step2Complete
       ? 'completed'
       : step1Complete || reportedMinutes > 0
@@ -165,7 +155,7 @@ export default function PracticumMilestoneStepper({
         phase: 'PHASE 02',
         title: 'Active Training',
         status: step2Status,
-        badgeLabel: step2Complete ? 'Hours target met' : targetMinutes > 0 ? 'In progress' : 'Target not set',
+        badgeLabel: step2Complete ? 'Hours verified' : targetMinutes > 0 ? 'In progress' : 'Target not set',
         kpiValue: hours(reportedMinutes),
         kpiSubLabel: targetMinutes > 0 ? `${percent}% of ${hours(targetMinutes)} goal` : 'Hours on record',
         detail: 'Reported hours count toward the target. Hours alone do not certify academic completion.',
@@ -176,12 +166,13 @@ export default function PracticumMilestoneStepper({
           {label: 'Reported', value: hours(goal.reported)},
           {label: 'Required', value: goal.target ? hours(goal.target) : 'Not set'},
           {label: 'Remaining', value: goal.target ? hours(goal.remaining) : '—'},
+          {label: 'Expected completion', value: studentForecastLabel(goal.forecast)},
+          {label: 'Estimate basis', value: studentForecastDetail(goal.forecast)},
           {label: 'Awaiting review', value: `${hours(pendingMinutes)} · ${pendingEntries.length} DTRs`},
           {label: 'Submitted DTRs', value: String(ownEntries.length)},
           {label: 'Days on record', value: String(daysOnRecord)},
-          {label: 'Average per day', value: daysOnRecord ? hours(goal.averagePerDay) : '—'},
+          {label: 'Reported average per day', value: daysOnRecord ? hours(goal.averagePerDay) : '—'},
           {label: 'Latest log', value: latestLog},
-          {label: 'Estimate', value: estimate},
         ],
       },
       {

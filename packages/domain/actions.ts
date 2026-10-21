@@ -92,11 +92,37 @@ export async function mutate(user:Identity,action:Action,payload:unknown):Promis
    case 'role':{requireRole(user,'SUPER_ADMIN');const d=parse('role');const account=await one('SELECT * FROM users WHERE tenant_id=? AND id=?',user.tenantId,d.userId);if(!account||account.isDemo===1)throw new DomainError('The demo identities are preserved. Choose a provisioned sample account.');if(d.role==='STUDENT'&&!account.courseId)throw new DomainError('This account has no student course. Provision a student account with a course.');resourceId=account.id;tx.push(statement(`UPDATE users SET role=?,status=?,session_version=session_version+1,company_id=CASE WHEN role<>? AND (role='SUPERVISOR' OR ?='SUPERVISOR') THEN NULL ELSE company_id END,supervisor_verified=CASE WHEN role<>? AND (role='SUPERVISOR' OR ?='SUPERVISOR') THEN 0 ELSE supervisor_verified END,can_post=CASE WHEN role<>? AND (role='SUPERVISOR' OR ?='SUPERVISOR') THEN 0 ELSE can_post END WHERE tenant_id=? AND id=?`,d.role,d.status,d.role,d.role,d.role,d.role,d.role,d.role,user.tenantId,account.id));message='Account updated. Existing sessions have been revoked.';break;}
   case 'profile':{const d=parse('profile');resourceId=user.id;tx.push(statement('UPDATE users SET name=? WHERE tenant_id=? AND id=?',d.name,user.tenantId,user.id));break;}
   case 'structure':{requireRole(user,'SUPER_ADMIN');const d=parse('structure');if(d.kind==='DEPARTMENT')tx.push(insert('departments',{name:d.name,code:d.code},resourceId));else{if(!await one('SELECT id FROM departments WHERE tenant_id=? AND id=?',user.tenantId,d.departmentId??''))throw new DomainError('Choose a valid department.');tx.push(insert('courses',{name:d.name,code:d.code,department_id:d.departmentId!},resourceId));}break;}
+  case 'studentSelfAssessment':{
+    requireRole(user,'STUDENT');const d=parse('studentSelfAssessment');const p=await placementFor(user,d.placementId);if(!['PLANNED','ACTIVE','COMPLETED'].includes(String(p.status)))throw new DomainError('A valid practicum placement is required to submit a self-assessment report.',403);
+    const hteEval=await one("SELECT id FROM evaluations WHERE tenant_id=? AND placement_id=? AND kind='FINAL'",user.tenantId,p.id);if(hteEval)throw new DomainError('The baseline self-assessment is locked because company evaluation has already commenced.',409);
+    const current=await one("SELECT * FROM evaluations WHERE tenant_id=? AND placement_id=? AND kind='BASELINE'",user.tenantId,p.id);
+    const ratings=[['Technical skills',d.scores.technicalSkills.score,d.scores.technicalSkills.evidence||null],['Communication',d.scores.communication.score,d.scores.communication.evidence||null],['Professionalism',d.scores.professionalism.score,d.scores.professionalism.evidence||null],['Problem solving',d.scores.problemSolving.score,d.scores.problemSolving.evidence||null]] as const;
+    if(current){
+      if(d.version!==undefined&&Number(current.version)!==Number(d.version))throw new DomainError('This self-assessment changed in another session. Refresh and try again.',409);
+      resourceId=String(current.id);const previous=await list('SELECT dimension,score,evidence_note FROM scores WHERE tenant_id=? AND evaluation_id=?',user.tenantId,resourceId);
+      tx.push(insert('evaluation_revisions',{evaluation_id:resourceId,actor_id:user.id,previous_version:Number(current.version),scores_json:JSON.stringify(previous),review_note:'Student self-assessment baseline update'}));
+      tx.push(statement("UPDATE evaluations SET version=version+1,updated_at=? WHERE tenant_id=? AND id=?",new Date().toISOString(),user.tenantId,resourceId));
+      for(const [dim,scoreVal,evNote] of ratings){
+        const existingScore=await one('SELECT id FROM scores WHERE tenant_id=? AND evaluation_id=? AND dimension=?',user.tenantId,resourceId,dim);
+        if(existingScore)tx.push(statement('UPDATE scores SET score=?,evidence_note=? WHERE tenant_id=? AND evaluation_id=? AND dimension=?',scoreVal,evNote,user.tenantId,resourceId,dim));
+        else tx.push(insert('scores',{evaluation_id:resourceId,dimension:dim,score:scoreVal,evidence_note:evNote}));
+      }
+      message='Self-Assessment Competency Report updated.';
+    }else{
+      tx.push(insert('evaluations',{placement_id:p.id,evaluator_id:user.id,kind:'BASELINE',framework_version:1,status:'SUBMITTED',version:1},resourceId));
+      for(const [dim,scoreVal,evNote] of ratings){tx.push(insert('scores',{evaluation_id:resourceId,dimension:dim,score:scoreVal,evidence_note:evNote}));}
+      message='Self-Assessment Competency Report submitted. Baseline established.';
+    }
+    const cls=await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?',user.tenantId,p.classId);
+    if(cls)notify(String(cls.coordinatorId),'Student Baseline Self-Assessment Submitted',`${user.name} submitted their baseline competency self-assessment. Company evaluation is now unlocked.`,'ASSESSMENT','evaluation',resourceId,'competencies');
+    break;
+  }
+  case 'reachOutAudit':{requireRole(user,'STUDENT');parse('reachOutAudit');resourceId=crypto.randomUUID();message='Reach out initiation recorded.';break;}
   case 'markNotificationRead':{const d=parse('markNotificationRead');resourceId=d.notificationId;tx.push(statement('UPDATE notifications SET read_at=? WHERE tenant_id=? AND id=? AND user_id=? AND read_at IS NULL',new Date().toISOString(),user.tenantId,d.notificationId,user.id));message='Notification marked as read.';break;}
   case 'markAllNotificationsRead':{parse('markAllNotificationsRead');tx.push(statement('UPDATE notifications SET read_at=? WHERE tenant_id=? AND user_id=? AND read_at IS NULL',new Date().toISOString(),user.tenantId,user.id));message='All notifications marked as read.';break;}
  default:throw new DomainError('Unknown action.');
  }
- tx.push(auditStatement(user.id,action==='incident'?'CASE_CREATE':action==='resolveCase'?'CASE_STATUS':action==='industryFeedback'?'INDUSTRY_FEEDBACK_SUBMITTED':action==='outcomeDecision'?'OUTCOME_DECISION_RECORDED':action==='calendarEvent'?'CALENDAR_EVENT_RECORDED':action==='cancelCalendarEvent'?'CALENDAR_EVENT_CANCELLED':action==='deleteCalendarEvent'?'CALENDAR_EVENT_DELETED':action.toUpperCase(),resourceId));
+ tx.push(auditStatement(user.id,action==='studentSelfAssessment'?'STUDENT_SELF_ASSESSMENT_SUBMITTED':action==='reachOutAudit'?'STUDENT_REACH_OUT_INITIATED':action==='incident'?'CASE_CREATE':action==='resolveCase'?'CASE_STATUS':action==='industryFeedback'?'INDUSTRY_FEEDBACK_SUBMITTED':action==='outcomeDecision'?'OUTCOME_DECISION_RECORDED':action==='calendarEvent'?'CALENDAR_EVENT_RECORDED':action==='cancelCalendarEvent'?'CALENDAR_EVENT_CANCELLED':action==='deleteCalendarEvent'?'CALENDAR_EVENT_DELETED':action.toUpperCase(),resourceId));
  try{await database().batch(tx);}catch(error){console.error('Mutation failed',action,error instanceof Error?error.name:'DatabaseError');throw new DomainError('The record changed or conflicts with existing data. Refresh and try again.',409);}
  return {message,id:resourceId};
 }

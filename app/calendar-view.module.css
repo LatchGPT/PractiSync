@@ -3007,6 +3007,14 @@
   padding-top: 10px;
 }
 
+.monthPacingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
 .monthPacingTitle {
   margin: 0;
   display: flex;
