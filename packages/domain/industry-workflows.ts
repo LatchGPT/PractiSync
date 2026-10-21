@@ -31,7 +31,7 @@ async function verifiedSupervisorCompanyId(user: Identity) {
 
 /** Handles only workflows with external HTE or completion-form access rules. */
 export async function mutateIndustry(user: Identity, action: Action, payload: unknown) {
-  const handled = ['companyProfile', 'companyVerification', 'job', 'jobReview', 'applicationStatus', 'selectApplication', 'confirmPlacement', 'activatePlacement', 'industryFinalEvaluation', 'evaluationReview', 'guestEvaluationLink', 'revokeGuestEvaluationLink', 'completionForm', 'completionDecision', 'privateHost'];
+  const handled = ['companyProfile', 'companyVerification', 'job', 'jobReview', 'applicationStatus', 'selectApplication', 'confirmPlacement', 'activatePlacement', 'industryFinalEvaluation', 'evaluationReview', 'guestEvaluationLink', 'revokeGuestEvaluationLink', 'completionForm', 'completionDecision', 'privateHost', 'externalPlacement'];
   if (!handled.includes(action)) return null;
   const d = inputs[action].parse(payload) as Record<string, unknown>;
   const tx: PreparedStatement[] = [];
@@ -277,6 +277,49 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
     tx.push(insert('completion', { placement_id: placementId, status: 'PENDING', reason: 'Awaiting student forms and coordinator review.' }));
     tx.push(statement('INSERT INTO private_hosts (id,tenant_id,created_at,placement_id,supervisor_name,supervisor_email) VALUES (?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), placementId, String(d.supervisorName), String(d.supervisorEmail)));
     return save(user, action, placementId, tx, 'Private host record created for this placement. It is hidden from the company directory; issue a guest evaluation link next.', { companyId });
+  }
+
+  if (action === 'externalPlacement') {
+    requireRole(user, 'STUDENT');
+    if (!isDate(String(d.startsAt)) || !isDate(String(d.endsAt)) || String(d.endsAt) < String(d.startsAt)) {
+      throw new DomainError('Enter valid placement dates, with the end date on or after the start date.');
+    }
+    const enrollment = await one('SELECT class_id FROM enrollments WHERE tenant_id=? AND student_id=? AND active=1 LIMIT 1', user.tenantId, user.id);
+    if (!enrollment) throw new DomainError('Join your coordinator class before setting up an external placement.', 403);
+    const cls = await one('SELECT * FROM classes WHERE tenant_id=? AND id=?', user.tenantId, enrollment.classId);
+    if (!cls) throw new DomainError('Your enrolled class was not found.', 404);
+    if (await one("SELECT id FROM placements WHERE tenant_id=? AND student_id=? AND status IN ('PLANNED','ACTIVE')", user.tenantId, user.id)) {
+      throw new DomainError('You already have an active or planned training placement.', 409);
+    }
+    const policy = await one('SELECT required_minutes,version,period FROM policies WHERE tenant_id=? AND course_id=? ORDER BY version DESC LIMIT 1', user.tenantId, cls.courseId);
+    if (!policy) throw new DomainError('Course hour policy is not configured yet. Contact your coordinator.', 409);
+
+    const companyId = crypto.randomUUID();
+    const placementId = crypto.randomUUID();
+    tx.push(insert('companies', { name: String(d.companyName), industry: String(d.industry), location: String(d.location), description: 'External / self-sourced host training establishment.', status: 'EXTERNAL', can_post: 0 }, companyId));
+    tx.push(insert('placements', {
+      student_id: user.id,
+      company_id: companyId,
+      class_id: cls.id,
+      course_id: cls.courseId,
+      period: policy.period,
+      starts_at: String(d.startsAt),
+      ends_at: String(d.endsAt),
+      required_minutes: Number(policy.requiredMinutes),
+      policy_version: Number(policy.version),
+      status: 'ACTIVE',
+      is_external: 1,
+      external_company_name: String(d.companyName),
+      external_company_location: String(d.location),
+      external_supervisor_name: String(d.supervisorName),
+      external_supervisor_email: d.supervisorEmail ? String(d.supervisorEmail) : null,
+      external_supervisor_phone: d.supervisorPhone ? String(d.supervisorPhone) : null,
+    }, placementId));
+    tx.push(insert('completion', { placement_id: placementId, status: 'PENDING', reason: 'Awaiting final DTR verification, evaluation, and coordinator review.' }));
+    if (cls.coordinatorId) {
+      tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), cls.coordinatorId, 'External placement registered', `${user.name} registered a self-sourced placement at ${String(d.companyName)}.`, 'JOB', 'placement', placementId, 'attendance'));
+    }
+    return save(user, action, placementId, tx, 'External placement registered and activated. You can now log your daily attendance.', { placementId });
   }
 
   return null;

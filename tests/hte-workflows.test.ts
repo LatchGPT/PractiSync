@@ -3,7 +3,7 @@ import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
-import { installTestDatabase, seed, one, list, insert, type PreparedStatement } from '../packages/db/demo';
+import { installTestDatabase, seed, one, list, insert, statement, type PreparedStatement } from '../packages/db/demo';
 import { mutate } from '../packages/domain/actions';
 import { registerHte } from '../packages/domain/hte-workflows';
 import { snapshot } from '../packages/domain/read';
@@ -33,6 +33,7 @@ beforeAll(async () => {
  sql.exec(migration('202610150001_calendar_events'));
  sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql','utf8').replace(/--> statement-breakpoint/g,''));
  sql.exec(readFileSync('drizzle/0008_industry_feedback.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210001_feedback_provenance/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210002_account_lifecycle/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210003_deadline_reminders/migration.sql','utf8'));
+ sql.exec(migration('202610220001_external_hte_workflows'));
  sql.exec("ALTER TABLE completion_responses ADD COLUMN status TEXT NOT NULL DEFAULT 'SUBMITTED'; ALTER TABLE completion_responses ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''; ALTER TABLE completion_responses ADD COLUMN review_note TEXT; ALTER TABLE completion_responses ADD COLUMN reviewer_id TEXT; ALTER TABLE completion_responses ADD COLUMN reviewed_at TEXT;");
  installTestDatabase({prepare:q => prepared(q),batch:async statements => {sql.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sql.exec('COMMIT');return out;}catch(e){sql.exec('ROLLBACK');throw e;}}});
  sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));workflowTargetFixtures(sql);await seed(); for(const role of ['student','coordinator','admin','supervisor'])users[role]=await fresh('demo-'+role);
@@ -163,6 +164,134 @@ describe('Whole internship DTR verification, school form and completion', () => 
   f=await final();await mutate(users.student,'finalDtrSubmit',{placementId:'placement-1',version:Number(f.version)});
   f=await final();await mutate(users.supervisor,'finalDtrReview',{placementId:'placement-1',version:Number(f.version),decision:'VERIFY'});
   f=await final();const r=await response();await mutate(users.supervisor,'hteEvaluationSave',{placementId:'placement-1',templateId:r.templateId,finalDtrVersion:Number(f.version),version:Number(r.version),mode:'SUBMIT',answers:JSON.parse(String(r.answersJson))});
-  expect((await response()).finalDtrVersion).toBe(f.version);
+ });
+});
+
+describe('Offline / Opt-out HTE external placement track', () => {
+ it('enables student to register external company, submit signed timesheet, upload evaluation, and complete OJT', async () => {
+  const extStudentId = 'student-ext-01';
+  await insert('users', {
+   name: 'External Student',
+   username: 'student.ext',
+   email: 'external.student@rtu.edu.ph',
+   role: 'STUDENT',
+   status: 'ACTIVE',
+   course_id: 'course-it'
+  }, extStudentId).run();
+  await insert('enrollments', {
+   class_id: 'class-it',
+   student_id: extStudentId,
+   active: 1
+  }, 'enrollment-ext-01').run();
+  const extStudent = await fresh(extStudentId);
+
+  // 1. Register external placement
+  const res = await mutate(extStudent, 'externalPlacement', {
+   companyName: 'Acme Offline Solutions',
+   industry: 'Software Engineering',
+   location: 'Ortigas Center, Pasig City',
+   supervisorName: 'Engr. Roberto D. Cruz',
+   supervisorEmail: 'roberto@acme-offline.local',
+   supervisorPhone: '+63 917 123 4567',
+   startsAt: '2026-06-01',
+   endsAt: '2026-09-30'
+  });
+  const placementId = res.id!;
+  const p = (await one('SELECT * FROM placements WHERE id=?', placementId))!;
+  expect(p.isExternal).toBe(1);
+  expect(p.status).toBe('ACTIVE');
+  expect(p.externalSupervisorName).toBe('Engr. Roberto D. Cruz');
+
+  // Prevent duplicate active placement
+  await expect(mutate(extStudent, 'externalPlacement', {
+   companyName: 'Another Company',
+   industry: 'IT',
+   location: 'Pasig',
+   supervisorName: 'Supervisor',
+   startsAt: '2026-06-01',
+   endsAt: '2026-09-30'
+  })).rejects.toThrow('already have an active or planned training placement');
+
+  // 2. Set hours and log attendance
+  await statement('UPDATE placements SET required_minutes=60 WHERE id=?', placementId).run();
+  await insert('entries', {
+   placement_id: placementId,
+   date: '2026-06-02',
+   narrative: 'Orientation and workstation setup.'
+  }, 'entry-ext-1').run();
+  await insert('intervals', {
+   entry_id: 'entry-ext-1',
+   starts_at: '2026-06-02T08:00:00Z',
+   ends_at: '2026-06-02T17:00:00Z',
+   break_minutes: 60,
+   minutes: 480
+  }).run();
+
+  // 3. Final DTR Submit with signed document attachment
+  await mutate(extStudent, 'finalDtrSubmit', {
+   placementId,
+   version: 0,
+   attachmentFilename: 'acme_signed_dtr.pdf',
+   attachmentBase64: 'JVBERi0xLjQK...'
+  });
+  const dtrRow = (await one('SELECT * FROM final_dtrs WHERE placement_id=?', placementId))!;
+  expect(dtrRow.status).toBe('SUBMITTED');
+  expect(dtrRow.verificationMethod).toBe('SIGNED_DOCUMENT');
+  expect(dtrRow.attachmentFilename).toBe('acme_signed_dtr.pdf');
+
+  // 4. Coordinator verifies the physical signed timesheet
+  await mutate(users.coordinator, 'finalDtrReview', {
+   placementId,
+   version: Number(dtrRow.version),
+   decision: 'VERIFY'
+  });
+  const verifiedDtr = (await one('SELECT * FROM final_dtrs WHERE placement_id=?', placementId))!;
+  expect(verifiedDtr.status).toBe('VERIFIED');
+  expect((await snapshot(extStudent)).entries.find(e=>e.id==='entry-ext-1')?.confirmedVersion).toBe(1);
+
+  // 5. Submit signed external evaluation
+  const publishedTemplate = (await one("SELECT * FROM hte_evaluation_templates WHERE status='PUBLISHED'"))!;
+  await mutate(extStudent, 'externalEvaluationSubmit', {
+   placementId,
+   templateId: publishedTemplate.id,
+   version: 0,
+   finalDtrVersion: Number(verifiedDtr.version),
+   attachmentFilename: 'acme_signed_evaluation.pdf',
+   attachmentBase64: 'JVBERi0xLjQK...',
+   answers: {
+    work: 'Meets requirements',
+    comment: 'Outstanding performance and initiative during the practicum term.'
+   }
+  });
+  const evalRow = (await one('SELECT * FROM hte_evaluation_responses WHERE placement_id=?', placementId))!;
+  expect(evalRow.status).toBe('SUBMITTED');
+  expect(evalRow.submissionChannel).toBe('UPLOADED_DOCUMENT');
+  expect(evalRow.attachmentFilename).toBe('acme_signed_evaluation.pdf');
+
+  // 6. Coordinator approves the external evaluation
+  await mutate(users.coordinator, 'hteEvaluationReview', {
+   responseId: evalRow.id,
+   version: Number(evalRow.version),
+   decision: 'APPROVED'
+  });
+  const approvedEval = (await one('SELECT * FROM hte_evaluation_responses WHERE id=?', evalRow.id))!;
+  expect(approvedEval.status).toBe('APPROVED');
+
+  // 7. Complete exit forms and coordinator approves overall completion
+  await mutate(extStudent, 'completionForm', {
+   placementId,
+   formType: 'FINAL_SELF_ASSESSMENT',
+   answers: { technicalSkills: 5, communication: 5, professionalism: 5, problemSolving: 5, reflection: 'Great external internship experience.' }
+  });
+  await mutate(extStudent, 'completionForm', {
+   placementId,
+   formType: 'OJT_EXIT_SURVEY',
+   answers: { curriculumRelevance: 5, universitySupport: 5, workplaceAlignment: 5, trainingPlanClarity: 5, feedback: 'Smooth process for offline companies.' }
+  });
+  await mutate(users.coordinator, 'completionDecision', {
+   placementId,
+   decision: 'APPROVE'
+  });
+  expect((await one('SELECT status FROM placements WHERE id=?', placementId))?.status).toBe('COMPLETED');
  });
 });

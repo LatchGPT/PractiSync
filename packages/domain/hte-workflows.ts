@@ -159,20 +159,31 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   const entries = await list('SELECT e.id,e.date,e.version,i.starts_at,i.ends_at,i.break_minutes,i.minutes FROM entries e JOIN intervals i ON i.entry_id=e.id AND i.tenant_id=e.tenant_id WHERE e.tenant_id=? AND e.placement_id=? ORDER BY e.date,i.starts_at,e.id', user.tenantId, p.id);
   const total = entries.reduce((sum, e) => sum + num(e, 'minutes'), 0);
   if (!num(p, 'requiredMinutes') || total < num(p, 'requiredMinutes')) throw new DomainError('Reach the required hours before submitting the final DTR.', 409);
+  const isExternal = num(p, 'isExternal') === 1 || Boolean(d.attachmentBase64);
+  if (num(p, 'isExternal') === 1 && !d.attachmentBase64) throw new DomainError('Upload a company-signed copy of your DTR or Certificate of Completion before submitting.', 400);
+  const method = isExternal ? 'SIGNED_DOCUMENT' : 'DIRECT_SUPERVISOR';
   const id = current?.id ?? crypto.randomUUID();
   const tx = [attendanceGuard(user, p, true)];
-  if (current) tx.push(archiveDtr(user, current), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='REVISION_REQUESTED' THEN version+1 ELSE NULL END,snapshot_json=?,attendance_revision=?,total_minutes=?,status='SUBMITTED',submitted_by=?,reviewed_by=NULL,reviewed_at=NULL,note=NULL WHERE tenant_id=? AND id=?", d.version, JSON.stringify(entries), num(p, 'dtrRevision') + 1, total, user.id, user.tenantId, id));
-  else tx.push(insert('final_dtrs', { tenant_id: user.tenantId, placement_id: p.id, attendance_revision: num(p, 'dtrRevision') + 1, snapshot_json: JSON.stringify(entries), total_minutes: total, status: 'SUBMITTED', submitted_by: user.id }, id));
-  const supervisors = await list("SELECT u.id FROM assignments a JOIN users u ON u.id=a.supervisor_id AND u.tenant_id=a.tenant_id JOIN companies c ON c.id=u.company_id AND c.tenant_id=u.tenant_id WHERE a.tenant_id=? AND a.placement_id=? AND a.active=1 AND u.status='ACTIVE' AND u.role='SUPERVISOR' AND u.supervisor_verified=1 AND c.id=? AND c.status='APPROVED'", user.tenantId, p.id, p.companyId);
-  if (!supervisors.length) throw new DomainError('Your coordinator must assign an approved HTE supervisor before you submit the final DTR.', 409);
-  tx.push(...supervisors.map(s => notify(user, s.id, 'Final DTR awaiting verification', `${user.name} submitted their complete attendance for review.`, 'attendance')));
-  return commit(user, 'FINAL_DTR_SUBMITTED', id, tx, 'Final DTR submitted. Attendance is locked while the HTE reviews it.');
+  if (current) tx.push(archiveDtr(user, current), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='REVISION_REQUESTED' THEN version+1 ELSE NULL END,snapshot_json=?,attendance_revision=?,total_minutes=?,status='SUBMITTED',submitted_by=?,reviewed_by=NULL,reviewed_at=NULL,note=NULL,attachment_filename=?,attachment_base64=?,verification_method=? WHERE tenant_id=? AND id=?", d.version, JSON.stringify(entries), num(p, 'dtrRevision') + 1, total, user.id, d.attachmentFilename || null, d.attachmentBase64 || null, method, user.tenantId, id));
+  else tx.push(insert('final_dtrs', { tenant_id: user.tenantId, placement_id: p.id, attendance_revision: num(p, 'dtrRevision') + 1, snapshot_json: JSON.stringify(entries), total_minutes: total, status: 'SUBMITTED', submitted_by: user.id, attachment_filename: d.attachmentFilename || null, attachment_base64: d.attachmentBase64 || null, verification_method: method }, id));
+  if (isExternal) {
+   const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, p.classId);
+   if (cls?.coordinatorId) tx.push(notify(user, str(cls, 'coordinatorId'), 'Final DTR awaiting coordinator verification', `${user.name} submitted attendance with an attached signed company DTR.`, 'attendance'));
+  } else {
+   const supervisors = await list("SELECT u.id FROM assignments a JOIN users u ON u.id=a.supervisor_id AND u.tenant_id=a.tenant_id JOIN companies c ON c.id=u.company_id AND c.tenant_id=u.tenant_id WHERE a.tenant_id=? AND a.placement_id=? AND a.active=1 AND u.status='ACTIVE' AND u.role='SUPERVISOR' AND u.supervisor_verified=1 AND c.id=? AND c.status='APPROVED'", user.tenantId, p.id, p.companyId);
+   if (!supervisors.length) throw new DomainError('Your coordinator must assign an approved HTE supervisor before you submit the final DTR.', 409);
+   tx.push(...supervisors.map(s => notify(user, s.id, 'Final DTR awaiting verification', `${user.name} submitted their complete attendance for review.`, 'attendance')));
+  }
+  return commit(user, 'FINAL_DTR_SUBMITTED', id, tx, isExternal ? 'Final DTR and signed timesheet submitted for coordinator verification.' : 'Final DTR submitted. Attendance is locked while the HTE reviews it.');
  }
  if (action === 'finalDtrReview') {
-  requireRole(user, 'SUPERVISOR'); const d = inputs.finalDtrReview.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.version);
+  const d = inputs.finalDtrReview.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.version);
+  const isSignedDoc = str(f, 'verificationMethod') === 'SIGNED_DOCUMENT' || num(p, 'isExternal') === 1;
+  if (isSignedDoc) requireRole(user, 'COORDINATOR');
+  else requireRole(user, 'SUPERVISOR', 'COORDINATOR');
   if (p.status !== 'ACTIVE' || f.status !== 'SUBMITTED' || num(f, 'attendanceRevision') !== num(p, 'dtrRevision')) throw conflict();
   if (d.decision === 'REJECT' && !d.note) throw new DomainError('Explain which dates or times need correction.');
-  return commit(user, 'FINAL_DTR_REVIEWED', f.id, [attendanceGuard(user, p), archiveDtr(user, f), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,attendance_revision=?,note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", d.version, d.decision === 'VERIFY' ? 'VERIFIED' : 'REVISION_REQUESTED', num(p, 'dtrRevision') + 1, d.note, user.id, now(), user.tenantId, f.id), notify(user, str(p, 'studentId'), d.decision === 'VERIFY' ? 'Final DTR verified' : 'Final DTR needs correction', d.note || 'Your HTE verified the complete attendance record.', 'attendance')], d.decision === 'VERIFY' ? 'Complete DTR verified. The school evaluation is the next step.' : 'DTR returned to the student for correction and resubmission.');
+  return commit(user, 'FINAL_DTR_REVIEWED', f.id, [attendanceGuard(user, p), archiveDtr(user, f), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,attendance_revision=?,note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", d.version, d.decision === 'VERIFY' ? 'VERIFIED' : 'REVISION_REQUESTED', num(p, 'dtrRevision') + 1, d.note, user.id, now(), user.tenantId, f.id), notify(user, str(p, 'studentId'), d.decision === 'VERIFY' ? 'Final DTR verified' : 'Final DTR needs correction', d.note || (isSignedDoc ? 'Coordinator verified your signed DTR.' : 'Your HTE verified the complete attendance record.'), 'attendance')], d.decision === 'VERIFY' ? 'Complete DTR verified. The school evaluation is the next step.' : 'DTR returned to the student for correction and resubmission.');
  }
  if (action === 'finalDtrReopen') {
   requireRole(user, 'STUDENT'); const d = inputs.finalDtrReopen.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.version);
@@ -230,6 +241,29 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   if (d.mode === 'SUBMIT' && cls) tx.push(notify(user, str(cls, 'coordinatorId'), 'School evaluation awaiting review', `${user.name} submitted an HTE evaluation.`, 'jobs'));
   return commit(user, 'HTE_EVALUATION_SAVED', id, tx, d.mode === 'SUBMIT' ? 'Evaluation submitted for coordinator review.' : 'Evaluation draft saved.');
  }
+ if (action === 'externalEvaluationSubmit') {
+  requireRole(user, 'STUDENT'); const d = inputs.externalEvaluationSubmit.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.finalDtrVersion);
+  if (p.status !== 'ACTIVE' || f.status !== 'VERIFIED' || num(f, 'attendanceRevision') !== num(p, 'dtrRevision')) throw new DomainError('Verify your final DTR before submitting the evaluation.', 409);
+  const existing = await one('SELECT * FROM hte_evaluation_responses WHERE tenant_id=? AND placement_id=?', user.tenantId, p.id);
+  if (existing && !['DRAFT','REVISION_REQUESTED'].includes(str(existing, 'status'))) throw new DomainError('An evaluation has already been submitted for this placement.', 409);
+  if (existing && Number(existing.version) !== d.version) throw conflict();
+  const template = await one(`SELECT * FROM hte_evaluation_templates WHERE tenant_id=? AND id=? ${existing ? "AND status IN ('PUBLISHED','ARCHIVED')" : "AND status='PUBLISHED'"}`, user.tenantId, d.templateId);
+  if (!template) throw new DomainError('Waiting for the school evaluation form to be published.', 409);
+  const questions = evaluationQuestions.parse(JSON.parse(str(template, 'questionsJson')));
+  if (Object.keys(d.answers).some(key => !questions.some(q => q.key === key))) throw new DomainError('Answers include an unknown question.');
+  for (const q of questions) {
+   const answer = (d.answers[q.key] ?? '').trim();
+   if (q.required && !answer) throw new DomainError(`Complete ${q.label}.`);
+   if (answer && q.type !== 'text' && !q.options.includes(answer)) throw new DomainError(`Choose a valid answer for ${q.label}.`);
+  }
+  const id = existing?.id ?? crypto.randomUUID();
+  const tx = [attendanceGuard(user, p), statement('UPDATE final_dtrs SET attendance_revision=? WHERE tenant_id=? AND id=?', num(p, 'dtrRevision') + 1, user.tenantId, f.id)];
+  if (existing) tx.push(archiveEvaluation(user, existing), statement("UPDATE hte_evaluation_responses SET version=CASE WHEN version=? AND status IN ('DRAFT','REVISION_REQUESTED') THEN version+1 ELSE NULL END,answers_json=?,status='SUBMITTED',final_dtr_version=?,note=NULL,reviewed_by=NULL,reviewed_at=NULL,updated_at=?,attachment_filename=?,attachment_base64=?,submission_channel='UPLOADED_DOCUMENT',entered_by=?,authorship_method='DIRECT',verification_state='PENDING' WHERE tenant_id=? AND id=?", d.version, JSON.stringify(d.answers), d.finalDtrVersion, now(), d.attachmentFilename, d.attachmentBase64, user.id, user.tenantId, id));
+  else tx.push(insert('hte_evaluation_responses', { tenant_id: user.tenantId, placement_id: p.id, evaluator_id: user.id, template_id: template.id, final_dtr_version: d.finalDtrVersion, answers_json: JSON.stringify(d.answers), status: 'SUBMITTED', updated_at: now(), attachment_filename: d.attachmentFilename, attachment_base64: d.attachmentBase64, submission_channel: 'UPLOADED_DOCUMENT', entered_by: user.id, authorship_method: 'DIRECT', verification_state: 'PENDING' }, id));
+  const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, p.classId);
+  if (cls?.coordinatorId) tx.push(notify(user, str(cls, 'coordinatorId'), 'School evaluation awaiting review', `${user.name} uploaded a signed HTE evaluation.`, 'competencies'));
+  return commit(user, 'EXTERNAL_EVALUATION_SUBMITTED', id, tx, 'Signed school evaluation submitted for coordinator review.');
+ }
  if (action === 'hteEvaluationReview') {
   requireRole(user, 'COORDINATOR'); const d = inputs.hteEvaluationReview.parse(payload);
   const e = await one('SELECT * FROM hte_evaluation_responses WHERE tenant_id=? AND id=?', user.tenantId, d.responseId);
@@ -237,7 +271,7 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   const p = await placement(user, str(e, 'placementId')), f = await finalDtr(user, p.id, e.finalDtrVersion);
   if (f.status !== 'VERIFIED') throw new DomainError('The current final DTR must be verified.', 409);
   if (d.decision === 'REVISION_REQUESTED' && !d.note) throw new DomainError('Explain what the evaluator needs to revise.');
-  return commit(user, 'HTE_EVALUATION_REVIEWED', e.id, [attendanceGuard(user, p), statement('UPDATE final_dtrs SET attendance_revision=? WHERE tenant_id=? AND id=?', num(p, 'dtrRevision') + 1, user.tenantId, f.id), archiveEvaluation(user, e), statement("UPDATE hte_evaluation_responses SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,note=?,reviewed_by=?,reviewed_at=?,updated_at=? WHERE tenant_id=? AND id=?", d.version, d.decision, d.note, user.id, now(), now(), user.tenantId, e.id), notify(user, str(e, 'evaluatorId'), 'School evaluation reviewed', d.note || 'Evaluation approved.', 'jobs'), notify(user, str(p, 'studentId'), 'School evaluation status updated', d.decision === 'APPROVED' ? 'Your school evaluation has been reviewed and released.' : 'The coordinator requested evaluation follow-up from the HTE.', 'competencies')], d.decision === 'APPROVED' ? 'Evaluation approved and released to the student.' : 'Evaluation returned for revision.');
+  return commit(user, 'HTE_EVALUATION_REVIEWED', e.id, [attendanceGuard(user, p), statement('UPDATE final_dtrs SET attendance_revision=? WHERE tenant_id=? AND id=?', num(p, 'dtrRevision') + 1, user.tenantId, f.id), archiveEvaluation(user, e), statement("UPDATE hte_evaluation_responses SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,note=?,reviewed_by=?,reviewed_at=?,updated_at=?,verification_state=CASE WHEN ?='APPROVED' THEN 'VERIFIED' ELSE verification_state END,verified_at=CASE WHEN ?='APPROVED' THEN ? ELSE verified_at END WHERE tenant_id=? AND id=?", d.version, d.decision, d.note, user.id, now(), now(), d.decision, d.decision, now(), user.tenantId, e.id), notify(user, str(e, 'evaluatorId'), 'School evaluation reviewed', d.note || 'Evaluation approved.', 'jobs'), notify(user, str(p, 'studentId'), 'School evaluation status updated', d.decision === 'APPROVED' ? 'Your school evaluation has been reviewed and released.' : 'The coordinator requested evaluation follow-up from the HTE.', 'competencies')], d.decision === 'APPROVED' ? 'Evaluation approved and released to the student.' : 'Evaluation returned for revision.');
  }
  if (action === 'hteCredentials') {
   requireRole(user, 'SUPERVISOR'); const d = inputs.hteCredentials.parse(payload);

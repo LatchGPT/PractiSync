@@ -279,9 +279,13 @@ export function openLocalDemoDatabase(): DemoDatabase {
   if (!feedbackColumns.some(column => column.name === 'verification_state')) sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610210001_feedback_provenance/migration.sql'), 'utf8'));
   if (!hasTable('account_tokens')) sql.exec(readFileSync(join(process.cwd(),'packages/db/prisma/migrations/202610210002_account_lifecycle/migration.sql'),'utf8'));
   if (!hasTable('deadline_reminder_policies')) sql.exec(readFileSync(join(process.cwd(),'packages/db/prisma/migrations/202610210003_deadline_reminders/migration.sql'),'utf8'));
+  const placementColumns = sql.prepare("PRAGMA table_info('placements')").all() as { name: string }[];
+  if (!placementColumns.some(column => column.name === 'is_external')) {
+    sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610220001_external_hte_workflows/migration.sql'), 'utf8'));
+  }
   installSqliteScopeGuards(sql);
-  sql.exec('PRAGMA user_version = 15');
+  sql.exec('PRAGMA user_version = 16');
   const database = new LocalDemoDatabase(sql);
-  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 15 };
+  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 16 };
   return database;
 }

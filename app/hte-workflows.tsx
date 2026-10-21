@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, type FormEvent } from 'react';
-import { Check, FileCheck2, FileClock, FileText, LockKeyhole, Upload } from 'lucide-react';
+import { Check, Download, FileCheck2, FileClock, FileText, LoaderCircle, LockKeyhole, ShieldCheck, Sparkles, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import type { Action, Row, Snapshot } from '@/packages/validation/contracts';
@@ -12,7 +10,7 @@ const text = (r: Row | undefined, k: string) => String(r?.[k] ?? '');
 const num = (r: Row | undefined, k: string) => Number(r?.[k] ?? 0);
 const hours = (n: number) => `${(n / 60).toLocaleString('en-PH', { maximumFractionDigits: 2 })} hours`;
 const date = (s: string) => new Date(s).toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' });
-const statusLabel = (s: string) => ({ SUBMITTED:'Awaiting HTE review', VERIFIED:'HTE verified', REVISION_REQUESTED:'Corrections requested', PENDING:'Awaiting approval', APPROVED:'Approved', REJECTED:'Rejected', DRAFT:'Draft', PUBLISHED:'Published', ARCHIVED:'Previous version' }[s] ?? s);
+const statusLabel = (s: string) => ({ SUBMITTED:'Awaiting review', VERIFIED:'Verified', REVISION_REQUESTED:'Corrections requested', PENDING:'Awaiting approval', APPROVED:'Approved', REJECTED:'Rejected', DRAFT:'Draft', PUBLISHED:'Published', ARCHIVED:'Previous version' }[s] ?? s);
 export const HteStatus = ({ value }: { value: string }) => <span className={`chip ${['VERIFIED','APPROVED','PUBLISHED'].includes(value) ? 'green' : ['REJECTED','REVISION_REQUESTED'].includes(value) ? 'red' : 'orange'}`}>{statusLabel(value)}</span>;
 
 export function useHteAction(refresh: () => Promise<void>) {
@@ -63,24 +61,176 @@ function FinalDtrCopy({ record }: { record: Row }) {
 
 export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; placement: Row; onRefresh: () => Promise<void> }) {
  const { busy,error,act } = useHteAction(onRefresh), [note,setNote] = useState('');
+ const [attachmentFilename, setAttachmentFilename] = useState('');
+ const [attachmentBase64, setAttachmentBase64] = useState('');
  const f = data.finalDtrs?.find(r => r.placementId === placement.id), role = data.user.role;
  const reopening = data.finalDtrReopens?.find(r => r.placementId === placement.id && r.status === 'PENDING');
  const lastReopening = data.finalDtrReopens?.find(r => r.placementId === placement.id);
  const reported = placement.reportedMinutes === undefined ? data.entries.filter(e => e.placementId === placement.id).reduce((s,e) => s + num(e,'minutes'),0) : num(placement,'reportedMinutes');
  const eligible = num(placement,'requiredMinutes') > 0 && reported >= num(placement,'requiredMinutes');
  const canSubmit = role === 'STUDENT' && placement.status === 'ACTIVE' && (!f || f.status === 'REVISION_REQUESTED');
- return <section className="hte-final-dtr"><div className="hte-section-heading"><div><h3><FileCheck2 size={18}/>Final DTR verification</h3><p>{hours(reported)} reported · {hours(num(placement,'requiredMinutes'))} required</p></div>{f ? <HteStatus value={text(f,'status')}/> : <span className="chip">Not submitted</span>}</div><Failure error={error}/>
-  {f ? <><FinalDtrCopy record={f}/>{f.note && <p className="hte-review-note"><strong>Review note:</strong> {text(f,'note')}</p>}{f.reviewedAt && <p className="small muted">Reviewed {date(text(f,'reviewedAt'))}</p>}</> : <p className="muted">The student submits the complete DTR once the required hours are reached. The HTE reviews attendance once for the whole internship.</p>}
-  {canSubmit && <><p className="small muted">{eligible ? 'Submitting locks attendance until the HTE verifies it or returns it for correction.' : 'Keep recording attendance. Final submission unlocks at the required hours target.'}</p><button className="primary" disabled={busy || !eligible} onClick={() => void act('finalDtrSubmit',{ placementId:placement.id,version:num(f,'version') })}><FileClock size={15}/>{busy ? 'Submitting…' : f ? 'Resubmit complete DTR' : 'Submit complete DTR'}</button></>}
-  {role === 'STUDENT' && f && ['SUBMITTED','VERIFIED'].includes(text(f,'status')) && <p className="small muted"><LockKeyhole size={14}/> Attendance is locked. {f.status === 'VERIFIED' ? 'Request reopening below if a correction is needed.' : 'Your HTE is reviewing the submitted record.'}</p>}
-  {role === 'SUPERVISOR' && f?.status === 'SUBMITTED' && <div className="hte-request-decision"><label>Review note <span className="muted">(identify incorrect dates or times when rejecting)</span><textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/></label><p className="small muted">Verify only after reviewing the entire submitted attendance record against your company records.</p><div className="hte-actions"><button className="primary" disabled={busy} onClick={() => void act('finalDtrReview',{ placementId:placement.id,version:num(f,'version'),decision:'VERIFY',note })}><Check size={15}/>Verify complete DTR</button><button className="secondary" disabled={busy} onClick={() => void act('finalDtrReview',{ placementId:placement.id,version:num(f,'version'),decision:'REJECT',note })}>Return for correction</button></div></div>}
-  {role === 'STUDENT' && f?.status === 'VERIFIED' && <details><summary>Request a correction</summary>{reopening ? <p className="hte-review-note">Your reopening request is awaiting coordinator approval. Reason: {text(reopening,'reason')}</p> : <><label>What needs correcting?<textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/></label><p className="small muted">If approved, completion and evaluation review will reopen. Your HTE must verify the corrected DTR again.</p><button className="secondary" disabled={busy} onClick={() => void act('finalDtrReopen',{ placementId:placement.id,version:num(f,'version'),reason:note })}>Request reopening</button>{lastReopening?.note && <p className="hte-review-note">Previous coordinator decision: {text(lastReopening,'note')}</p>}</>}</details>}
-  {role === 'COORDINATOR' && reopening && <div className="hte-request-decision"><h4>Student requested reopening</h4><p>{text(reopening,'reason')}</p><label>Coordinator decision reason<textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/></label><p className="small muted">Approving unlocks attendance, returns formal completion to pending, and requires renewed HTE verification and evaluation review.</p><div className="hte-actions"><button className="primary" disabled={busy} onClick={() => void act('finalDtrReopenReview',{ requestId:reopening.id,version:num(reopening,'version'),decision:'APPROVE',note })}>Approve reopening</button><button className="secondary" disabled={busy} onClick={() => void act('finalDtrReopenReview',{ requestId:reopening.id,version:num(reopening,'version'),decision:'REJECT',note })}>Decline reopening</button></div></div>}
+ const isExternal = num(placement, 'isExternal') === 1;
+
+ const handleFileUpload = (file: File) => {
+  if (file.size > 4 * 1024 * 1024) {
+   toast.error('File exceeds 4 MB maximum limit.');
+   return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+   setAttachmentFilename(file.name);
+   setAttachmentBase64(String(reader.result));
+   toast.success(`Attached signed DTR: ${file.name}`);
+  };
+  reader.readAsDataURL(file);
+ };
+
+ const submitDtr = () => {
+  if (isExternal && !attachmentBase64) {
+   toast.error('Please upload your company-signed DTR or Certificate of Hours before submitting.');
+   return;
+  }
+  void act('finalDtrSubmit', {
+   placementId: placement.id,
+   version: num(f, 'version'),
+   attachmentFilename: attachmentFilename || undefined,
+   attachmentBase64: attachmentBase64 || undefined,
+  });
+ };
+
+ return <section className="hte-final-dtr">
+  <div className="hte-section-heading">
+   <div>
+    <h3>
+     <FileCheck2 size={18}/>Final DTR verification
+     {isExternal && <span className="chip purple" style={{fontSize:11,fontWeight:600}}>Offline / External HTE</span>}
+    </h3>
+    <p>{hours(reported)} reported · {hours(num(placement,'requiredMinutes'))} required</p>
+   </div>
+   {f ? <HteStatus value={text(f,'status')}/> : <span className="chip">Not submitted</span>}
+  </div>
+  <Failure error={error}/>
+  {f ? <>
+   <FinalDtrCopy record={f}/>
+   {f.attachmentFilename && f.attachmentBase64 && (
+    <div className="hte-attachment-card">
+     <div className="hte-attachment-left">
+      <FileCheck2 size={22} className="hte-attachment-icon" />
+      <div className="hte-attachment-info">
+       <span className="small muted">Attached signed company document</span>
+       <strong>{text(f,'attachmentFilename')}</strong>
+       <span className="small muted">{f.verificationMethod === 'SIGNED_DOCUMENT' ? 'Company-signed physical verification' : 'Direct supervisor record'}</span>
+      </div>
+     </div>
+     <a href={text(f,'attachmentBase64')} download={text(f,'attachmentFilename')} className="secondary hte-download-btn" target="_blank" rel="noreferrer">
+      <Download size={14}/> Download copy
+     </a>
+    </div>
+   )}
+   {f.note && <p className="hte-review-note"><strong>Review note:</strong> {text(f,'note')}</p>}
+   {f.reviewedAt && <p className="small muted">Reviewed {date(text(f,'reviewedAt'))}</p>}
+  </> : <p className="muted">The student submits the complete DTR once the required hours are reached. {isExternal ? 'Your Class Coordinator verifies the DTR against your signed company timesheet.' : 'The HTE reviews attendance once for the whole internship.'}</p>}
+
+  {canSubmit && <>
+   <p className="small muted">
+    {eligible
+     ? (isExternal
+      ? 'Required hours reached. Upload your signed company DTR or Certificate of Hours for Class Coordinator verification.'
+      : 'Submitting locks attendance until the HTE verifies it or returns it for correction.')
+     : 'Keep recording attendance. Final submission unlocks at the required hours target.'}
+   </p>
+
+   <div className="hte-upload-area">
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+     <div>
+      <strong style={{fontSize:13,color:'var(--rtu-navy)'}}>
+       {isExternal ? 'Signed company DTR or Certificate of Hours (Required)' : 'Signed physical DTR attachment (Optional)'}
+      </strong>
+      <p className="small muted" style={{margin:0}}>PDF, PNG, or JPG up to 4 MB.</p>
+     </div>
+     {attachmentBase64 ? (
+      <div className="hte-upload-meta">
+       <span>{attachmentFilename}</span>
+       <button type="button" className="textbutton" onClick={() => { setAttachmentFilename(''); setAttachmentBase64(''); }} title="Remove file">
+        <X size={14}/>
+       </button>
+      </div>
+     ) : (
+      <label className="secondary hte-download-btn" style={{cursor:'pointer',margin:0}}>
+       <Upload size={14}/> Choose signed file
+       <input type="file" accept=".pdf,image/png,image/jpeg" style={{display:'none'}} onChange={e => { const file = e.target.files?.[0]; if (file) handleFileUpload(file); }} />
+      </label>
+     )}
+    </div>
+   </div>
+
+   <button className="primary" disabled={busy || !eligible || (isExternal && !attachmentBase64)} onClick={submitDtr}>
+    <FileClock size={15}/>{busy ? 'Submitting…' : f ? 'Resubmit complete DTR' : isExternal ? 'Submit complete DTR with signed copy' : 'Submit complete DTR'}
+   </button>
+  </>}
+
+  {role === 'STUDENT' && f && ['SUBMITTED','VERIFIED'].includes(text(f,'status')) && (
+   <p className="small muted">
+    <LockKeyhole size={14}/> Attendance is locked. {f.status === 'VERIFIED' ? 'Request reopening below if a correction is needed.' : isExternal ? 'Your Class Coordinator is reviewing your submitted record and signed attachment.' : 'Your HTE is reviewing the submitted record.'}
+   </p>
+  )}
+
+  {role === 'SUPERVISOR' && f?.status === 'SUBMITTED' && (
+   <div className="hte-request-decision">
+    <label>Review note <span className="muted">(identify incorrect dates or times when rejecting)</span>
+     <textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/>
+    </label>
+    <p className="small muted">Verify only after reviewing the entire submitted attendance record against your company records.</p>
+    <div className="hte-actions">
+     <button className="primary" disabled={busy} onClick={() => void act('finalDtrReview',{ placementId:placement.id,version:num(f,'version'),decision:'VERIFY',note })}>
+      <Check size={15}/>Verify complete DTR
+     </button>
+     <button className="secondary" disabled={busy} onClick={() => void act('finalDtrReview',{ placementId:placement.id,version:num(f,'version'),decision:'REJECT',note })}>
+      Return for correction
+     </button>
+    </div>
+   </div>
+  )}
+
+  {role === 'COORDINATOR' && f?.status === 'SUBMITTED' && (
+   <div className="hte-request-decision">
+    <div className="hte-coordinator-notice">
+     <ShieldCheck size={18} className="text-blue-700" style={{flexShrink:0,marginTop:2}} />
+     <div>
+      <strong>Coordinator Attendance Verification</strong>
+      <p className="small muted">
+       {isExternal || f.attachmentBase64
+        ? 'The student is training at an offline / external host company and uploaded a signed document. Verify the logged attendance against the attached document.'
+        : 'Direct coordinator override for final attendance verification.'}
+      </p>
+     </div>
+    </div>
+    <label>Coordinator review note <span className="muted">(optional for verification; required when returning for correction)</span>
+     <textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)} placeholder="Add any verification remarks..." />
+    </label>
+    <div className="hte-actions">
+     <button className="primary" disabled={busy} onClick={() => void act('finalDtrReview',{ placementId:placement.id,version:num(f,'version'),decision:'VERIFY',note })}>
+      <Check size={15}/>Verify complete DTR (Coordinator)
+     </button>
+     <button className="secondary" disabled={busy} onClick={() => void act('finalDtrReview',{ placementId:placement.id,version:num(f,'version'),decision:'REJECT',note })}>
+      Return for correction
+     </button>
+    </div>
+   </div>
+  )}
+
+  {role === 'STUDENT' && f?.status === 'VERIFIED' && (
+   <details><summary>Request a correction</summary>{reopening ? <p className="hte-review-note">Your reopening request is awaiting coordinator approval. Reason: {text(reopening,'reason')}</p> : <><label>What needs correcting?<textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/></label><p className="small muted">If approved, completion and evaluation review will reopen. Your {isExternal ? 'coordinator' : 'HTE'} must verify the corrected DTR again.</p><button className="secondary" disabled={busy} onClick={() => void act('finalDtrReopen',{ placementId:placement.id,version:num(f,'version'),reason:note })}>Request reopening</button>{lastReopening?.note && <p className="hte-review-note">Previous coordinator decision: {text(lastReopening,'note')}</p>}</>}</details>
+  )}
+
+  {role === 'COORDINATOR' && reopening && (
+   <div className="hte-request-decision"><h4>Student requested reopening</h4><p>{text(reopening,'reason')}</p><label>Coordinator decision reason<textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/></label><p className="small muted">Approving unlocks attendance, returns formal completion to pending, and requires renewed verification and evaluation review.</p><div className="hte-actions"><button className="primary" disabled={busy} onClick={() => void act('finalDtrReopenReview',{ requestId:reopening.id,version:num(reopening,'version'),decision:'APPROVE',note })}>Approve reopening</button><button className="secondary" disabled={busy} onClick={() => void act('finalDtrReopenReview',{ requestId:reopening.id,version:num(reopening,'version'),decision:'REJECT',note })}>Decline reopening</button></div></div>
+  )}
  </section>;
 }
 
 export function FinalDtrWorkspace({ data,onRefresh }: { data: Snapshot; onRefresh: () => Promise<void> }) {
- return <section className="hte-card"><h2>Final attendance review</h2><p className="muted">Daily logs count as reported attendance. One HTE verification covers the complete internship DTR.</p>{data.placements.length ? data.placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT' || Boolean(data.finalDtrReopens?.some(r=>r.placementId===p.id && r.status==='PENDING'))}><summary>{text(p,'studentName')} · {text(p,'companyName')} · {statusLabel(text(data.finalDtrs?.find(f => f.placementId === p.id),'status')) || 'Not submitted'}</summary><FinalDtrCard data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">An assigned placement is needed before a final DTR can be submitted.</p>}</section>;
+ return <section className="hte-card"><h2>Final attendance review</h2><p className="muted">Daily logs count as reported attendance. One HTE verification covers the complete internship DTR.</p>{data.placements.length ? data.placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT' || Boolean(data.finalDtrReopens?.some(r=>r.placementId===p.id && r.status==='PENDING'))}><summary>{text(p,'studentName')} · {text(p,'companyName')} {num(p,'isExternal') === 1 ? '· (External HTE)' : ''} · {statusLabel(text(data.finalDtrs?.find(f => f.placementId === p.id),'status')) || 'Not submitted'}</summary><FinalDtrCard data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">An assigned placement is needed before a final DTR can be submitted.</p>}</section>;
 }
 
 function TemplateEditor({ template,onRefresh }: { template: Row; onRefresh: () => Promise<void> }) {
@@ -117,19 +267,242 @@ export function HteEvaluationForm({ data,placement,onRefresh }: { data: Snapshot
  if (!final || final.status !== 'VERIFIED') return <p className="hte-review-note"><LockKeyhole size={15}/> The school evaluation unlocks after the complete DTR is verified.</p>;
  return <EvaluationAnswers key={`${response?.id ?? template.id}:${response?.version ?? 0}:${final.version}`} data={data} placement={placement} template={template} response={response} final={final} onRefresh={onRefresh}/>;
 }
+
 function EvaluationAnswers({ data,placement,template,response,final,onRefresh }: { data: Snapshot; placement: Row; template: Row; response?: Row; final: Row; onRefresh: () => Promise<void> }) {
  const questions = JSON.parse(text(template,'questionsJson')) as EvaluationQuestion[];
- const [answers,setAnswers] = useState<Record<string,string>>(() => response ? JSON.parse(text(response,'answersJson')) : {}), [note,setNote] = useState('');
+ const [answers,setAnswers] = useState<Record<string,string>>(() => response ? JSON.parse(text(response,'answersJson')) : {});
+ const [note,setNote] = useState('');
+ const [evalFilename, setEvalFilename] = useState(text(response, 'attachmentFilename') || '');
+ const [evalBase64, setEvalBase64] = useState(text(response, 'attachmentBase64') || '');
+ const [scanningPdf, setScanningPdf] = useState(false);
+ const [scanSuccess, setScanSuccess] = useState(false);
  const { busy,error,act } = useHteAction(onRefresh);
- const canAnswer = data.user.role === 'SUPERVISOR' && (!response || ['DRAFT','REVISION_REQUESTED'].includes(text(response,'status')));
+
+ const isExternal = num(placement, 'isExternal') === 1;
+ const isStudent = data.user.role === 'STUDENT';
+ const isCoordinator = data.user.role === 'COORDINATOR';
+ const isSupervisor = data.user.role === 'SUPERVISOR';
+
+ const canSupervisorAnswer = isSupervisor && (!response || ['DRAFT','REVISION_REQUESTED'].includes(text(response,'status')));
+ const canStudentUpload = isStudent && isExternal && (!response || ['DRAFT','REVISION_REQUESTED'].includes(text(response,'status')));
+
  const save = (mode: 'DRAFT'|'SUBMIT') => void act('hteEvaluationSave',{ placementId:placement.id,templateId:template.id,finalDtrVersion:num(final,'version'),version:num(response,'version'),mode,answers });
- return <section className="hte-evaluation-form"><div className="hte-section-heading"><h3>{text(template,'title')}</h3>{response && <HteStatus value={text(response,'status')}/>}</div><a className="textbutton" href={`/api/hte-evaluation-template/${template.id}/file`}>Download original school document</a>{response?.note && <p className="hte-review-note">Coordinator note: {text(response,'note')}</p>}<Failure error={error}/>
-  {canAnswer ? <form className="hte-answer-form" onSubmit={(e:FormEvent) => {e.preventDefault();save('SUBMIT');}}>{questions.map(q => <label key={q.key}>{q.label}{!q.required && <span className="muted"> (optional)</span>}{q.type === 'text' ? <textarea required={q.required} maxLength={5000} value={answers[q.key] ?? ''} onChange={e => setAnswers({...answers,[q.key]:e.target.value})}/> : <select required={q.required} value={answers[q.key] ?? ''} onChange={e => setAnswers({...answers,[q.key]:e.target.value})}><option value="">Choose an answer</option>{q.options.map(o => <option key={o} value={o}>{o}</option>)}</select>}</label>)}<div className="hte-actions"><button className="primary" disabled={busy}>{busy ? 'Saving…' : 'Submit evaluation for review'}</button><button className="secondary" type="button" disabled={busy} onClick={() => save('DRAFT')}>Save draft</button></div></form> : response ? <dl className="hte-answer-receipt">{questions.map(q => <div key={q.key}><dt>{q.label}</dt><dd>{answers[q.key] || 'No answer'}</dd></div>)}</dl> : <p className="muted">The assigned HTE has not submitted this evaluation.</p>}
-  {data.user.role === 'COORDINATOR' && response?.status === 'SUBMITTED' && <div className="hte-request-decision"><label>Coordinator review note<textarea value={note} onChange={e => setNote(e.target.value)} maxLength={2000}/></label><div className="hte-actions"><button className="primary" disabled={busy} onClick={() => void act('hteEvaluationReview',{ responseId:response.id,version:num(response,'version'),decision:'APPROVED',note })}>Approve and release</button><button className="secondary" disabled={busy} onClick={() => void act('hteEvaluationReview',{ responseId:response.id,version:num(response,'version'),decision:'REVISION_REQUESTED',note })}>Request revision</button></div></div>}
+
+ const handleExternalPdfSelect = async (file: File) => {
+  if (!file.name.toLowerCase().endsWith('.pdf') || file.size > 4 * 1024 * 1024) {
+   toast.error('Choose a valid evaluation PDF up to 4 MB.');
+   return;
+  }
+  setScanningPdf(true);
+  setScanSuccess(false);
+  try {
+   const base64 = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+   });
+   setEvalFilename(file.name);
+   setEvalBase64(base64);
+
+   const res = await fetch('/api/extract-evaluation-scores', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pdfBase64: base64, questions })
+   });
+   if (!res.ok) {
+    const err = await res.json() as { error?: string };
+    throw new Error(err.error || 'Automated score detection could not parse this file.');
+   }
+   const extracted = await res.json() as { scores: Record<string, number>; narrativeRecommendation: string };
+   const patched = { ...answers };
+   for (const [k, score] of Object.entries(extracted.scores || {})) {
+    patched[k] = String(score);
+   }
+   if (extracted.narrativeRecommendation) {
+    const textQ = questions.find(q => q.type === 'text');
+    if (textQ && !patched[textQ.key]) {
+     patched[textQ.key] = extracted.narrativeRecommendation;
+    }
+   }
+   setAnswers(patched);
+   setScanSuccess(true);
+   toast.success('Scores detected from PDF. Review and confirm answers below.');
+  } catch (e) {
+   toast.error(e instanceof Error ? e.message : 'Upload failed.');
+  } finally {
+   setScanningPdf(false);
+  }
+ };
+
+ const submitExternalEvaluation = (e: FormEvent) => {
+  e.preventDefault();
+  if (!evalBase64) {
+   toast.error('Please upload your signed evaluation PDF first.');
+   return;
+  }
+  void act('externalEvaluationSubmit', {
+   placementId: placement.id,
+   templateId: template.id,
+   finalDtrVersion: num(final, 'version'),
+   version: num(response, 'version'),
+   answers,
+   attachmentFilename: evalFilename,
+   attachmentBase64: evalBase64
+  });
+ };
+
+ return <section className="hte-evaluation-form">
+  <div className="hte-section-heading">
+   <div>
+    <h3>{text(template,'title')} {isExternal && <span className="chip purple" style={{fontSize:11,fontWeight:600}}>Offline / External Track</span>}</h3>
+   </div>
+   {response && <HteStatus value={text(response,'status')}/>}
+  </div>
+
+  <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap',marginBottom:14}}>
+   <a className="secondary hte-download-btn" href={`/api/hte-evaluation-template/${template.id}/file`} target="_blank" rel="noreferrer">
+    <Download size={14}/> Download official school evaluation PDF
+   </a>
+  </div>
+
+  {response?.note && <p className="hte-review-note"><strong>Coordinator note:</strong> {text(response,'note')}</p>}
+  <Failure error={error}/>
+
+  {(response?.attachmentFilename || (canStudentUpload && evalFilename)) && (
+   <div className="hte-attachment-card">
+    <div className="hte-attachment-left">
+     <FileText size={22} className="hte-attachment-icon" />
+     <div className="hte-attachment-info">
+      <span className="small muted">{canStudentUpload ? 'Attached evaluation PDF' : 'Signed school evaluation document'}</span>
+      <strong>{evalFilename || text(response, 'attachmentFilename')}</strong>
+      <span className="small muted">Uploaded by {text(response, 'submissionChannel') === 'EXTERNAL_UPLOAD' || canStudentUpload ? 'Student (Signed Document)' : 'Direct supervisor submission'}</span>
+     </div>
+    </div>
+    {(evalBase64 || response?.attachmentBase64) && (
+     <a href={evalBase64 || text(response, 'attachmentBase64')} download={evalFilename || text(response, 'attachmentFilename')} className="secondary hte-download-btn" target="_blank" rel="noreferrer">
+      <Download size={14}/> Download PDF
+     </a>
+    )}
+   </div>
+  )}
+
+  {canSupervisorAnswer && (
+   <form className="hte-answer-form" onSubmit={(e:FormEvent) => {e.preventDefault();save('SUBMIT');}}>
+    {questions.map(q => <label key={q.key}>{q.label}{!q.required && <span className="muted"> (optional)</span>}{q.type === 'text' ? <textarea required={q.required} maxLength={5000} value={answers[q.key] ?? ''} onChange={e => setAnswers({...answers,[q.key]:e.target.value})}/> : <select required={q.required} value={answers[q.key] ?? ''} onChange={e => setAnswers({...answers,[q.key]:e.target.value})}><option value="">Choose an answer</option>{q.options.map(o => <option key={o} value={o}>{o}</option>)}</select>}</label>)}
+    <div className="hte-actions">
+     <button className="primary" disabled={busy}>{busy ? 'Saving…' : 'Submit evaluation for review'}</button>
+     <button className="secondary" type="button" disabled={busy} onClick={() => save('DRAFT')}>Save draft</button>
+    </div>
+   </form>
+  )}
+
+  {canStudentUpload && (
+   <form className="hte-answer-form" onSubmit={submitExternalEvaluation}>
+    <div className="hte-flow-step">
+     <div className="hte-flow-step-header">
+      <span className="hte-step-badge">1</span>
+      <span className="hte-flow-step-title">Upload Completed & Signed Evaluation Form</span>
+     </div>
+     <p className="small muted" style={{margin:0}}>
+      Have your host company supervisor rate you on the printed form and sign it. Scan or save as PDF and upload it here.
+     </p>
+     <label className="secondary hte-download-btn" style={{cursor: scanningPdf ? 'wait' : 'pointer', width:'fit-content', marginTop:6}}>
+      {scanningPdf ? <LoaderCircle size={15} className="spin" /> : <Upload size={15} />}
+      {scanningPdf ? 'Scanning PDF & detecting scores…' : evalFilename ? 'Replace evaluation PDF' : 'Upload signed evaluation PDF'}
+      <input type="file" accept=".pdf,application/pdf" disabled={scanningPdf} style={{display:'none'}} onChange={e => { const file = e.target.files?.[0]; if (file) void handleExternalPdfSelect(file); }} />
+     </label>
+    </div>
+
+    {scanningPdf && (
+     <div className="hte-scanning-banner">
+      <LoaderCircle size={16} className="spin" />
+      <span>Analyzing document text and AcroForm fields to detect 1–5 ratings...</span>
+     </div>
+    )}
+
+    {scanSuccess && (
+     <div className="hte-extraction-banner">
+      <Sparkles size={16} />
+      <span>Ratings automatically detected from your PDF. Review and confirm each score below before submitting.</span>
+     </div>
+    )}
+
+    <div className="hte-flow-step">
+     <div className="hte-flow-step-header">
+      <span className="hte-step-badge">2</span>
+      <span className="hte-flow-step-title">Review & Confirm Evaluation Ratings</span>
+     </div>
+     <p className="small muted" style={{margin:'0 0 12px'}}>
+      Verify that each rating matches the physical document signed by your supervisor.
+     </p>
+
+     {questions.map(q => (
+      <label key={q.key} style={{marginBottom:10}}>
+       {q.label}{!q.required && <span className="muted"> (optional)</span>}
+       {q.type === 'text' ? (
+        <textarea required={q.required} maxLength={5000} value={answers[q.key] ?? ''} onChange={e => setAnswers({...answers,[q.key]:e.target.value})} placeholder="Supervisor recommendations or comments..." />
+       ) : (
+        <select required={q.required} value={answers[q.key] ?? ''} onChange={e => setAnswers({...answers,[q.key]:e.target.value})}>
+         <option value="">Select rating / answer</option>
+         {q.options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+       )}
+      </label>
+     ))}
+    </div>
+
+    <div className="hte-actions">
+     <button className="primary" disabled={busy || scanningPdf || !evalBase64}>
+      {busy ? 'Submitting…' : 'Submit signed evaluation for coordinator review'}
+     </button>
+    </div>
+   </form>
+  )}
+
+  {!canSupervisorAnswer && !canStudentUpload && response && (
+   <dl className="hte-answer-receipt">
+    {questions.map(q => <div key={q.key}><dt>{q.label}</dt><dd>{answers[q.key] || 'No answer'}</dd></div>)}
+   </dl>
+  )}
+
+  {!canSupervisorAnswer && !canStudentUpload && !response && (
+   <p className="muted">{isExternal ? 'Download the official form above, have your supervisor complete and sign it, then upload the PDF here.' : 'The assigned HTE has not submitted this evaluation.'}</p>
+  )}
+
+  {isCoordinator && response?.status === 'SUBMITTED' && (
+   <div className="hte-request-decision">
+    <div className="hte-coordinator-notice">
+     <ShieldCheck size={18} className="text-blue-700" style={{flexShrink:0,marginTop:2}} />
+     <div>
+      <strong>Coordinator Evaluation Review</strong>
+      <p className="small muted">
+       {response.attachmentBase64
+        ? 'The student submitted a signed physical evaluation from their external host company. Check the ratings against the attached PDF.'
+        : 'Review the online evaluation submitted by the supervisor.'}
+      </p>
+     </div>
+    </div>
+    <label>Coordinator review note <span className="muted">(optional for approval; required when requesting revision)</span>
+     <textarea value={note} onChange={e => setNote(e.target.value)} maxLength={2000} placeholder="Add coordinator comments or approval notes..." />
+    </label>
+    <div className="hte-actions">
+     <button className="primary" disabled={busy} onClick={() => void act('hteEvaluationReview',{ responseId:response.id,version:num(response,'version'),decision:'APPROVED',note })}>
+      <Check size={15}/>Approve and release
+     </button>
+     <button className="secondary" disabled={busy} onClick={() => void act('hteEvaluationReview',{ responseId:response.id,version:num(response,'version'),decision:'REVISION_REQUESTED',note })}>
+      Request revision
+     </button>
+    </div>
+   </div>
+  )}
  </section>;
 }
 
 export function SchoolEvaluationReviews({ data,onRefresh }: { data: Snapshot; onRefresh: () => Promise<void> }) {
- const placements = data.placements.filter(p => data.hteEvaluationResponses?.some(r => r.placementId === p.id));
- return <section className="hte-card"><h2>School evaluation responses</h2>{placements.length ? placements.map(p => <details className="hte-placement" key={p.id}><summary>{text(p,'studentName')} · {text(p,'companyName')}</summary><HteEvaluationForm data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">{data.user.role === 'STUDENT' ? 'Your school evaluation will appear here after coordinator review.' : 'No school evaluations have been submitted yet.'}</p>}</section>;
+ const ownPlacement = data.user.role === 'STUDENT' ? data.placements.find(p => p.studentId === data.user.id) : null;
+ const placements = data.user.role === 'STUDENT'
+   ? (ownPlacement ? [ownPlacement] : [])
+   : data.placements.filter(p => data.hteEvaluationResponses?.some(r => r.placementId === p.id));
+ return <section className="hte-card"><h2>School evaluation responses</h2>{placements.length ? placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT'}><summary>{text(p,'studentName')} · {text(p,'companyName')} {num(p,'isExternal') === 1 ? '· (External HTE)' : ''}</summary><HteEvaluationForm data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">{data.user.role === 'STUDENT' ? 'Your school evaluation will appear here once ready.' : 'No school evaluations have been submitted yet.'}</p>}</section>;
 }

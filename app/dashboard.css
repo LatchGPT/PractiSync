@@ -2462,7 +2462,51 @@ body.high-contrast .badge-vice-rep {
 .myclass-layout-wrap {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
+}
+
+/* Placement Status Banner */
+.myclass-placement-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+.myclass-placement-banner.is-external {
+  background: linear-gradient(135deg, #ffffff 0%, #f7f9fd 100%);
+  border-left: 4px solid var(--primary);
+}
+.myclass-placement-banner.is-empty {
+  background: #fdfaf3;
+  border: 1px dashed #d7aa3e;
+}
+.myclass-placement-banner-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 800px;
+}
+.myclass-placement-company {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--rtu-navy);
+  margin: 4px 0 2px;
+}
+.myclass-placement-sub {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin: 0;
+}
+.myclass-placement-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* 1. Header Card (Balanced Grid & RTU Gradient) */

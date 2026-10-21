@@ -28,6 +28,7 @@ interface StudentMyClassViewProps {
   user: Identity;
   ownPlacement?: Row | null;
   openJoinModal: () => void;
+  openExternalPlacement?: () => void;
   onViewStudent?: (studentId: string) => void;
 }
 
@@ -36,6 +37,7 @@ export default function StudentMyClassView({
   user,
   ownPlacement,
   openJoinModal,
+  openExternalPlacement,
   onViewStudent,
 }: StudentMyClassViewProps) {
   const [search, setSearch] = useState('');
@@ -169,6 +171,17 @@ export default function StudentMyClassView({
               </div>
 
               <div className="myclass-hero-actions">
+                {(!ownPlacement || ownPlacement.status !== 'ACTIVE') && openExternalPlacement && (
+                  <button
+                    type="button"
+                    className="primary myclass-switch-btn"
+                    onClick={openExternalPlacement}
+                    title="Register an external host company that doesn't have a PractiSync profile"
+                  >
+                    <Building2 size={14} />
+                    Add external company
+                  </button>
+                )}
                 <button
                   type="button"
                   className="secondary myclass-switch-btn"
@@ -264,6 +277,58 @@ export default function StudentMyClassView({
               </div>
             </div>
           </section>
+
+          {/* Placement Status Card */}
+          {ownPlacement ? (
+            <section className={`myclass-placement-banner ${Number(ownPlacement.isExternal || 0) === 1 ? 'is-external' : ''}`}>
+              <div className="myclass-placement-banner-left">
+                <div className="myclass-placement-badge-row">
+                  <span className="chip green">
+                    <CheckCircle2 size={12} /> Active Training Placement
+                  </span>
+                  {Number(ownPlacement.isExternal || 0) === 1 && (
+                    <span className="chip purple">
+                      <Building2 size={12} /> Offline / Opt-Out HTE Track
+                    </span>
+                  )}
+                </div>
+                <h3 className="myclass-placement-company">{String(ownPlacement.companyName)}</h3>
+                <p className="myclass-placement-sub">
+                  {String(ownPlacement.externalCompanyLocation || ownPlacement.location || 'Company Office')} · Immediate Supervisor: <strong>{String(ownPlacement.externalSupervisorName || 'Assigned Supervisor')}</strong>
+                  {ownPlacement.externalSupervisorEmail ? ` (${ownPlacement.externalSupervisorEmail})` : ''}
+                </p>
+                {Number(ownPlacement.isExternal || 0) === 1 && (
+                  <p className="small muted" style={{ margin: '4px 0 0' }}>
+                    This host company does not maintain an online account in PractiSync. Continue recording daily attendance in Attendance. At target hours, submit your company-signed DTR and School Evaluation PDF for your coordinator’s verification.
+                  </p>
+                )}
+              </div>
+            </section>
+          ) : (
+            <section className="myclass-placement-banner is-empty">
+              <div className="myclass-placement-banner-left">
+                <div className="myclass-placement-badge-row">
+                  <span className="chip orange">
+                    <Clock size={12} /> No Placement Linked Yet
+                  </span>
+                </div>
+                <h3 className="myclass-placement-company">Internship at a Company Without a PractiSync Account?</h3>
+                <p className="small muted" style={{ margin: '4px 0 0' }}>
+                  If your internship company does not have a profile on PractiSync and opts out of registering, you can register their details directly to start logging your practicum hours immediately.
+                </p>
+              </div>
+              {openExternalPlacement && (
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={openExternalPlacement}
+                >
+                  <Building2 size={14} />
+                  Register external company
+                </button>
+              )}
+            </section>
+          )}
 
           {/* 2. Class Leadership Section */}
           <section className="myclass-section myclass-leadership-section">
