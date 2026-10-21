@@ -9,7 +9,7 @@
     "install:ci": "bash scripts/install-pnpm.sh",
     "dev": "next dev",
     "dev:demo": "node scripts/dev-demo.mjs",
-    "build": "next build",
+    "build": "npm run db:migrate && next build",
     "start": "next start",
     "cf:dev": "node scripts/run-framework.mjs dev",
     "cf:build": "node scripts/run-framework.mjs build",
