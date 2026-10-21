@@ -1,3 +1,4 @@
+import { workflowTargetFixtures } from './runtime-fixture';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
@@ -32,7 +33,7 @@ const mockFeedback: Row[] = [
     id: 'fb-1',
     placementId: 'p1',
     companyId: 'comp-1',
-    supervisorId: 'sup-1',
+    supervisorId: 'sup-1', evaluatorId:'sup-1', enteredBy:'sup-1', assignmentId:'a1', authorshipMethod:'DIRECT', verificationState:'VERIFIED', verifiedAt:'2026-10-01', status:'SUBMITTED',
     courseId: 'course-it',
     academicPeriod: '2026-T1',
     frameworkVersion: 1,
@@ -50,7 +51,7 @@ const mockFeedback: Row[] = [
     id: 'fb-2',
     placementId: 'p2',
     companyId: 'comp-1',
-    supervisorId: 'sup-1',
+    supervisorId: 'sup-1', evaluatorId:'sup-1', enteredBy:'sup-1', assignmentId:'a1', authorshipMethod:'DIRECT', verificationState:'VERIFIED', verifiedAt:'2026-10-01', status:'SUBMITTED',
     courseId: 'course-it',
     academicPeriod: '2026-T1',
     frameworkVersion: 1,
@@ -68,7 +69,7 @@ const mockFeedback: Row[] = [
     id: 'fb-3',
     placementId: 'p3',
     companyId: 'comp-2',
-    supervisorId: 'sup-2',
+    supervisorId: 'sup-2', evaluatorId:'sup-2', enteredBy:'sup-2', assignmentId:'a2', authorshipMethod:'DIRECT', verificationState:'VERIFIED', verifiedAt:'2026-10-01', status:'SUBMITTED',
     courseId: 'course-it',
     academicPeriod: '2026-T1',
     frameworkVersion: 1,
@@ -101,7 +102,7 @@ ALTER TABLE completion_responses ADD COLUMN reviewer_id TEXT;
 ALTER TABLE completion_responses ADD COLUMN reviewed_at TEXT;
 UPDATE completion_responses SET updated_at=COALESCE(submitted_at,created_at);`);
   sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql', 'utf8').replace(/--> statement-breakpoint/g, ''));
-  sql.exec(readFileSync('drizzle/0008_industry_feedback.sql', 'utf8'));
+  sql.exec(readFileSync('drizzle/0008_industry_feedback.sql', 'utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210001_feedback_provenance/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210002_account_lifecycle/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210003_deadline_reminders/migration.sql','utf8'));
   sql.exec(`CREATE TABLE custom_document_templates (id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,created_at TEXT NOT NULL,created_by TEXT NOT NULL,title TEXT NOT NULL,instructions TEXT NOT NULL,category TEXT NOT NULL,fields_json TEXT NOT NULL,status TEXT NOT NULL,version INTEGER NOT NULL,original_filename TEXT NOT NULL DEFAULT '',pdf_base64 TEXT NOT NULL DEFAULT '');CREATE TABLE custom_document_responses (id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,created_at TEXT NOT NULL,placement_id TEXT NOT NULL,template_id TEXT NOT NULL,template_version INTEGER NOT NULL,template_json TEXT NOT NULL DEFAULT '{}',response_json TEXT NOT NULL,submitted_at TEXT,updated_at TEXT NOT NULL,status TEXT NOT NULL,review_note TEXT,reviewer_id TEXT,reviewed_at TEXT,version INTEGER NOT NULL,UNIQUE(tenant_id,placement_id,template_id));`);
   const database: DemoDatabase = {
     prepare: (query) => prepared(query) as PreparedStatement,
@@ -119,7 +120,7 @@ UPDATE completion_responses SET updated_at=COALESCE(submitted_at,created_at);`);
     },
   };
   installTestDatabase(database);
-  sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));await seed();
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));workflowTargetFixtures(sql);await seed();
 });
 
 afterAll(() => {
@@ -259,8 +260,11 @@ describe('Industry Feedback & Curriculum Gap Analytics (PSS-20)', () => {
       })
     ).rejects.toThrow('You do not have permission');
 
-    // 2. Coordinator / supervisor records structured feedback
-    const res = await mutate(coordinatorUser, 'industryFeedback', {
+    // Coordinators cannot impersonate employers.
+    await expect(mutate(coordinatorUser,'industryFeedback',{placementId:'placement-1',workplaceReadiness:4,competencyRelevance:4,supervisionSupport:4,curriculumAlignment:4,recommendations:'University entry denied.'})).rejects.toThrow('permission');
+    const supervisorUser = {...coordinatorUser,id:'demo-supervisor',role:'SUPERVISOR' as const,companyId:'company-northstar'};
+    // 2. An assigned, verified supervisor submits attributed feedback.
+    const res = await mutate(supervisorUser, 'industryFeedback', {
       placementId: 'placement-1',
       workplaceReadiness: 5,
       competencyRelevance: 4,
@@ -271,11 +275,11 @@ describe('Industry Feedback & Curriculum Gap Analytics (PSS-20)', () => {
       recommendations: 'Student shows exceptional technical adaptability. Adding microservices exposure would further boost workplace readiness.',
     });
 
-    expect(res.message).toContain('Industry supervisor feedback');
+    expect(res.message).toContain('verified supervisor attribution');
 
     // 3. Verify record was stored
     const rows = await list(
-      "SELECT * FROM industry_feedback WHERE tenant_id='fictional-university' AND placement_id='placement-1' AND supervisor_id='demo-coordinator'"
+      "SELECT * FROM industry_feedback WHERE tenant_id='fictional-university' AND placement_id='placement-1' AND evaluator_id='demo-supervisor'"
     );
     expect(rows.length).toBe(1);
     expect(Number(rows[0].workplaceReadiness)).toBe(5);
@@ -292,5 +296,38 @@ describe('Industry Feedback & Curriculum Gap Analytics (PSS-20)', () => {
     expect(snap.industryFeedback).toBeDefined();
     expect(snap.industryFeedback.length).toBeGreaterThan(0);
     expect(snap.reviews).toBeDefined(); // Student company reviews exist separately
+  });
+
+  it('preserves verified history after revocation, rejects stale revisions and audits invalidation', async () => {
+    const actor=async(id:string)=> (await list('SELECT * FROM users WHERE id=?',id))[0] as unknown as Identity;
+    const supervisor=await actor('demo-supervisor'), admin=await actor('demo-admin');
+    const row=(await list("SELECT * FROM industry_feedback WHERE evaluator_id='demo-supervisor'"))[0];
+    const payload={placementId:'placement-1',version:Number(row.version),workplaceReadiness:4,competencyRelevance:4,supervisionSupport:4,curriculumAlignment:4,recommendations:'An authenticated revision with preserved authorship.'};
+    await mutate(supervisor,'industryFeedback',payload);
+    await expect(mutate(supervisor,'industryFeedback',payload)).rejects.toThrow('changed');
+    expect((await list('SELECT * FROM industry_feedback_history WHERE feedback_id=?',row.id))).toHaveLength(1);
+    await expect(mutate(supervisor,'industryFeedback',{...payload,placementId:'placement-4',version:0})).rejects.toThrow('assignment');
+    sql.exec("UPDATE assignments SET active=0 WHERE supervisor_id='demo-supervisor' AND placement_id='placement-1'");
+    await expect(mutate(supervisor,'industryFeedback',{...payload,version:Number(row.version)+1})).rejects.toThrow('assignment');
+    expect((await snapshot(supervisor)).industryFeedback).toHaveLength(0);
+    const revised=(await list('SELECT * FROM industry_feedback WHERE id=?',row.id))[0];
+    const p=(await list("SELECT * FROM placements WHERE id='placement-1'"));
+    expect(calculateCurriculumAnalytics(p,[revised],{privacyThreshold:1}).feedbackCount).toBe(1);
+    await mutate(admin,'invalidateIndustryFeedback',{feedbackId:row.id,version:Number(revised.version),reason:'Fictional evidence correction test.'});
+    const invalid=(await list('SELECT * FROM industry_feedback WHERE id=?',row.id))[0];
+    expect(calculateCurriculumAnalytics(p,[invalid],{privacyThreshold:1}).feedbackCount).toBe(0);
+    expect((await list('SELECT * FROM industry_feedback_history WHERE feedback_id=?',row.id))).toHaveLength(2);
+    sql.exec("UPDATE assignments SET active=1 WHERE supervisor_id='demo-supervisor' AND placement_id='placement-1'");
+  });
+
+  it('excludes legacy and foreign records and selects one latest response per placement', () => {
+    const recent={...mockFeedback[0],id:'newest',evaluatorId:'sup-other',enteredBy:'sup-other',submittedAt:'2026-10-20',workplaceReadiness:2};
+    const legacy={...mockFeedback[1],verificationState:'UNVERIFIED',authorshipMethod:'LEGACY'};
+    const foreign={...mockFeedback[2],tenantId:'other-university'};
+    const result=calculateCurriculumAnalytics(mockPlacements,[...mockFeedback,recent,legacy,foreign],{privacyThreshold:1});
+    expect(result.feedbackCount).toBe(3);
+    expect(result.responseRatePercent).toBe(50);
+    const empty=calculateCurriculumAnalytics(mockPlacements,[legacy,foreign],{privacyThreshold:1});
+    expect(empty.feedbackCount).toBe(0);
   });
 });

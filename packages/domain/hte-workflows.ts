@@ -1,9 +1,11 @@
+import {hteActivationStatements} from '../auth/accounts';
+import {runtimeTenantId} from '../auth/runtime';
 import { auditStatement, database, insert, list, one, statement, type PreparedStatement } from '../db/demo';
 import { hashPassword, verifyPassword } from '../auth/password';
 import { limit } from '../auth/auth';
 import { hteRegistration, companyDetails, jobDetails, evaluationQuestions } from '../validation/hte';
 import { inputs, type Action, type Identity, type Row, type Snapshot } from '../validation/contracts';
-import { DomainError, requireRole, scope, TENANT } from './policies';
+import { DomainError, requireRole, scope } from './policies';
 
 const num = (row: Row, key: string) => Number(row[key] ?? 0);
 const str = (row: Row, key: string) => String(row[key] ?? '');
@@ -61,13 +63,15 @@ export async function registerHte(payload: unknown) {
  const d = hteRegistration.parse(payload);
  if (await one('SELECT id FROM users WHERE username=? OR lower(email)=?', d.username, d.email.toLowerCase())) throw new DomainError('That username or email is already registered. Sign in or choose different details.', 409);
  const userId = crypto.randomUUID(), companyId = crypto.randomUUID();
- const user = { id: userId, tenantId: TENANT } as Identity;
+ const tenantId=runtimeTenantId();
+ const activation=process.env.DEPLOYMENT_MODE==='institutional'?await hteActivationStatements(tenantId,userId,d.email.toLowerCase()):[];
+ const user = { id: userId, tenantId } as Identity;
  const req = requestRecord(user, companyId, companyId, 'REGISTRATION', { name: d.name, industry: d.industry, location: d.location, description: d.description, contactName: d.contactName, email: d.email }, 1);
  return commit(user, 'HTE_REGISTRATION_SUBMITTED', req.id, [
-  insert('companies', { tenant_id: TENANT, name: d.name, industry: d.industry, location: d.location, description: d.description, status: 'PENDING', can_post: 0 }, companyId),
-  insert('users', { tenant_id: TENANT, name: d.contactName, username: d.username, email: d.email.toLowerCase(), role: 'SUPERVISOR', status: 'ACTIVE', password_hash: await hashPassword(d.password), session_version: 1, is_demo: 0, company_id: companyId, supervisor_verified: 0, can_post: 0 }, userId),
-  req.query, ...await notifyAdmins(user, 'HTE registration awaiting approval', `${d.name} submitted an HTE registration request.`),
- ], 'Registration submitted. Sign in to track Super Admin approval.');
+  insert('companies', { tenant_id: tenantId, name: d.name, industry: d.industry, location: d.location, description: d.description, status: 'PENDING', can_post: 0 }, companyId),
+  insert('users', { tenant_id: tenantId, name: d.contactName, username: d.username, email: d.email.toLowerCase(), role: 'SUPERVISOR', status: process.env.DEPLOYMENT_MODE==='institutional'?'INVITED':'ACTIVE', password_hash: await hashPassword(d.password), session_version: 1, is_demo: 0, company_id: companyId, supervisor_verified: 0, can_post: 0 }, userId),
+  ...activation,req.query, ...await notifyAdmins(user, 'HTE registration awaiting approval', `${d.name} submitted an HTE registration request.`),
+ ], process.env.DEPLOYMENT_MODE==='institutional'?'Registration submitted. Activate your account using the emailed link, then sign in to track Super Admin approval.':'Registration submitted. Sign in to track Super Admin approval.');
 }
 
 export async function mutateHte(user: Identity, action: Action, payload: unknown): Promise<{ id?: string; message: string } | null> {
@@ -217,6 +221,11 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   const tx = [attendanceGuard(user, p), statement('UPDATE final_dtrs SET attendance_revision=? WHERE tenant_id=? AND id=?', num(p, 'dtrRevision') + 1, user.tenantId, f.id)];
   if (existing) tx.push(archiveEvaluation(user, existing), statement("UPDATE hte_evaluation_responses SET version=CASE WHEN version=? AND status IN ('DRAFT','REVISION_REQUESTED') THEN version+1 ELSE NULL END,answers_json=?,status=?,final_dtr_version=?,note=NULL,reviewed_by=NULL,reviewed_at=NULL,updated_at=? WHERE tenant_id=? AND id=?", d.version, JSON.stringify(d.answers), status, d.finalDtrVersion, now(), user.tenantId, id));
   else tx.push(insert('hte_evaluation_responses', { tenant_id: user.tenantId, placement_id: p.id, evaluator_id: user.id, template_id: template.id, final_dtr_version: d.finalDtrVersion, answers_json: JSON.stringify(d.answers), status, updated_at: now() }, id));
+  if(d.mode==='SUBMIT'){
+   const assignment=await one('SELECT id FROM assignments WHERE tenant_id=? AND placement_id=? AND supervisor_id=? AND active=1',user.tenantId,p.id,user.id);
+   if(!assignment)throw new DomainError('Your supervisor assignment is no longer active.',403);
+   tx.push(statement("UPDATE hte_evaluation_responses SET assignment_id=?,entered_by=?,authorship_method='DIRECT',verification_state='VERIFIED',verified_at=? WHERE tenant_id=? AND id=?",assignment.id,user.id,now(),user.tenantId,id));
+  }
   const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, p.classId);
   if (d.mode === 'SUBMIT' && cls) tx.push(notify(user, str(cls, 'coordinatorId'), 'School evaluation awaiting review', `${user.name} submitted an HTE evaluation.`, 'jobs'));
   return commit(user, 'HTE_EVALUATION_SAVED', id, tx, d.mode === 'SUBMIT' ? 'Evaluation submitted for coordinator review.' : 'Evaluation draft saved.');

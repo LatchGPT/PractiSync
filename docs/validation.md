@@ -1,5 +1,13 @@
 # Validation record
 
+## Lint cleanup — October 21, 2026
+
+- Full repository lint passes with **0 errors and 0 warnings**, enforced by `pnpm lint --max-warnings 0`. No rule suppressions were added. This supersedes the earlier lint-failure records below for the current working tree.
+- Calendar cleanup removes unused imports/calculations, uses a subscribed viewport snapshot for the responsive default, preserves explicit view choices, fixes memo/export callback dependencies, replaces `any` casts and uses supported grid selection semantics. Dead inspector state was removed; day indicators now select the calendar date. The old layout helper is ESM at `scripts/apply_layout_improvements.mjs`; its syntax was checked without executing its source mutations.
+- All **119 tests across 17 files**, TypeScript, Prisma validation and production build pass. PostgreSQL isolation acceptance, both HTTP smoke scripts and the workflow worker one-shot check also pass in the dedicated fictional verification database.
+- Both browser checks pass: 14 backlog UI checks and 10 calendar checks at 390, 820 and 1440px. The calendar pass covers responsive defaults, user-selected mode on resize, keyboard/focus/selection, schedule filters and fresh JSON/CSV/iCalendar downloads after a real deadline save. A long-label phone overflow exposed by the rerun was fixed with a bounded grid track; no page overflow, hydration or runtime errors remain in these checks.
+- Evidence and remaining institutional/release gates: [tasks 5–8 verification](backlog-5-8-evidence.md). Local screenshots/logs are in `.local/backlog-5-8-evidence/`. Earlier dated records remain historical.
+
 ## Student registration and RTU access — October 20, 2026
 
 - Replaces the earlier coordinator approval flow with immediate registration into an active class. The complete suite passes 102 tests across 14 files; the 10 registration/access checks also pass after the final changes, including direct API denial before setup, fresh-profile isolation, duplicate-number handling, atomic rollback, exact email-domain checks, manual exceptions, retired review actions, scoped removal and immediate enrollment in another eligible class.

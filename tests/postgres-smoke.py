@@ -5,10 +5,10 @@ from http import cookiejar
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, timedelta
+from datetime import date, datetime, timezone, timedelta
 from uuid import uuid4
 
-BASE = os.environ.get("PRACTISYNC_BASE_URL", "http://127.0.0.1:3000")
+BASE = os.environ.get("PRACTISYNC_BASE_URL", "http://localhost:3000")
 
 
 def client():
@@ -77,36 +77,33 @@ assert admin_data["incidents"] == []
 assert "passwordHash" not in student_data["user"]
 print("PostgreSQL demo sign-ins and scoped reads passed.", flush=True)
 
-# DTR create, coordinator confirmation, and a correction that revokes that confirmation.
-existing_dates = {row["date"] for row in student_data["entries"]}
-work_date = next(
-    (candidate.isoformat() for offset in range(1, 15)
-     if (candidate := date.today() - timedelta(days=offset)).isoformat() not in existing_dates),
-    None,
-)
-assert work_date, "No free recent date is available for the DTR smoke entry."
+# DTR creation/correction; daily confirmation must remain retired.
+work_date = (datetime.now(timezone(timedelta(hours=8))).date() - timedelta(days=1)).isoformat()
+# Evening intervals avoid the seed's 08:00–17:00 records, including repeated checks.
+intervals = [(datetime.fromisoformat(row["startsAt"].replace("Z","+00:00")), datetime.fromisoformat(row["endsAt"].replace("Z","+00:00"))) for row in student_data["entries"]]
+start_hour = next(hour for hour in range(18,23) if not any(a < datetime.fromisoformat(f"{work_date}T{hour+1:02d}:00+08:00") and b > datetime.fromisoformat(f"{work_date}T{hour:02d}:00+08:00") for a,b in intervals))
 dtr = action(student, "dtr", {
     "placementId": "placement-1", "date": work_date,
-    "startsAt": f"{work_date}T08:00", "endsAt": f"{work_date}T17:00",
-    "breakMinutes": 60, "narrative": "Synthetic PostgreSQL smoke record.",
+    "startsAt": f"{work_date}T{start_hour:02d}:00", "endsAt": f"{work_date}T{start_hour+1:02d}:00",
+    "breakMinutes": 0, "narrative": "Synthetic PostgreSQL smoke record.",
 })
-action(coordinator, "confirm", {"entryId": dtr["id"], "version": 1})
+action(coordinator, "confirm", {"entryId": dtr["id"], "version": 1}, expected=409)
 action(student, "dtr", {
     "placementId": "placement-1", "entryId": dtr["id"], "version": 1,
-    "date": work_date, "startsAt": f"{work_date}T08:00", "endsAt": f"{work_date}T16:00",
-    "breakMinutes": 60, "narrative": "Corrected synthetic PostgreSQL smoke record.",
+    "date": work_date, "startsAt": f"{work_date}T{start_hour:02d}:00", "endsAt": f"{work_date}T{start_hour:02d}:45",
+    "breakMinutes": 0, "narrative": "Corrected synthetic PostgreSQL smoke record.",
     "reason": "Corrected the recorded time-out.",
 })
 current_entry = next(row for row in snapshot(student)["entries"] if row["id"] == dtr["id"])
 assert current_entry["version"] == 2 and current_entry["confirmedVersion"] is None
-print("PostgreSQL DTR confirmation and correction passed.", flush=True)
+print("PostgreSQL DTR correction and retired-confirmation denial passed.", flush=True)
 
-# Coordinator class creation, student join request, approval, and notification read.
+# Coordinator class creation, immediate student registration, and notification read.
 smoke_suffix = uuid4().hex[:8]
 smoke_username = f"smoke.{smoke_suffix}"
 new_account = action(admin, "account", {
     "name": "Riley Synthetic", "username": smoke_username,
-    "email": f"{smoke_username}@example.invalid", "role": "STUDENT",
+    "email": f"{smoke_username}@rtu.edu.ph", "role": "STUDENT",
     "courseId": "course-it", "password": "Smoke@Test2026!",
 })
 created_class = action(coordinator, "class", {
@@ -114,13 +111,13 @@ created_class = action(coordinator, "class", {
 })
 class_row = next(row for row in snapshot(coordinator)["classes"] if row["id"] == created_class["id"])
 new_student = sign_in(username=smoke_username, password="Smoke@Test2026!")
-join_result = action(new_student, "join", {"code": class_row["codeLabel"]})
-assert "Awaiting coordinator approval" in join_result["message"]
-join_request = next(row for row in snapshot(coordinator)["joinRequests"] if row["studentId"] == new_account["id"])
-action(coordinator, "joinRequestDecision", {"requestId": join_request["id"], "decision": "APPROVE"})
+assert request(new_student,"/api/data")[0] == 403
+status, result = request(new_student, "/api/student-verification", {"legalName":"Riley Synthetic","studentNumber":"SMOKE-"+smoke_suffix,"yearLevel":4,"classCode":class_row["codeLabel"],"version":1})
+assert status == 200, (status,result)
 new_student_data = snapshot(new_student)
 assert any(row["id"] == created_class["id"] for row in new_student_data["classes"])
-approval_notification = next(row for row in new_student_data["notifications"] if row["resourceType"] == "class")
+action(coordinator,"announcement",{"classId":created_class["id"],"title":"Fictional smoke notice","body":"A notification read check for the synthetic class."})
+approval_notification = next(row for row in snapshot(new_student)["notifications"] if row["resourceType"] == "announcement")
 action(new_student, "markNotificationRead", {"notificationId": approval_notification["id"]})
 assert next(row for row in snapshot(new_student)["notifications"] if row["id"] == approval_notification["id"])["readAt"]
 print("PostgreSQL class enrollment and notification read passed.", flush=True)
@@ -142,4 +139,9 @@ action(admin, "role", {"userId": new_account["id"], "role": "STUDENT", "status":
 print("Account disabled; checking the old session now.", flush=True)
 assert request(new_student, "/api/data")[0] == 401
 
-print("PostgreSQL HTTP smoke passed: three demo sign-ins, password login, scoped reads, DTR correction/confirmation, class enrollment, policy update, application, notification, coordinator SOS privacy, and session revocation.")
+action(coordinator, "revokeOwnSessions", {"userId": admin_data["user"]["id"]})
+assert request(coordinator, "/api/data")[0] == 401
+assert request(admin, "/api/data")[0] == 200
+print("Self-session revocation and unchanged admin access passed.", flush=True)
+
+print("PostgreSQL HTTP smoke passed: three demo sign-ins, password login, scoped reads, DTR correction and daily-confirmation denial, class enrollment, policy update, application, notification, coordinator SOS privacy, and session revocation.")

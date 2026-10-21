@@ -82,7 +82,7 @@ export async function submitStudentVerification(user: Identity, payload: unknown
   insert('student_profiles', { tenant_id: user.tenantId, user_id: accountId, student_number: d.studentNumber, year_level: d.yearLevel }),
   insert('enrollments', { tenant_id: user.tenantId, class_id: section.id, student_id: accountId, active: 1 }),
   statement("UPDATE student_verifications SET status='APPROVED',approved_student_id=?,legal_name=?,student_number=?,course_id=?,year_level=?,class_id=?,review_note=NULL,reviewer_id=NULL,reviewed_at=NULL,submitted_at=?,updated_at=? WHERE tenant_id=? AND id=?", accountId, d.legalName, d.studentNumber, String(section.courseId), d.yearLevel, section.id, now, now, user.tenantId, request.id),
-  auditStatement(accountId, 'STUDENT_REGISTRATION_COMPLETED', request.id),
+  auditStatement(accountId, 'STUDENT_REGISTRATION_COMPLETED', request.id,null,user.tenantId),
  ]);
  return { message: 'Your registration is complete. Welcome to your class.' };
 }

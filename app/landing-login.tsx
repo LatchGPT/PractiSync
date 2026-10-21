@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 import React, { useState, useRef, type FormEvent } from 'react';
 import {
   GraduationCap,
@@ -19,21 +21,22 @@ import {
   AlertCircle,
   ArrowRight,
   Sparkles,
-  Check,
   HelpCircle,
   X,
-  ExternalLink,
 } from 'lucide-react';
 import { quickDemoAccounts as demoAccounts } from '@/packages/test-utils/fixtures';
 
 interface LoginViewProps {
+  initialAuthError?: string;
+  google?: boolean;
   demo: boolean;
   configured: boolean;
   redirectTo?: string;
   onAuthSubmit: (provider: string, values: Record<string, string>) => Promise<unknown>;
 }
 
-export default function LandingLoginView({ demo, configured, redirectTo = '/', onAuthSubmit }: LoginViewProps) {
+export default function LandingLoginView({ demo, configured, google=false, initialAuthError='', redirectTo = '/', onAuthSubmit }: LoginViewProps) {
+  const router=useRouter();
   const [activeTab, setActiveTab] = useState<'credentials' | 'demo'>('credentials');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -41,7 +44,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
   const [showPassword, setShowPassword] = useState(false);
   const [busyKey, setBusyKey] = useState<string>('');
   const [formErrors, setFormErrors] = useState<{ username?: string; password?: string }>({});
-  const [generalError, setGeneralError] = useState('');
+  const [generalError, setGeneralError] = useState(initialAuthError);
   const [helpOpen, setHelpOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
@@ -86,7 +89,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
         password,
         rememberMe: rememberMe ? '1' : '0',
       });
-      location.assign('/login/complete?redirect='+encodeURIComponent(redirectTo));
+      router.push('/login/complete?redirect='+encodeURIComponent(redirectTo));
     } catch (err) {
       setGeneralError(
         err instanceof Error
@@ -102,7 +105,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
     setGeneralError('');
     try {
       await onAuthSubmit('callback/credentials', { demoId: accountId });
-      location.assign('/login/complete?redirect='+encodeURIComponent(redirectTo));
+      router.push('/login/complete?redirect='+encodeURIComponent(redirectTo));
     } catch (err) {
       setGeneralError(err instanceof Error ? err.message : 'Demo sign-in failed.');
       setBusyKey('');
@@ -436,6 +439,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                 </div>
               )}
 
+              <Link className="ps-forgot-link" href="/account-access">Forgot your local account password?</Link>
               {/* Divider & Secondary Sign-In */}
               <div className="ps-divider">
                 <span>or use university single sign-on</span>
@@ -444,16 +448,17 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               <div className="ps-sso-wrap">
                 <button
                   type="button"
-                  disabled
+                  disabled={!google||!!busyKey}
+                  onClick={async()=>{setBusyKey('google');setGeneralError('');try{const result=await onAuthSubmit('signin/google',{}) as {url?:string};if(result.url)window.location.assign(result.url);}catch(e){setGeneralError(e instanceof Error?e.message:'Google sign-in is unavailable. Try again.');setBusyKey('');}}}
                   className="ps-google-btn"
                   title="Google Workspace OAuth integration for RTU faculty & students"
                 >
                   <span className="ps-google-icon">G</span>
                   <span>Continue with @rtu.edu.ph Google Account</span>
-                  <span className="ps-sso-badge">Coming Soon</span>
+                  <span className="ps-sso-badge">{google?'RTU Workspace':'Not configured'}</span>
                 </button>
                 <p className="ps-sso-note">
-                  Google Workspace sign-in is unavailable in this fictional demo.
+                  {google?'Students complete registration after sign-in. Staff require an OJT office invitation.':'Google Workspace sign-in is unavailable in this fictional demo.'}
                 </p>
               </div>
 

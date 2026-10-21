@@ -17,3 +17,9 @@ PractiSync coordinates university internships across all courses and programs. E
 - A coordinator approves formal completion only after final DTR verification, school HTE evaluation approval, and both student exit forms. Hours alone never establish completion.
 
 The application remains confined to the configured fictional demo runtime. No hosting, notification email service, institutional activation or real school questionnaire is implied by these changes.
+
+## Tasks 5–8 decisions
+
+The approved scope, provenance, account lifecycle, reminder policy and verification boundaries are recorded in `docs/backlog-5-8-contract.md`. University tenancy is the institutional boundary; program/class scope remains explicit. Existing fictional feedback is not independent verified employer evidence.
+
+The working implementation includes direct assigned-supervisor attribution and history, prepared account invitations/recovery, persistent in-app document reminder scheduling, and university ownership guards. Real RTU Google/email acceptance and the complete isolation gate after FEAT-01–04 remain outstanding. The October 21 evidence in `docs/backlog-5-8-evidence.md` defines what was actually demonstrated.

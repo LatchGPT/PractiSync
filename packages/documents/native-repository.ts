@@ -30,7 +30,7 @@ export async function createNativeTemplate(user:Identity,filename:string,bytes:U
     insert('native_document_sources',{tenant_id:user.tenantId,created_by:user.id,filename,sha256:sha256(bytes),content_base64:Buffer.from(bytes).toString('base64'),fonts_json:JSON.stringify(parsed.fonts),scanned_at:now},sourceId),
     insert('native_document_templates',{tenant_id:user.tenantId,created_by:user.id,name:name||filename.replace(/\.docx$/i,''),status:'ACTIVE',last_version:1},templateId),
     insert('native_document_versions',{tenant_id:user.tenantId,template_id:templateId,source_id:sourceId,version:1,revision:1,status:'WORKING',fields_json:JSON.stringify(fields),tokenized_base64:tokenized.toString('base64')},versionId),
-    auditStatement(user.id,'NATIVE_TEMPLATE_UPLOADED',templateId),
+    auditStatement(user.id,'NATIVE_TEMPLATE_UPLOADED',templateId,null,user.tenantId),
   ]);return nativeVersion(user.tenantId,versionId);
 }
 function fieldRows(tenantId:string,versionId:string,fields:NativeField[]){return fields.flatMap(field=>{
@@ -52,7 +52,7 @@ export async function saveNativeFields(user:Identity,version:NativeVersion,field
     statement("UPDATE native_document_versions SET revision=CASE WHEN revision=? AND status='WORKING' THEN revision+1 ELSE NULL END,fields_json=?,tokenized_base64=?,status=?,published_at=? WHERE tenant_id=? AND id=?",version.revision,JSON.stringify(fields),tokenized.toString('base64'),publish?'PUBLISHED':'WORKING',publish?now:null,user.tenantId,version.id),
     statement('DELETE FROM native_document_occurrences WHERE tenant_id=? AND field_id IN (SELECT id FROM native_document_fields WHERE tenant_id=? AND version_id=?)',user.tenantId,user.tenantId,version.id),
     statement('DELETE FROM native_document_fields WHERE tenant_id=? AND version_id=?',user.tenantId,version.id),...fieldRows(user.tenantId,version.id,fields),
-    ...(publish?[statement('UPDATE native_document_templates SET published_version_id=? WHERE tenant_id=? AND id=?',version.id,user.tenantId,version.templateId)]:[]),auditStatement(user.id,publish?'NATIVE_TEMPLATE_PUBLISHED':'NATIVE_FIELDS_UPDATED',version.id),
+    ...(publish?[statement('UPDATE native_document_templates SET published_version_id=? WHERE tenant_id=? AND id=?',version.id,user.tenantId,version.templateId)]:[]),auditStatement(user.id,publish?'NATIVE_TEMPLATE_PUBLISHED':'NATIVE_FIELDS_UPDATED',version.id,null,user.tenantId),
   ]);return nativeVersion(user.tenantId,version.id);
 }
 export async function editNativeVersion(user:Identity,version:NativeVersion){

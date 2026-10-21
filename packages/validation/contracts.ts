@@ -9,6 +9,14 @@ export interface StudentAccountSummary extends Row {courseId:string|null;courseC
 export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];calendarEvents:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];outcomeDecisions:Row[];industryFeedback:Row[];completionResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];studentAccountSummary?:StudentAccountSummary[];classMembers?:Row[];}
 const str=(max=500)=>z.string().trim().min(1).max(max);
 export interface Snapshot {
+ reminderPolicies?: Row[];
+ reminderJobs?: Row[];
+ reminderTargets?: Row[];
+ workflowWorker?: Row|null;
+ deadlineRemindersEnabled?: boolean;
+ accountMailJobs?: Row[];
+ accountAccess?: {google:boolean;email:boolean;institutional:boolean};
+ industryFeedbackHistory?: Row[];
  hteRequests?: Row[];
  finalDtrs?: Row[];
  finalDtrReopens?: Row[];
@@ -19,7 +27,7 @@ export const dtrInput=z.object({placementId:str(),date:z.string().regex(/^\d{4}-
 export const inputs={
  ...hteInputs,
  dtr:dtrInput,
- calendarEvent:z.object({eventId:z.string().optional(),eventType:z.enum(['ACADEMIC','HOLIDAY','DEADLINE','APPOINTMENT']),title:str(160),description:z.string().trim().max(2000).optional().default(''),startDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),endDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),startTime:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal('')),endTime:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal('')),location:z.string().trim().max(240).optional().default(''),meetingUrl:z.string().trim().max(1000).optional().default(''),audience:z.enum(['UNIVERSITY','CLASS']).optional().default('CLASS'),classId:z.string().trim().max(100).optional().default(''),status:z.enum(['ACTIVE','CANCELLED']).optional().default('ACTIVE')}),
+ calendarEvent:z.object({remindersEnabled:z.coerce.number().int().min(0).max(1).default(1),reminderTarget:z.string().max(160).default('NONE'),eventId:z.string().optional(),eventType:z.enum(['ACADEMIC','HOLIDAY','DEADLINE','APPOINTMENT']),title:str(160),description:z.string().trim().max(2000).optional().default(''),startDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),endDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),startTime:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal('')),endTime:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal('')),location:z.string().trim().max(240).optional().default(''),meetingUrl:z.string().trim().max(1000).optional().default(''),audience:z.enum(['UNIVERSITY','CLASS']).optional().default('CLASS'),classId:z.string().trim().max(100).optional().default(''),status:z.enum(['ACTIVE','CANCELLED']).optional().default('ACTIVE')}),
  cancelCalendarEvent:z.object({eventId:str()}),
  deleteCalendarEvent:z.object({eventId:str()}),
  confirm:z.object({entryId:str(),version:z.coerce.number().int()}),
@@ -53,9 +61,15 @@ export const inputs={
  evaluation:z.object({placementId:str(),kind:z.enum(['WEEKLY','MONTHLY']),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),version:z.coerce.number().int().min(1).optional(),technical:z.coerce.number().int().min(1).max(5),communication:z.coerce.number().int().min(1).max(5),professionalism:z.coerce.number().int().min(1).max(5),problemSolving:z.coerce.number().int().min(1).max(5)}),
  evaluationReview:z.object({evaluationId:str(),decision:z.enum(['APPROVED','REVISION_REQUESTED']),note:z.string().trim().max(1000).optional()}),
  outcomeDecision:z.object({placementId:str(),decision:z.enum(['EXEMPLARY','SATISFACTORY','NEEDS_REINFORCEMENT','UNSATISFACTORY']),rationale:z.string().trim().min(5).max(2000)}),
- industryFeedback:z.object({placementId:str(),workplaceReadiness:z.coerce.number().int().min(1).max(5),competencyRelevance:z.coerce.number().int().min(1).max(5),supervisionSupport:z.coerce.number().int().min(1).max(5),curriculumAlignment:z.coerce.number().int().min(1).max(5),technicalGaps:z.string().trim().max(500).optional(),softSkillGaps:z.string().trim().max(500).optional(),recommendations:z.string().trim().min(5).max(2000)}),
+ industryFeedback:z.object({placementId:str(),version:z.coerce.number().int().min(0).default(0),workplaceReadiness:z.coerce.number().int().min(1).max(5),competencyRelevance:z.coerce.number().int().min(1).max(5),supervisionSupport:z.coerce.number().int().min(1).max(5),curriculumAlignment:z.coerce.number().int().min(1).max(5),technicalGaps:z.string().trim().max(500).optional(),softSkillGaps:z.string().trim().max(500).optional(),recommendations:z.string().trim().min(5).max(2000)}),
+ invalidateIndustryFeedback:z.object({feedbackId:str(),version:z.coerce.number().int().min(1),reason:str(1000)}),
  review:z.object({placementId:str(),rating:z.coerce.number().int().min(1).max(5),body:str(5000)}),
  moderateReview:z.object({reviewId:str(),status:z.enum(['APPROVED','REJECTED'])}),
+ reminderPreference:z.object({enabled:z.coerce.number().int().min(0).max(1)}),
+ retryDeadlineReminder:z.object({slotId:str()}),
+ revokeOwnSessions:z.object({}),
+ retryAccountEmail:z.object({jobId:str()}),
+ inviteAccount:z.object({userId:str()}),
  account:z.object({name:str(120),username:z.string().trim().toLowerCase().regex(/^[a-z][a-z0-9._-]{3,40}$/),email:z.string().trim().toLowerCase().email(),role:z.enum(roles),courseId:z.string().optional(),companyId:z.string().optional(),studentEmailAccess:z.enum(['RTU_ONLY','MANUAL_EXCEPTION']).default('RTU_ONLY'),password:z.string().min(12).max(128)}),
  role:z.object({userId:str(),role:z.enum(roles),status:z.enum(['ACTIVE','DISABLED'])}),
  profile:z.object({name:str(120)}),
@@ -64,4 +78,4 @@ export const inputs={
  markAllNotificationsRead:z.object({}),
 };
 export type Action=keyof typeof inputs;
-export function camelRows(rows:Record<string,unknown>[]):Row[]{return rows.map(row=>Object.fromEntries(Object.entries(row).map(([k,v])=>[k.replace(/_([a-z])/g,(_,c:string)=>c.toUpperCase()),v])) as Row);}
+export function camelRows(rows:Record<string,unknown>[]):Row[]{return rows.map(row=>Object.fromEntries(Object.entries(row).map(([k,v])=>[k.replace(/_([a-z])/g,(_,c:string)=>c.toUpperCase()),typeof v==='bigint'?(v<=BigInt(Number.MAX_SAFE_INTEGER)&&v>=BigInt(Number.MIN_SAFE_INTEGER)?Number(v):v.toString()):v])) as Row);}

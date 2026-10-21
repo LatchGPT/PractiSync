@@ -1,3 +1,4 @@
+import {runtimeTenantId} from '../auth/runtime';
 import { z } from 'zod';
 import { auditStatement, database, insert, list, one, statement, type PreparedStatement } from '../db/demo';
 import { inputs, type Action, type Identity } from '../validation/contracts';
@@ -6,7 +7,7 @@ import { DomainError, requireRole } from './policies';
 import { manilaToday } from './assessment-period';
 import { attendanceGuard, requireFinalCompletion } from './hte-workflows';
 
-const tenantId = 'fictional-university';
+
 const hash = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), (byte) => byte.toString(16).padStart(2, '0')).join('');
 const tokenText = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 const isDate = (value: string) => {
@@ -282,6 +283,7 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
 }
 
 export async function guestEvaluationContext(token: string, accessCode: string) {
+  const tenantId=runtimeTenantId();
   if (!/^[A-Za-z0-9_-]{32,64}$/.test(token)) throw new DomainError('This evaluation link is invalid or unavailable.', 404);
   const row = await one(`SELECT l.id,l.access_code_hash,p.id AS placement_id,p.period,p.status,l.expires_at,u.name AS student_name,c.name AS company_name,co.code AS course_code
     FROM guest_evaluation_links l
@@ -296,6 +298,7 @@ export async function guestEvaluationContext(token: string, accessCode: string) 
 }
 
 export async function submitGuestEvaluation(token: string, payload: unknown) {
+  const tenantId=runtimeTenantId();
   const body = z.object({ accessCode: z.string().trim().regex(/^\d{8}$/), scores: z.object({
     'Technical skills': z.object({ score: z.number().int().min(1).max(5), evidence: z.string().trim().min(1).max(1000) }),
     Communication: z.object({ score: z.number().int().min(1).max(5), evidence: z.string().trim().min(1).max(1000) }),
@@ -317,7 +320,7 @@ export async function submitGuestEvaluation(token: string, payload: unknown) {
     ...scores.map(([dimension, value]) => statement(`INSERT INTO scores (id,tenant_id,created_at,evaluation_id,dimension,score,evidence_note)
       SELECT ?,tenant_id,?, ?, ?, ?, ? FROM guest_evaluation_links WHERE tenant_id=? AND id=? AND submission_id=?`, crypto.randomUUID(), now, evaluationId, dimension, value.score, value.evidence, tenantId, link.id, evaluationId)),
   ];
-  tx.push(auditStatement(String(link.issuedBy), 'GUEST_EVALUATION_SUBMIT', evaluationId));
+  tx.push(auditStatement(String(link.issuedBy), 'GUEST_EVALUATION_SUBMIT', evaluationId,null,tenantId));
   await database().batch(tx);
   return { message: 'Evaluation submitted for coordinator review.' };
 }

@@ -1552,6 +1552,8 @@ model DemoAssignments {
 
   @@unique([tenantId, placementId, supervisorId], map: "assignment_pair")
   @@map("assignments")
+  @@unique([id,tenantId], map:"scope_assignments_identity")
+
 }
 
 model DemoAudit {
@@ -1598,6 +1600,8 @@ model DemoClasses {
   @@unique([codeHash], map: "classes_code")
   @@index([tenantId, coordinatorId], map: "classes_coordinator")
   @@map("classes")
+  @@unique([id,tenantId], map:"scope_classes_identity")
+
 }
 
 model DemoCalendarEvents {
@@ -1623,6 +1627,8 @@ model DemoCalendarEvents {
   @@index([tenantId, startDate], map: "calendar_events_tenant_start")
   @@index([tenantId, classId, startDate], map: "calendar_events_class_start")
   @@map("calendar_events")
+  @@unique([id,tenantId], map:"scope_calendar_events_identity")
+
 }
 
 model DemoCompanies {
@@ -1638,6 +1644,8 @@ model DemoCompanies {
   canPost     Int    @default(0) @map("can_post")
 
   @@map("companies")
+  @@unique([id,tenantId], map:"scope_companies_identity")
+
 }
 
 model DemoCompletion {
@@ -1663,6 +1671,8 @@ model DemoCourses {
   code         String
 
   @@map("courses")
+  @@unique([id,tenantId], map:"scope_courses_identity")
+
 }
 
 model DemoDepartments {
@@ -1673,6 +1683,8 @@ model DemoDepartments {
   code      String
 
   @@map("departments")
+  @@unique([id,tenantId], map:"scope_departments_identity")
+
 }
 
 model DemoDocuments {
@@ -1717,6 +1729,8 @@ model DemoEntries {
 
   @@index([tenantId, placementId, date], map: "entries_placement_date")
   @@map("entries")
+  @@unique([id,tenantId], map:"scope_entries_identity")
+
 }
 
 model DemoEvaluations {
@@ -1808,6 +1822,8 @@ model DemoPlacements {
   @@index([tenantId, studentId], map: "placement_student")
   @@index([tenantId, classId], map: "placement_class")
   @@map("placements")
+  @@unique([id,tenantId], map:"scope_placements_identity")
+
 }
 
 model DemoPolicies {
@@ -1916,6 +1932,8 @@ model DemoUsers {
   @@unique([username], map: "users_username")
   @@index([tenantId, role], map: "users_tenant_role")
   @@map("users")
+  @@unique([id,tenantId], map:"scope_users_identity")
+
 }
 
 model DemoJoinRequests {
@@ -2054,6 +2072,20 @@ model DemoIndustryFeedback {
   @@index([tenantId, courseId, academicPeriod], map: "industry_feedback_course_period")
   @@index([tenantId, companyId], map: "industry_feedback_company")
   @@map("industry_feedback")
+  evaluatorId String? @map("evaluator_id")
+  enteredBy String? @map("entered_by")
+  assignmentId String? @map("assignment_id")
+  authorshipMethod String @default("LEGACY") @map("authorship_method")
+  verificationState String @default("UNVERIFIED") @map("verification_state")
+  verifiedAt String? @map("verified_at")
+  submittedAt String? @map("submitted_at")
+  version Int @default(1)
+  invalidatedBy String? @map("invalidated_by")
+  invalidationReason String? @map("invalidation_reason")
+  invalidatedAt String? @map("invalidated_at")
+
+  @@unique([id,tenantId], map:"scope_industry_feedback_identity")
+
 }
 
 model DocumentTemplate {
@@ -2074,6 +2106,8 @@ model DocumentTemplate {
 
   @@index([tenantId, kind, status], map: "document_templates_tenant_kind")
   @@map("document_templates")
+  @@unique([id,tenantId], map:"scope_document_templates_identity")
+
 }
 
 model DocumentTemplateField {
@@ -2135,6 +2169,8 @@ model NativeDocumentSource {
   scannedAt String @map("scanned_at")
   versions NativeDocumentVersion[]
   @@map("native_document_sources")
+  @@unique([id,tenantId], map:"scope_native_document_sources_identity")
+
 }
 model NativeDocumentTemplate {
   id String @id
@@ -2148,6 +2184,8 @@ model NativeDocumentTemplate {
   versions NativeDocumentVersion[]
   @@index([tenantId,status],map:"native_templates_tenant")
   @@map("native_document_templates")
+  @@unique([id,tenantId], map:"scope_native_document_templates_identity")
+
 }
 model NativeDocumentVersion {
   id String @id
@@ -2169,6 +2207,8 @@ model NativeDocumentVersion {
   documents NativeGeneratedDocument[]
   @@unique([templateId,version])
   @@map("native_document_versions")
+  @@unique([id,tenantId], map:"scope_native_document_versions_identity")
+
 }
 model NativeDocumentField {
   id String @id
@@ -2184,6 +2224,8 @@ model NativeDocumentField {
   occurrences NativeDocumentOccurrence[]
   @@unique([versionId,variableKey])
   @@map("native_document_fields")
+  @@unique([id,tenantId], map:"scope_native_document_fields_identity")
+
 }
 model NativeDocumentOccurrence {
   id String @id
@@ -2207,6 +2249,8 @@ model NativeDocumentDraft {
   documents NativeGeneratedDocument[]
   @@unique([tenantId,userId,versionId])
   @@map("native_document_drafts")
+  @@unique([id,tenantId], map:"scope_native_document_drafts_identity")
+
 }
 model NativeGeneratedDocument {
   id String @id
@@ -2341,6 +2385,13 @@ model DemoHteEvaluationResponses {
   version Int @default(1)
   @@unique([tenantId, placementId])
   @@map("hte_evaluation_responses")
+  assignmentId String? @map("assignment_id")
+  authorshipMethod String @default("LEGACY") @map("authorship_method")
+  verificationState String @default("UNVERIFIED") @map("verification_state")
+  verifiedAt String? @map("verified_at")
+
+  enteredBy String? @map("entered_by")
+
 }
 
 model DemoHteEvaluationHistory {
@@ -2388,4 +2439,122 @@ model DemoStudentVerifications {
   @@unique([tenantId,approvedStudentId])
   @@index([tenantId,classId,status,submittedAt],map:"student_verification_queue")
   @@map("student_verifications")
+}
+
+model IndustryFeedbackHistory {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ feedbackId String @map("feedback_id")
+ version Int
+ actorId String @map("actor_id")
+ recordJson String @map("record_json")
+ @@unique([tenantId,feedbackId,version])
+ @@map("industry_feedback_history")
+}
+
+model AuthIdentity {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ userId String @map("user_id")
+ provider String
+ issuer String
+ subject String
+ @@unique([provider,issuer,subject])
+ @@unique([tenantId,userId,provider])
+ @@map("auth_identities")
+}
+model AccountAccessToken {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ userId String @map("user_id")
+ tokenHash String @unique @map("token_hash")
+ purpose String
+ email String
+ sessionVersion Int @map("session_version")
+ expiresAt String @map("expires_at")
+ usedAt String? @map("used_at")
+ claimedBy String? @map("claimed_by")
+ @@index([tenantId,userId,purpose])
+ @@map("account_tokens")
+}
+model AccountEmailOutbox {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ encryptedPayload String @map("encrypted_payload")
+ status String @default("PENDING")
+ attempts Int @default(0)
+ availableAt String @map("available_at")
+ lockedUntil String? @map("locked_until")
+ deliveredAt String? @map("delivered_at")
+ lastError String? @map("last_error")
+ @@index([status,availableAt])
+ @@map("email_outbox")
+}
+
+model DeadlineReminderPolicy {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ eventId String @map("event_id")
+ enabled Int @default(1)
+ targetKind String @default("NONE") @map("target_kind")
+ targetId String? @map("target_id")
+ revision Int @default(1)
+ updatedAt String @map("updated_at")
+ updatedBy String @map("updated_by")
+ @@unique([tenantId,eventId])
+ @@map("deadline_reminder_policies")
+}
+model DeadlineReminderSlot {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ eventId String @map("event_id")
+ policyRevision Int @map("policy_revision")
+ leadDays Int @map("lead_days")
+ dueAt String @map("due_at")
+ deadlineAt String @map("deadline_at")
+ status String @default("PENDING")
+ attempts Int @default(0)
+ nextAttemptAt String @map("next_attempt_at")
+ lastError String? @map("last_error")
+ @@unique([tenantId,eventId,policyRevision,leadDays])
+ @@index([tenantId,status,nextAttemptAt])
+ @@map("deadline_reminder_slots")
+  @@unique([id,tenantId], map:"scope_deadline_reminder_slots_identity")
+
+}
+model DeadlineReminderDelivery {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ slotId String @map("slot_id")
+ userId String @map("user_id")
+ status String @default("PENDING")
+ claimId String? @map("claim_id")
+ deliveredAt String? @map("delivered_at")
+ reason String?
+ @@unique([tenantId,slotId,userId])
+ @@map("deadline_reminder_deliveries")
+}
+model DeadlineNotificationPreference {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ userId String @map("user_id")
+ deadlineReminders Int @default(1) @map("deadline_reminders")
+ @@unique([tenantId,userId])
+ @@map("notification_preferences")
+}
+model WorkflowWorkerState {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ checkedAt String @map("checked_at")
+ lastError String? @map("last_error")
+ @@map("workflow_worker_state")
 }

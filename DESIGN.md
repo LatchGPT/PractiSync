@@ -242,3 +242,11 @@ The generator is an Operate surface for students completing documents and admini
 ## HTE approval and final review extension
 
 The Operate surface and existing blue-and-gold identity remain authoritative. See `docs/hte-workflows.md` for the design contract. Use a compact approval queue with requested/current values, explicit reasons for rejection, and a single primary action per review. Whole-internship DTR verification replaces daily confirmation controls and queue counts. The school evaluation placeholder reads “Waiting for evaluation form” and explains that Super Admin must upload and publish the document for every course and program. Preserve the school’s wording and scale labels when configuring its online answer fields; no sample questionnaire is seeded.
+
+## Tasks 5–8 extension
+
+Feedback provenance, account recovery and deadline settings are Operate surfaces. Follow `docs/backlog-5-8-contract.md`; reuse the existing Inter/RTU tokens and shared controls, use one primary action per form, retain failed input and state the verification/configuration status in text.
+
+The HTE placement form leads with its attributed submission receipt. University reviewers can reach the provenance ledger even when sample-size rules suppress analytics; legacy and invalidated evidence remains visible with explicit labels. Keep destructive invalidation behind an expanded, reasoned confirmation. Pending submissions disable editable fields and preserve failed drafts. Associate labels explicitly with their inputs. On phones, contain wide tables and Settings tab scrolling, stack controls, and leave optional deadline times genuinely optional. Security controls must describe actual configured behavior; do not show simulated password changes, MFA, device locations or email digests as active. See `docs/backlog-5-8-evidence.md` for the rendered finish gate.
+
+Calendar defaults to Agenda on compact viewports while retaining a mode the user explicitly selects. Grid cells use `aria-selected`, and arrow-key navigation keeps focus with the selected date. Bound phone summary-card tracks with `minmax(0, 1fr)` so long deadline labels cannot widen the page.

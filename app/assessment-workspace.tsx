@@ -21,9 +21,8 @@ import {
   Sparkles,
   GraduationCap,
   Lock,
-  PlusCircle,
-  X,
 } from 'lucide-react';
+import { EmployerFeedbackLedger } from './employer-feedback';
 import type { Action, Row, Snapshot } from '@/packages/validation/contracts';
 import {
   assessmentPeriod,
@@ -209,17 +208,6 @@ export default function AssessmentWorkspace({
   const [analyticsCompany, setAnalyticsCompany] = useState<string>('ALL');
   const [analyticsPrivacyThreshold, setAnalyticsPrivacyThreshold] = useState<number>(DEFAULT_PRIVACY_THRESHOLD);
 
-  // Supervisor Feedback Submission Form State
-  const [showFeedbackModal, setShowFeedbackModal] = useState<boolean>(false);
-  const [fbPlacementId, setFbPlacementId] = useState<string>('');
-  const [fbReadiness, setFbReadiness] = useState<number>(4);
-  const [fbRelevance, setFbRelevance] = useState<number>(4);
-  const [fbSupervision, setFbSupervision] = useState<number>(4);
-  const [fbAlignment, setFbAlignment] = useState<number>(4);
-  const [fbTechnicalGaps, setFbTechnicalGaps] = useState<string>('');
-  const [fbSoftSkillGaps, setFbSoftSkillGaps] = useState<string>('');
-  const [fbRecommendations, setFbRecommendations] = useState<string>('');
-
   const placement = data.placements.find((item) => item.studentId === user.id);
   const selectedCourse =
     user.role === 'STUDENT'
@@ -355,12 +343,6 @@ export default function AssessmentWorkspace({
   }
 
   // Eligible placements for industry feedback
-  const feedbackEligiblePlacements = data.placements.filter((p) => {
-    if (!p.companyId) return false;
-    if (user.role === 'SUPERVISOR' && user.companyId && p.companyId !== user.companyId) return false;
-    return true;
-  });
-
   const allCohortPeriods = Array.from(
     new Set(
       data.placements
@@ -381,26 +363,6 @@ export default function AssessmentWorkspace({
     }
   );
 
-  async function handleRecordIndustryFeedback(e: React.FormEvent) {
-    e.preventDefault();
-    const targetPlacementId =
-      fbPlacementId || (feedbackEligiblePlacements[0]?.id ? String(feedbackEligiblePlacements[0].id) : '');
-    if (!targetPlacementId || !fbRecommendations.trim()) return;
-    await run('industryFeedback', {
-      placementId: targetPlacementId,
-      workplaceReadiness: fbReadiness,
-      competencyRelevance: fbRelevance,
-      supervisionSupport: fbSupervision,
-      curriculumAlignment: fbAlignment,
-      technicalGaps: fbTechnicalGaps.trim(),
-      softSkillGaps: fbSoftSkillGaps.trim(),
-      recommendations: fbRecommendations.trim(),
-    });
-    setShowFeedbackModal(false);
-    setFbTechnicalGaps('');
-    setFbSoftSkillGaps('');
-    setFbRecommendations('');
-  }
 
   return (
     <div className="assessment-workspace">
@@ -1256,31 +1218,17 @@ export default function AssessmentWorkspace({
                 supervision support, and curriculum alignment under Framework v1.0.
               </p>
             </div>
-            {(user.role === 'COORDINATOR' || user.role === 'SUPER_ADMIN' || user.role === 'SUPERVISOR') &&
-              feedbackEligiblePlacements.length > 0 && (
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => {
-                    if (!fbPlacementId && feedbackEligiblePlacements.length > 0) {
-                      setFbPlacementId(String(feedbackEligiblePlacements[0].id));
-                    }
-                    setShowFeedbackModal(true);
-                  }}
-                >
-                  <PlusCircle size={15} />
-                  <span>Record Supervisor Competency Evaluation</span>
-                </button>
-              )}
+
           </div>
 
+          <EmployerFeedbackLedger data={data} onAction={onAction}/>
           {/* Student Reviews Strict Separation Notice */}
           <div className="notice industry-separation-notice" role="alert">
             <ShieldAlert size={18} className="disclaimer-icon" />
             <div>
               <strong>Strict Workflow Separation:</strong> Student reviews of companies (student → company)
               are maintained in an independent workflow and strictly excluded from employer feedback metrics.
-              All analytics below represent direct supervisor and employer evaluations.
+              Analytics include only verified direct submissions, using the latest eligible response per placement. Legacy and invalidated responses remain visible to authorized reviewers and are excluded.
             </div>
           </div>
 
@@ -1558,228 +1506,11 @@ export default function AssessmentWorkspace({
                 </div>
               </section>
 
-              {/* Individual Feedback Responses Table (Audited) */}
-              {(user.role === 'COORDINATOR' || user.role === 'SUPER_ADMIN') && (
-                <section className="panel industry-table-panel">
-                  <div className="panel-head">
-                    <div>
-                      <h2>Individual Industry Feedback Ledger</h2>
-                      <p>
-                        Access-controlled supervisor feedback submissions. All views are logged to the
-                        audit ledger.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="panel-body">
-                    <div className="industry-table-wrap">
-                      <table className="industry-feedback-table">
-                        <thead>
-                          <tr>
-                            <th>DATE</th>
-                            <th>STUDENT</th>
-                            <th>HOST COMPANY</th>
-                            <th>SUPERVISOR</th>
-                            <th>READINESS</th>
-                            <th>RELEVANCE</th>
-                            <th>SUPERVISION</th>
-                            <th>ALIGNMENT</th>
-                            <th>GAPS &amp; RECOMMENDATIONS</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(data.industryFeedback ?? []).map((fb) => (
-                            <tr key={fb.id}>
-                              <td className="small muted">
-                                {dateLabel(text(fb, 'createdAt').slice(0, 10))}
-                              </td>
-                              <td>
-                                <strong>
-                                  {text(fb, 'studentName') ||
-                                    String(
-                                      visiblePlacements.find((p) => p.id === fb.placementId)?.studentName ??
-                                        'Student'
-                                    )}
-                                </strong>
-                              </td>
-                              <td>
-                                {text(fb, 'companyName') ||
-                                  String(
-                                    data.companies.find((c) => c.id === fb.companyId)?.name ??
-                                      'Partner Company'
-                                  )}
-                              </td>
-                              <td className="small">{text(fb, 'supervisorName') || 'Supervisor'}</td>
-                              <td><strong>{fb.workplaceReadiness} / 5</strong></td>
-                              <td><strong>{fb.competencyRelevance} / 5</strong></td>
-                              <td><strong>{fb.supervisionSupport} / 5</strong></td>
-                              <td><strong>{fb.curriculumAlignment} / 5</strong></td>
-                              <td className="small">
-                                {fb.technicalGaps && <div><strong>Tech:</strong> {text(fb, 'technicalGaps')}</div>}
-                                {fb.softSkillGaps && <div><strong>Soft:</strong> {text(fb, 'softSkillGaps')}</div>}
-                                {fb.recommendations && <div className="muted">{text(fb, 'recommendations')}</div>}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </section>
-              )}
+
             </>
           )}
 
-          {/* Supervisor Feedback Submission Modal */}
-          {showFeedbackModal && (
-            <div className="modal-backdrop" role="dialog" aria-modal="true">
-              <div className="modal-content industry-feedback-modal">
-                <div className="modal-header">
-                  <div>
-                    <h3>Record Industry Supervisor Feedback</h3>
-                    <p className="small muted">
-                      Evaluate workplace preparedness and suggest curriculum improvements (Framework v1.0).
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="modal-close-btn"
-                    onClick={() => setShowFeedbackModal(false)}
-                    aria-label="Close dialog"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
 
-                <form onSubmit={handleRecordIndustryFeedback} className="industry-feedback-form">
-                  <label className="form-field">
-                    <strong>Student Training Placement:</strong>
-                    <select
-                      value={fbPlacementId || (feedbackEligiblePlacements[0]?.id ? String(feedbackEligiblePlacements[0].id) : '')}
-                      onChange={(e) => setFbPlacementId(e.target.value)}
-                      required
-                    >
-                      {feedbackEligiblePlacements.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {text(p, 'studentName')} · {text(p, 'courseCode')} · {text(p, 'companyName')}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="rating-inputs-grid">
-                    <label className="rating-select-field">
-                      <span>Workplace Readiness</span>
-                      <select
-                        value={fbReadiness}
-                        onChange={(e) => setFbReadiness(Number(e.target.value))}
-                      >
-                        <option value={5}>5 — Exemplary (Exceeds entry expectations)</option>
-                        <option value={4}>4 — Proficient (Well-prepared for tasks)</option>
-                        <option value={3}>3 — Competent (Acceptable foundational skills)</option>
-                        <option value={2}>2 — Developing (Needs significant guidance)</option>
-                        <option value={1}>1 — Unsatisfactory (Unprepared for workplace)</option>
-                      </select>
-                    </label>
-
-                    <label className="rating-select-field">
-                      <span>Competency Relevance</span>
-                      <select
-                        value={fbRelevance}
-                        onChange={(e) => setFbRelevance(Number(e.target.value))}
-                      >
-                        <option value={5}>5 — Directly relevant to current industry tech</option>
-                        <option value={4}>4 — High industry relevance</option>
-                        <option value={3}>3 — Moderately relevant</option>
-                        <option value={2}>2 — Partially outdated / tangential</option>
-                        <option value={1}>1 — Obsolete / Irrelevant to job roles</option>
-                      </select>
-                    </label>
-
-                    <label className="rating-select-field">
-                      <span>Supervision Support</span>
-                      <select
-                        value={fbSupervision}
-                        onChange={(e) => setFbSupervision(Number(e.target.value))}
-                      >
-                        <option value={5}>5 — Comprehensive daily mentorship</option>
-                        <option value={4}>4 — Regular structured supervision</option>
-                        <option value={3}>3 — Adequate periodic guidance</option>
-                        <option value={2}>2 — Minimal supervisor availability</option>
-                        <option value={1}>1 — Inadequate supervision</option>
-                      </select>
-                    </label>
-
-                    <label className="rating-select-field">
-                      <span>Curriculum Alignment</span>
-                      <select
-                        value={fbAlignment}
-                        onChange={(e) => setFbAlignment(Number(e.target.value))}
-                      >
-                        <option value={5}>5 — Excellent alignment with industry stack</option>
-                        <option value={4}>4 — Strong academic alignment</option>
-                        <option value={3}>3 — Moderate alignment</option>
-                        <option value={2}>2 — Notable skill stack gaps</option>
-                        <option value={1}>1 — Severe mismatch with industry demands</option>
-                      </select>
-                    </label>
-                  </div>
-
-                  <label className="form-field">
-                    <span>Observed Technical Skill Gaps (comma-separated):</span>
-                    <input
-                      type="text"
-                      value={fbTechnicalGaps}
-                      onChange={(e) => setFbTechnicalGaps(e.target.value)}
-                      placeholder="e.g. Git branching, Docker containerization, REST API design"
-                      maxLength={500}
-                    />
-                  </label>
-
-                  <label className="form-field">
-                    <span>Observed Workplace Soft Skill Gaps (comma-separated):</span>
-                    <input
-                      type="text"
-                      value={fbSoftSkillGaps}
-                      onChange={(e) => setFbSoftSkillGaps(e.target.value)}
-                      placeholder="e.g. Client communication, Meeting etiquette, Sprint reviews"
-                      maxLength={500}
-                    />
-                  </label>
-
-                  <label className="form-field">
-                    <span>Actionable Curriculum Recommendations:</span>
-                    <textarea
-                      value={fbRecommendations}
-                      onChange={(e) => setFbRecommendations(e.target.value)}
-                      placeholder="Provide concrete curriculum enhancements or training adjustments (minimum 5 characters)..."
-                      rows={3}
-                      maxLength={2000}
-                      required
-                    />
-                    <span className="small muted">{fbRecommendations.length}/2000 characters</span>
-                  </label>
-
-                  <div className="modal-actions">
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => setShowFeedbackModal(false)}
-                      disabled={busy}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="primary"
-                      disabled={busy || fbRecommendations.trim().length < 5}
-                    >
-                      Submit Feedback
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>

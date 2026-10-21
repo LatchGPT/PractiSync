@@ -1,3 +1,5 @@
+import { runtimeTenantId } from '../auth/runtime';
+import { writeTenant } from './tenant-context';
 import { prisma } from './client';
 import { openLocalDemoDatabase } from './local-demo';
 import { TENANT, DomainError, demoAllowed } from '../domain/policies';
@@ -134,11 +136,9 @@ export function settings() {
 
 export function database(): DemoDatabase {
   const cfg = settings();
-  if (!demoAllowed(cfg.DEPLOYMENT_MODE, cfg.DEMO_ENABLED)) {
-    throw new DomainError('Institutional backend is not configured. Demo access is disabled.', 503);
-  }
+  runtimeTenantId();
   if (testDatabase) return testDatabase;
-  if (cfg.PRACTISYNC_LOCAL_DEMO === 'true') return (testDatabase = openLocalDemoDatabase());
+  if (cfg.PRACTISYNC_LOCAL_DEMO === 'true' && demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)) return (testDatabase = openLocalDemoDatabase());
   if (!cfg.DATABASE_URL) throw new DomainError('The demo database is unavailable. Please try again.', 503);
   return new PrismaDemoDatabase(prisma);
 }
@@ -157,7 +157,7 @@ export function statement(sql: string, ...args: Values) {
 }
 
 export function insert(table: string, values: Record<string, string | number | null>, id = crypto.randomUUID()) {
-  const record = { id, tenant_id: TENANT, created_at: new Date().toISOString(), ...values };
+  const record = { id, tenant_id: writeTenant(), created_at: new Date().toISOString(), ...values };
   const columns = Object.keys(record);
   return statement(
     `INSERT INTO ${table} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
@@ -165,11 +165,12 @@ export function insert(table: string, values: Record<string, string | number | n
   );
 }
 
-export function auditStatement(actorId: string, action: string, resourceId: string, reason: string | null = null) {
-  return insert('audit', { actor_id: actorId, action, resource_id: resourceId, reason });
+export function auditStatement(actorId: string, action: string, resourceId: string, reason: string | null = null, tenantId = writeTenant()) {
+  return insert('audit', { tenant_id:tenantId, actor_id: actorId, action, resource_id: resourceId, reason });
 }
 
 export async function seed() {
+  if (!demoAllowed(settings().DEPLOYMENT_MODE,settings().DEMO_ENABLED)) return;
   const db = database();
   if (!testDatabase) {
     const tenant = await prisma.tenant.upsert({

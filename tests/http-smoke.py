@@ -29,7 +29,10 @@ for role,op in accounts:
  assert 'passwordHash' not in data['user'],'Sensitive password hash leaked'
  if role in ['admin']:assert not data['incidents']
  if role=='supervisor':
-  assert {row['id'] for row in data['placements']} <= {'placement-1','placement-3'}
+  # Isolation verification may add legitimate cross-program assignments.
+  placement_ids={row['id'] for row in data['placements']}
+  assert 'placement-1' in placement_ids and 'placement-2' not in placement_ids
+  assert all(row['tenantId']==data['user']['tenantId'] and row['companyId']==data['user']['companyId'] for row in data['placements'])
   assert all('narrative' not in row and 'documents' not in row for row in data['entries'])
  if role=='student':
   assert len(data['placements'])==1

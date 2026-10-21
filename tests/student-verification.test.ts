@@ -1,3 +1,4 @@
+import { workflowTargetFixtures } from './runtime-fixture';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
@@ -45,12 +46,12 @@ beforeAll(async () => {
  sql.exec(migration('202610110001_demo_runtime').split('INSERT INTO "assessment_schedules"')[0]!);
  for (const name of ['202610110003_limited_hte_workflows','202610190001_hte_approvals_final_dtr','202610150001_calendar_events']) sql.exec(migration(name));
  sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql','utf8').replace(/--> statement-breakpoint/g,''));
- sql.exec(readFileSync('drizzle/0008_industry_feedback.sql','utf8'));
+ sql.exec(readFileSync('drizzle/0008_industry_feedback.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210001_feedback_provenance/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210002_account_lifecycle/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210003_deadline_reminders/migration.sql','utf8'));
  sql.exec(migration('202610200001_student_verification').split('ALTER TABLE "StudentProfile"')[0]!);
  sql.exec(migration('202610200003_student_registration'));
  installInteractiveFormSchema();
  installTestDatabase({ prepare: query => prepared(query), batch: async statements => { sql.exec('BEGIN'); try { const result=[]; for (const query of statements) result.push(await query.run()); sql.exec('COMMIT'); return result; } catch (error) { sql.exec('ROLLBACK'); throw error; } } });
- await seed(); await ensureNewStudentDemo();
+ workflowTargetFixtures(sql);await seed(); await ensureNewStudentDemo();
  for (const role of ['coordinator','admin']) actors[role] = await one('SELECT * FROM users WHERE id=?', 'demo-' + role) as unknown as Identity;
  actors.other = await one('SELECT * FROM users WHERE id=?', 'coordinator-other') as unknown as Identity;
  actors.student = await one('SELECT * FROM users WHERE id=?', 'demo-new-student') as unknown as Identity;
