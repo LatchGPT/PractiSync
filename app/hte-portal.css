@@ -48,10 +48,7 @@
   margin: 15px 0 8px;
 }
 
-.hte-intro p {
-  max-width: 790px;
-  color: var(--muted-foreground);
-}
+
 
 .hte-card,
 .hte-notice {
@@ -407,10 +404,7 @@
   margin-bottom: 4px;
 }
 
-.completion-form .muted {
-  font-size: 12.5px;
-  color: var(--muted-foreground);
-}
+
 
 .completion-form.submitted {
   background: #f0fdf4;

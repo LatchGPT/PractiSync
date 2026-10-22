@@ -322,8 +322,8 @@ export default function CalendarView({
                 tenantId: user.tenantId,
                 createdAt: value(doc, 'createdAt'),
                 eventType: 'DEADLINE',
-                title: `Clearance Submission: ${value(doc, 'name')}`,
-                description: `Mandatory practicum document clearance requirement for ${value(placement, 'companyName')}. Status: ${value(doc, 'status') || 'Pending submission'}.`,
+                title: `Internship Document Submission: ${value(doc, 'name')}`,
+                description: `Required practicum document submission for ${value(placement, 'companyName')}. Status: ${value(doc, 'status') || 'Pending submission'}.`,
                 startDate: startKey,
                 endDate: startKey,
                 allDay: 1,
@@ -1798,11 +1798,6 @@ export default function CalendarView({
             </button>
           )}
         </div>
-        <p className={styles.legendCardSubtitle}>
-          {categoryFilter === 'ALL'
-            ? 'Click any item below to highlight it on your practicum calendar.'
-            : `Showing highlight for ${categoryFilter.toLowerCase()}. Click again to reset.`}
-        </p>
 
         <div className={styles.legendList}>
           <button
@@ -1974,7 +1969,7 @@ export default function CalendarView({
         )}
 
         <div className={user.role === 'STUDENT' && studentOverallStats ? styles.monthPacingDivider : ''}>
-          <div className={styles.legendCardHeader}>
+          <div className={styles.monthPacingHeader}>
             <h4 className={styles.monthPacingTitle}>
               <Clock3 size={14} color="var(--rtu-blue)" />
               {format(cursor, 'MMMM')} Shift Pacing
@@ -2013,7 +2008,7 @@ export default function CalendarView({
         )}
       </div>
 
-      {/* 3. Upcoming Milestones & Document Clearance Card */}
+      {/* 3. Upcoming Milestones & Internship Documents Card */}
       <div className={styles.upcomingCard}>
         <div className={styles.legendCardHeader}>
           {user.role === 'STUDENT' && studentClearanceDocs.length > 0 ? (
@@ -2036,7 +2031,7 @@ export default function CalendarView({
                 onClick={() => setLeftRailTab('CLEARANCE')}
               >
                 <FileText size={13} />
-                <span>Clearance ({studentClearanceDocs.length})</span>
+                <span>Internship Documents ({studentClearanceDocs.length})</span>
               </button>
             </div>
           ) : (
@@ -2118,7 +2113,7 @@ export default function CalendarView({
                       className={styles.clearanceDocLink}
                       onClick={() => onNavigate('documents')}
                     >
-                      <span>{isApproved ? 'View approved submission' : 'Submit / update in Clearance'}</span>
+                      <span>{isApproved ? 'View approved submission' : 'Submit / update in Internship Documents'}</span>
                       <ExternalLink size={11} />
                     </button>
                   )}
@@ -2131,7 +2126,7 @@ export default function CalendarView({
                 className={styles.clearanceAllBtn}
                 onClick={() => onNavigate('documents')}
               >
-                <span>Open Document Clearance Portal</span>
+                <span>Open Internship Documents</span>
                 <ChevronRight size={13} />
               </button>
             )}
@@ -2166,20 +2161,17 @@ export default function CalendarView({
 
   const CoeAdminTopCardsDeck = (
     <div className={styles.topCardsGrid} role="region" aria-label="COE Office OJT schedule overview">
-      {/* 1. OJT Document Clearance & Submission Cutoffs */}
+      {/* 1. Internship Document Submission Cutoffs */}
       <div className={styles.legendCard}>
         <div className={styles.legendCardHeader}>
           <h3>
             <FileCheck size={16} color="var(--rtu-blue)" />
-            OJT Document Clearance
+            Internship Documents
           </h3>
           <span className="chip orange" style={{ fontSize: 11, padding: '2px 7px' }}>
             {coeDeadlines.length} active
           </span>
         </div>
-        <p className={styles.legendCardSubtitle}>
-          Submission cutoffs for MOAs, medical clearance, and final OJT clearance.
-        </p>
         <div className={styles.upcomingList} style={{ maxHeight: 170 }}>
           {coeDeadlines.length ? (
             coeDeadlines.slice(0, 5).map((ev) => {
@@ -2231,9 +2223,6 @@ export default function CalendarView({
             {coeAppointments.length} sessions
           </span>
         </div>
-        <p className={styles.legendCardSubtitle}>
-          Industry Partner partner meetings, student consultations, and supervisor alignments.
-        </p>
         <div className={styles.upcomingList} style={{ maxHeight: 170 }}>
           {coeAppointments.length ? (
             coeAppointments.slice(0, 5).map((ev) => {
@@ -2291,9 +2280,6 @@ export default function CalendarView({
             A.Y. 2026–2027
           </span>
         </div>
-        <p className={styles.legendCardSubtitle}>
-          College-wide academic term calendar and official holiday suspensions.
-        </p>
         <div className={styles.upcomingList} style={{ maxHeight: 170 }}>
           {coeAcademicEvents.length ? (
             coeAcademicEvents.slice(0, 5).map((ev) => {
@@ -2440,7 +2426,7 @@ export default function CalendarView({
                     onClick={() => setCategoryFilter(categoryFilter === 'DEADLINE' ? 'ALL' : 'DEADLINE')}
                   >
                     <span className={`${styles.filterDot} ${styles.filterDotDeadline}`} />
-                    {user.role === 'SUPER_ADMIN' ? 'Document Cutoffs & Clearance' : 'Passing of documents'}
+                    {user.role === 'SUPER_ADMIN' ? 'Internship Document Deadlines' : 'Passing of documents'}
                   </button>
                   <button
                     type="button"

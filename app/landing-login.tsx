@@ -3,11 +3,10 @@
 import Link from 'next/link';
 import {useRouter} from 'next/navigation';
 import React, { useState, useRef, type FormEvent } from 'react';
+import { RtuSeal } from '@/components/rtu-seal';
 import {
-  GraduationCap,
-  ShieldCheck,
   BookOpen,
-  BriefcaseBusiness,
+  ShieldCheck,
   Building2,
   CalendarDays,
   Clock,
@@ -20,27 +19,22 @@ import {
   LoaderCircle,
   AlertCircle,
   ArrowRight,
-  Sparkles,
   HelpCircle,
   X,
 } from 'lucide-react';
-import { quickDemoAccounts as demoAccounts } from '@/packages/test-utils/fixtures';
 
 interface LoginViewProps {
   initialAuthError?: string;
   google?: boolean;
-  demo: boolean;
   configured: boolean;
   redirectTo?: string;
   onAuthSubmit: (provider: string, values: Record<string, string>) => Promise<unknown>;
 }
 
-export default function LandingLoginView({ demo, configured, google=false, initialAuthError='', redirectTo = '/', onAuthSubmit }: LoginViewProps) {
+export default function LandingLoginView({ configured, google=false, initialAuthError='', redirectTo = '/', onAuthSubmit }: LoginViewProps) {
   const router=useRouter();
-  const [activeTab, setActiveTab] = useState<'credentials' | 'demo'>('credentials');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [busyKey, setBusyKey] = useState<string>('');
   const [formErrors, setFormErrors] = useState<{ username?: string; password?: string }>({});
@@ -49,6 +43,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const loginSectionRef = useRef<HTMLDivElement>(null);
   const featuresSectionRef = useRef<HTMLElement>(null);
 
@@ -74,6 +69,8 @@ export default function LandingLoginView({ demo, configured, google=false, initi
       errors.password = 'Password must be at least 6 characters.';
     }
     setFormErrors(errors);
+    if (errors.username) usernameInputRef.current?.focus();
+    else if (errors.password) passwordInputRef.current?.focus();
     return Object.keys(errors).length === 0;
   };
 
@@ -87,7 +84,6 @@ export default function LandingLoginView({ demo, configured, google=false, initi
       await onAuthSubmit('callback/credentials', {
         username: username.trim(),
         password,
-        rememberMe: rememberMe ? '1' : '0',
       });
       router.push('/login/complete?redirect='+encodeURIComponent(redirectTo));
     } catch (err) {
@@ -100,18 +96,6 @@ export default function LandingLoginView({ demo, configured, google=false, initi
     }
   };
 
-  const handleDemoSignIn = async (accountId: string) => {
-    setBusyKey(accountId);
-    setGeneralError('');
-    try {
-      await onAuthSubmit('callback/credentials', { demoId: accountId });
-      router.push('/login/complete?redirect='+encodeURIComponent(redirectTo));
-    } catch (err) {
-      setGeneralError(err instanceof Error ? err.message : 'Demo sign-in failed.');
-      setBusyKey('');
-    }
-  };
-
   return (
     <div className="ps-landing-wrapper">
       {/* Top Navigation Bar */}
@@ -119,13 +103,12 @@ export default function LandingLoginView({ demo, configured, google=false, initi
         <div className="ps-landing-nav-inner">
           <div className="ps-landing-brand">
             <span className="ps-brand-badge">
-              <GraduationCap size={20} strokeWidth={2.2} />
+              <RtuSeal size={38} />
             </span>
             <div className="ps-brand-titles">
               <div className="ps-brand-name">
                 PractiSync<span className="ps-gold-dot">.</span>
               </div>
-              <span className="ps-brand-sub">Rizal Technological University</span>
             </div>
           </div>
 
@@ -158,11 +141,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
               <em className="ps-gold-em">Ready for what comes next.</em>
             </h1>
 
-            <p className="ps-hero-desc">
-              The official university-to-industry practicum portal connecting RTU students,
-              academic coordinators, and host establishment supervisors in one seamless,
-              transparent workspace.
-            </p>
+
 
             <div className="ps-hero-cta-group">
               <button
@@ -183,14 +162,11 @@ export default function LandingLoginView({ demo, configured, google=false, initi
             </div>
           </section>
 
-          {/* Right Column: High-Craft Login & Demo Switcher Card */}
+          {/* Right Column: Login Card */}
           <section className="ps-login-col" ref={loginSectionRef}>
             <div className="ps-login-card">
               <div className="ps-login-card-header">
                 <h2 className="ps-login-title">Welcome to PractiSync</h2>
-                <p className="ps-login-subtitle">
-                  Sign in with your RTU institutional account or exploration credentials.
-                </p>
               </div>
 
               {/* General / Server Error Alert */}
@@ -222,47 +198,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                 </div>
               )}
 
-              {/* Segmented Mode Selector: Credentials vs Demo */}
-              <div
-                className="ps-login-tabs"
-                role="tablist"
-                data-active={activeTab}
-                data-tabs={demo ? '2' : '1'}
-              >
-                <div className="ps-tab-glider" aria-hidden="true" />
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'credentials'}
-                  className={`ps-login-tab ${activeTab === 'credentials' ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveTab('credentials');
-                    setGeneralError('');
-                  }}
-                >
-                  <UserRound size={15} />
-                  <span>University Account</span>
-                </button>
-                {demo && (
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeTab === 'demo'}
-                    className={`ps-login-tab ${activeTab === 'demo' ? 'active' : ''}`}
-                    onClick={() => {
-                      setActiveTab('demo');
-                      setGeneralError('');
-                    }}
-                  >
-                    <Sparkles size={15} />
-                    <span>Quick Demo Access</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Tab 1: Production Credentials Form */}
-              {activeTab === 'credentials' && (
-                <form className="ps-form" onSubmit={handleCredentialsSubmit} noValidate>
+              <form className="ps-form" onSubmit={handleCredentialsSubmit} noValidate>
                   {/* Username / Institutional Email */}
                   <div className={`ps-field-group ${formErrors.username ? 'has-error' : ''}`}>
                     <label htmlFor="ps-username" className="ps-field-label">
@@ -276,6 +212,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                       <input
                         ref={usernameInputRef}
                         id="ps-username"
+                        name="username"
                         type="text"
                         autoComplete="username"
                         autoCapitalize="none"
@@ -291,7 +228,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                         }}
                         className="ps-input"
                         aria-invalid={!!formErrors.username}
-                        aria-describedby={formErrors.username ? 'username-error' : 'username-hint'}
+                        aria-describedby={formErrors.username ? 'username-error' : undefined}
                       />
                     </div>
                     {formErrors.username ? (
@@ -299,11 +236,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                         <AlertCircle size={13} />
                         <span>{formErrors.username}</span>
                       </p>
-                    ) : (
-                      <p id="username-hint" className="ps-field-hint">
-                        Use your university account ID or institutional email.
-                      </p>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Password Field */}
@@ -326,7 +259,9 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                         <LockKeyhole size={16} />
                       </span>
                       <input
+                        ref={passwordInputRef}
                         id="ps-password"
+                        name="password"
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="current-password"
                         placeholder="••••••••••••"
@@ -359,19 +294,6 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                     )}
                   </div>
 
-                  {/* Remember Me Option */}
-                  <div className="ps-remember-row">
-                    <label className="ps-checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="ps-checkbox"
-                      />
-                      <span>Remember this workstation</span>
-                    </label>
-                  </div>
-
                   {/* Submit Button */}
                   <button
                     type="submit"
@@ -390,54 +312,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                       </>
                     )}
                   </button>
-                </form>
-              )}
-
-              {/* Tab 2: Cleanly Separated Demo Accounts */}
-              {activeTab === 'demo' && demo && (
-                <div className="ps-demo-section">
-                  <div className="ps-demo-notice">
-                    <Sparkles size={15} />
-                    <span>Instant QA &amp; Evaluation Access (No password needed)</span>
-                  </div>
-                  <div className="ps-demo-grid">
-                    {demoAccounts.map((account, i) => {
-                      const icons = [GraduationCap, BookOpen, ShieldCheck, BriefcaseBusiness];
-                      const Icon = icons[i] ?? UserRound;
-                      const roleColors = ['student', 'coordinator', 'admin', 'supervisor'];
-                      const colorClass = roleColors[i] ?? 'default';
-
-                      return (
-                        <button
-                          key={account.id}
-                          type="button"
-                          className={`ps-demo-card ps-demo-${colorClass}`}
-                          disabled={!!busyKey || !configured}
-                          onClick={() => handleDemoSignIn(account.id)}
-                        >
-                          <div className="ps-demo-card-head">
-                            <span className="ps-demo-icon">
-                              {busyKey === account.id ? (
-                                <LoaderCircle size={16} className="spin" />
-                              ) : (
-                                <Icon size={16} />
-                              )}
-                            </span>
-                            <span className="ps-demo-role-badge">{account.title}</span>
-                          </div>
-                          <strong className="ps-demo-name">{account.name}</strong>
-                          <p className="ps-demo-desc">{account.description}</p>
-                          <span className="ps-demo-click-hint">Click to launch &rarr;</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button type="button" className="ps-first-login-demo" disabled={!!busyKey || !configured} onClick={() => handleDemoSignIn('demo-new-student')}>
-                    {busyKey === 'demo-new-student' ? <LoaderCircle size={17} className="spin"/> : <UserPlus size={17}/>}
-                    <span><strong>Try first-time student setup</strong><small>Fictional identity · join with a class code</small></span><ArrowRight size={16}/>
-                  </button>
-                </div>
-              )}
+              </form>
 
               <Link className="ps-forgot-link" href="/account-access">Forgot your local account password?</Link>
               {/* Divider & Secondary Sign-In */}
@@ -474,12 +349,8 @@ export default function LandingLoginView({ demo, configured, google=false, initi
         {/* Platform Pillars Section */}
         <section className="ps-features-section" ref={featuresSectionRef}>
           <div className="ps-features-header">
-            <span className="ps-features-eyebrow">COOPERATIVE WORKSPACE EXCELLENCE</span>
-            <h2 className="ps-features-title">Engineered for Academic &amp; Industry Rigor</h2>
-            <p className="ps-features-subtitle">
-              PractiSync bridges the gap between university course requirements and workplace
-              performance with auditable digital tracking.
-            </p>
+            <span className="ps-features-eyebrow">RTU COE ORIENTATION · OJT KICKSTART</span>
+            <h2 className="ps-features-title">From internship orientation to industry practice</h2>
           </div>
 
           <div className="ps-features-grid">
@@ -488,11 +359,10 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                 <Clock size={22} />
               </div>
               <h3 className="ps-feature-card-title">Industry Partner Supervisor Time Verification</h3>
-              <p className="ps-feature-card-text">
-                Company supervisors review one complete DTR at the end of the internship,
-                verify its accuracy or return it for correction, then complete the school evaluation.
-              </p>
-              <span className="ps-feature-tag">Final DTR Verification</span>
+              <p className="ps-feature-card-copy">Verify logged hours with your Industry Partner Supervisor before coordinator review.</p>
+              <div className="ps-feature-card-footer">
+                <span className="ps-feature-tag">Final DTR Verification</span>
+              </div>
             </div>
 
             <div className="ps-feature-card ps-feature-navy">
@@ -500,11 +370,29 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                 <ChartNoAxesCombined size={22} />
               </div>
               <h3 className="ps-feature-card-title">Outcome &amp; Competency Analytics</h3>
-              <p className="ps-feature-card-text">
-                Evaluate student technical and soft skills through standardized rubric frameworks
-                mapped directly to CHED and institutional learning outcomes.
-              </p>
-              <span className="ps-feature-tag">Curriculum Alignment</span>
+              <p className="ps-feature-card-copy">Track competency progress against course expectations and placement outcomes.</p>
+              <div className="ps-feature-card-footer">
+                <span className="ps-feature-tag">Curriculum Alignment</span>
+              </div>
+            </div>
+
+            <div className="ps-feature-card ps-feature-gold">
+              <div className="ps-feature-icon-wrap ps-icon-gold">
+                <BookOpen size={22} />
+              </div>
+              <h3 className="ps-feature-card-title">OJT Kickstart: Internship Orientation</h3>
+              <p className="ps-feature-card-copy">Review internship policies, required forms, and professional expectations before placement.</p>
+              <div className="ps-feature-card-footer">
+                <span className="ps-feature-tag">OJT readiness</span>
+                <a
+                  className="ps-feature-source"
+                  href="https://www.rtu.edu.ph/ojt-kickstart-rtu-coe-office-launches-internship-orientation-for-the-new-semester/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  COE Office site <ArrowRight size={14} />
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -514,18 +402,12 @@ export default function LandingLoginView({ demo, configured, google=false, initi
       <footer className="ps-landing-footer">
         <div className="ps-footer-inner">
           <div className="ps-footer-branding">
+            <RtuSeal size={40} />
             <div className="ps-brand-titles">
               <div className="ps-brand-name">
                 PractiSync<span className="ps-gold-dot">.</span>
               </div>
-              <span className="ps-brand-sub">
-                Rizal Technological University · Cooperative Education Portal
-              </span>
             </div>
-            <p className="ps-footer-disclaimer">
-              Built for Rizal Technological University on-the-job training and cooperative
-              education programs. Fictional demo environment for academic demonstration.
-            </p>
           </div>
 
           <div className="ps-footer-col">
@@ -587,13 +469,6 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                   the university.
                 </li>
               </ul>
-              <div className="ps-help-demo-tip">
-                <Sparkles size={14} />
-                <span>
-                  For this evaluation demo, you can instantly test any role by selecting the{' '}
-                  <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab on the sign-in card.
-                </span>
-              </div>
             </div>
             <div className="ps-help-modal-footer">
               <button
@@ -642,33 +517,13 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                   <strong>Industry Partners:</strong> <a href="/register/industry-partner">Register your Industry Partner</a>. Industry supervisors can submit company and account details for Super Admin approval.
                 </li>
               </ul>
-              <div className="ps-help-demo-tip">
-                <Sparkles size={14} />
-                <span>
-                  Testing the system? You can jump straight in using the{' '}
-                  <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab. Choose &ldquo;Try first-time student setup&rdquo; to explore student registration, or use a role card to open an established workspace.
-                </span>
-              </div>
             </div>
-            <div className="ps-help-modal-footer" style={{ gap: '10px' }}>
-              <button
-                type="button"
-                className="ps-hero-secondary-btn"
-                style={{ padding: '8px 16px', fontSize: '13px' }}
-                onClick={() => {
-                  setRegisterModalOpen(false);
-                  setActiveTab('demo');
-                  scrollToLogin();
-                }}
-              >
-                Explore Demo
-              </button>
+            <div className="ps-help-modal-footer">
               <button
                 type="button"
                 className="ps-modal-primary-btn"
                 onClick={() => {
                   setRegisterModalOpen(false);
-                  setActiveTab('credentials');
                   scrollToLogin();
                 }}
               >

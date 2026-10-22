@@ -147,6 +147,8 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
     const companyId = await verifiedSupervisorCompanyId(user);
     const placement = await one('SELECT * FROM placements WHERE tenant_id=? AND id=? AND company_id=? AND id IN (SELECT placement_id FROM assignments WHERE tenant_id=? AND supervisor_id=? AND active=1) AND status=\'ACTIVE\'', user.tenantId, String(d.placementId), companyId, user.tenantId, user.id);
     if (!placement) throw new DomainError('This placement is not assigned to your verified company account.', 403);
+    const baseline = await one("SELECT id FROM evaluations WHERE tenant_id=? AND placement_id=? AND kind='BASELINE' AND status IN ('SUBMITTED','APPROVED')", user.tenantId, placement.id);
+    if (!baseline) throw new DomainError('Company evaluation cannot begin until the student submits their baseline Self-Assessment Competency Report.', 409);
     const scores = d.scores as Record<string, { score: number; evidence: string }>;
     const dimensions = [['Technical skills', scores.technicalSkills], ['Communication', scores.communication], ['Professionalism', scores.professionalism], ['Problem solving', scores.problemSolving]] as const;
     const current = await one('SELECT * FROM evaluations WHERE tenant_id=? AND placement_id=? AND evaluator_id=? AND kind=\'FINAL\' ORDER BY created_at DESC LIMIT 1', user.tenantId, placement.id, user.id);
@@ -338,7 +340,8 @@ export async function guestEvaluationContext(token: string, accessCode: string) 
     JOIN courses co ON co.id=p.course_id AND co.tenant_id=p.tenant_id
     WHERE l.tenant_id=? AND l.token_hash=? AND l.revoked_at IS NULL AND l.used_at IS NULL AND l.expires_at>? AND p.status IN ('ACTIVE','COMPLETED')`, tenantId, await hash(token), new Date().toISOString());
   if (!row || !/^\d{8}$/.test(accessCode) || await hash(`${row.id}:${accessCode}`) !== row.accessCodeHash) throw new DomainError('The access code is invalid or this link is unavailable.', 403);
-  return { studentName: row.studentName, companyName: row.companyName, courseCode: row.courseCode, period: row.period, expiresAt: row.expiresAt, rubric: ['Technical skills', 'Communication', 'Professionalism', 'Problem solving'] };
+  const baseline = await one("SELECT id FROM evaluations WHERE tenant_id=? AND placement_id=? AND kind='BASELINE' AND status IN ('SUBMITTED','APPROVED')", tenantId, row.placementId);
+  return { studentName: row.studentName, companyName: row.companyName, courseCode: row.courseCode, period: row.period, expiresAt: row.expiresAt, rubric: ['Technical skills', 'Communication', 'Professionalism', 'Problem solving'], hasBaseline: !!baseline };
 }
 
 export async function submitGuestEvaluation(token: string, payload: unknown) {
@@ -354,6 +357,8 @@ export async function submitGuestEvaluation(token: string, payload: unknown) {
     JOIN classes cl ON cl.id=p.class_id AND cl.tenant_id=p.tenant_id AND cl.coordinator_id=l.issued_by
     WHERE l.tenant_id=? AND l.token_hash=? AND l.revoked_at IS NULL AND l.used_at IS NULL AND l.expires_at>? AND p.status IN ('ACTIVE','COMPLETED')`, tenantId, await hash(token), new Date().toISOString());
   if (!link || await hash(`${link.id}:${body.accessCode}`) !== link.accessCodeHash) throw new DomainError('The access code is invalid or this link is unavailable.', 403);
+  const baseline = await one("SELECT id FROM evaluations WHERE tenant_id=? AND placement_id=? AND kind='BASELINE' AND status IN ('SUBMITTED','APPROVED')", tenantId, link.placementId);
+  if (!baseline) throw new DomainError('Company evaluation cannot begin until the student submits their baseline Self-Assessment Competency Report.', 409);
   const evaluationId = crypto.randomUUID();
   const now = new Date().toISOString();
   const scores = Object.entries(body.scores) as [string, { score: number; evidence: string }][];

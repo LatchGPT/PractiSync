@@ -57,7 +57,7 @@ function getNotificationVisual(type: string) {
       return {
         icon: FileText,
         className: 'notif-icon-document',
-        tag: 'Clearance',
+        tag: 'Internship Documents',
       };
     case 'CLASS':
       return {
@@ -271,11 +271,6 @@ export default function NotificationCenter({
                 {tab === 'unread' ? <CheckCircle2 size={32} /> : <Bell size={32} />}
               </div>
               <h4>{tab === 'unread' ? 'All caught up!' : 'No notifications yet'}</h4>
-              <p>
-                {tab === 'unread'
-                  ? "You have reviewed all updates. There are no unread alerts right now."
-                  : 'Important practicum milestones and coordinator updates will appear here.'}
-              </p>
             </div>
           )}
         </div>

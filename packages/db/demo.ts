@@ -2,6 +2,7 @@ import { runtimeTenantId } from '../auth/runtime';
 import { writeTenant } from './tenant-context';
 import { prisma } from './client';
 import { openLocalDemoDatabase } from './local-demo';
+import { rtuCourses, rtuDepartments } from './rtu-university-structure';
 import { TENANT, DomainError, demoAllowed } from '../domain/policies';
 import { demoAccounts } from '../test-utils/fixtures';
 import { camelRows, type Row } from '../validation/contracts';
@@ -192,7 +193,7 @@ export async function seed() {
   // Promote the existing fictional HTE account for password sign-in without reseeding or resetting demo edits.
   await db.prepare("UPDATE users SET is_demo=1 WHERE id=? AND username=? AND role=?").bind('demo-supervisor', 'demo.supervisor', 'SUPERVISOR').run();
 
-  const existingSeed = await db.prepare("SELECT value FROM seed_state WHERE key='seed-v7'").first();
+  const existingSeed = await db.prepare("SELECT value FROM seed_state WHERE key='seed-v9'").first();
   const ensureSchedules = () => db.prepare("INSERT OR IGNORE INTO assessment_schedules (id,tenant_id,created_at,course_id,cadence,updated_at,version) SELECT 'schedule-' || id,tenant_id,datetime('now'),id,'WEEKLY',datetime('now'),1 FROM courses").run();
   if (existingSeed) {
     await ensureSchedules();
@@ -230,8 +231,14 @@ export async function seed() {
   add('users', 'coordinator-other', { name: 'Patricia Lim', username: 'coordinator.other', email: 'patricia@example.invalid', role: 'COORDINATOR', is_demo: 0 });
   add('users', 'supervisor-northstar', { name: 'Engr. Marc Torres', username: 'supervisor.northstar', email: 'marc.torres@northstar.example.com', role: 'SUPERVISOR', course_id: null, company_id: 'company-northstar', supervisor_verified: 1, is_demo: 0 });
   add('users', 'supervisor-brightside', { name: 'Dr. Elena Cruz', username: 'supervisor.brightside', email: 'elena.cruz@brightside.example.com', role: 'SUPERVISOR', course_id: null, company_id: 'company-brightside', supervisor_verified: 1, is_demo: 0 });
-  for (const [id, name, code] of [['dept-it', 'Computing & Technology', 'CCT'], ['dept-business', 'Business & Management', 'CBM'], ['dept-education', 'Teacher Education', 'CED']]) add('departments', id, { name, code });
-  for (const [id, department, name, code] of [['course-it', 'dept-it', 'BS Information Technology', 'BSIT'], ['course-business', 'dept-business', 'BS Business Administration', 'BSBA'], ['course-education', 'dept-education', 'BS Education', 'BSED']]) add('courses', id, { department_id: department, name, code });
+  for (const department of rtuDepartments) add('departments', department.id, { name: department.name, code: department.code });
+  for (const course of rtuCourses) add('courses', course.id, { department_id: course.departmentId, name: course.name, code: course.code });
+  for (const department of rtuDepartments) {
+    statements.push(db.prepare('UPDATE departments SET name=?,code=? WHERE tenant_id=? AND id=?').bind(department.name, department.code, TENANT, department.id));
+  }
+  for (const course of rtuCourses) {
+    statements.push(db.prepare('UPDATE courses SET department_id=?,name=?,code=? WHERE tenant_id=? AND id=?').bind(course.departmentId, course.name, course.code, TENANT, course.id));
+  }
   for (const [id, name, section, course, coordinator, code, expires, revoked, rep, vice] of [['class-it', 'OJT Practicum', 'BSIT 4-A', 'course-it', 'demo-coordinator', 'SYNC4A', null, 0, 'demo-student', 'student-5'], ['class-it-b', 'OJT Practicum', 'BSIT 4-B', 'course-it', 'demo-coordinator', 'SYNC4B', null, 0, 'student-3', null], ['class-business', 'Business Practicum', 'BSBA 4-A', 'course-business', 'demo-coordinator', 'BIZ4A', null, 0, 'student-2', null], ['class-ed', 'Teaching Internship', 'BSED 4-A', 'course-education', 'coordinator-other', 'EDUC4A', null, 0, 'student-4', null], ['class-expired', 'Archived Practicum', 'BSIT 3-X', 'course-it', 'demo-coordinator', 'EXPIRED', '2026-01-01', 0, null, null], ['class-revoked', 'Archived Practicum', 'BSIT 3-Y', 'course-it', 'demo-coordinator', 'REVOKED', null, 1, null, null]] as const) {
     add('classes', id, { name, section, course_id: course, coordinator_id: coordinator, period: '2026–2027 · First semester', code_hash: await digest(code), code_label: code, expires_at: expires, revoked, class_rep_id: rep, vice_class_rep_id: vice });
   }
@@ -299,7 +306,7 @@ export async function seed() {
   add('industry_feedback', 'ind-feed-2', { placement_id: 'placement-1', company_id: 'company-northstar', supervisor_id: 'supervisor-northstar', course_id: 'course-it', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 4, supervision_support: 4, curriculum_alignment: 3, technical_gaps: 'Automated testing (Vitest/Jest), API contract validation', soft_skill_gaps: 'Client-facing status updates', recommendations: 'Student demonstrates quick learning and good problem solving. More emphasis on test-driven development and API integration would enhance readiness.', status: 'SUBMITTED' });
   add('industry_feedback', 'ind-feed-3', { placement_id: 'placement-3', company_id: 'company-northstar', supervisor_id: 'supervisor-northstar', course_id: 'course-it', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 5, supervision_support: 4, curriculum_alignment: 4, technical_gaps: 'SQL query optimization, Relational indexing', soft_skill_gaps: 'None observed', recommendations: 'Overall well prepared for engineering tasks. Integrating database performance tuning into advanced database subjects would be beneficial.', status: 'SUBMITTED' });
   add('industry_feedback', 'ind-feed-4', { placement_id: 'placement-4', company_id: 'company-brightside', supervisor_id: 'supervisor-brightside', course_id: 'course-education', academic_period: '2026–2027 · First semester', framework_version: 1, workplace_readiness: 4, competency_relevance: 5, supervision_support: 5, curriculum_alignment: 4, technical_gaps: 'Digital lesson planning tools', soft_skill_gaps: 'Parent-teacher conference facilitation', recommendations: 'Very strong pedagogy and classroom presence. Training on blended learning management systems would be a great addition.', status: 'SUBMITTED' });
-  statements.push(db.prepare("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v7','20261015')"));
+  statements.push(db.prepare("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v9','20261021')"));
   for (let index = 0; index < statements.length; index += 80) await db.batch(statements.slice(index, index + 80));
   await ensureSchedules();
 }

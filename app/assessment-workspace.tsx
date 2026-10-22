@@ -21,8 +21,10 @@ import {
   Sparkles,
   GraduationCap,
   Lock,
+  Eye,
 } from 'lucide-react';
 import { EmployerFeedbackLedger } from './employer-feedback';
+import SelfAssessmentModal from './self-assessment-modal';
 import type { Action, Row, Snapshot } from '@/packages/validation/contracts';
 import {
   assessmentPeriod,
@@ -80,10 +82,7 @@ function PeriodDtr({ entries, start, end }: { entries: Row[]; start: string; end
   return (
     <section className="assessment-context" aria-label="Daily attendance context">
       <h3>Daily training context</h3>
-      <p className="small muted">
-        Read-only DTR records for {dateLabel(start)} – {dateLabel(end)}. These do not set competency
-        scores.
-      </p>
+
       <div className="assessment-context-totals">
         <strong>{periodEntries.length} entries</strong>
         <span>{(reported / 60).toFixed(1)} reported hours</span>
@@ -177,7 +176,7 @@ export default function AssessmentWorkspace({
   onAction,
 }: {
   data: Snapshot;
-  onAction: (action: Action, values: Record<string, string | number>) => Promise<void>;
+  onAction?: (action: Action, values: Record<string, unknown>) => Promise<unknown>;
 }) {
   const { user } = data;
   const ownedClasses = data.classes.filter((item) => item.coordinatorId === user.id);
@@ -208,6 +207,7 @@ export default function AssessmentWorkspace({
   const [analyticsCompany, setAnalyticsCompany] = useState<string>('ALL');
   const [analyticsPrivacyThreshold, setAnalyticsPrivacyThreshold] = useState<number>(DEFAULT_PRIVACY_THRESHOLD);
 
+  const [showSelfAssessmentModal, setShowSelfAssessmentModal] = useState<boolean>(false);
   const placement = data.placements.find((item) => item.studentId === user.id);
   const selectedCourse =
     user.role === 'STUDENT'
@@ -326,7 +326,7 @@ export default function AssessmentWorkspace({
   async function run(action: Action, values: Record<string, string | number>) {
     setBusy(true);
     try {
-      await onAction(action, values);
+      if (onAction) await onAction(action, values);
     } finally {
       setBusy(false);
     }
@@ -402,16 +402,18 @@ export default function AssessmentWorkspace({
 
       {activeTab === 'outcome' && (
         <div className="outcome-evaluation-section">
-          {/* Decision Support Disclaimer Notice */}
-          <div className="notice outcome-disclaimer-notice" role="alert">
-            <ShieldAlert size={18} className="disclaimer-icon" />
-            <div>
-              <strong>Decision Support Only:</strong> Calculated outcome results are derived using
-              deterministic rubric dimensions and published thresholds. They assist academic evaluation,
-              but <em>never</em> automatically certify OJT completion, approve a grade, or replace a
-              coordinator’s formal academic decision.
+          {/* Decision Support Disclaimer Notice (Coordinators and Administrators only) */}
+          {user.role !== 'STUDENT' && (
+            <div className="notice outcome-disclaimer-notice" role="alert">
+              <ShieldAlert size={18} className="disclaimer-icon" />
+              <div>
+                <strong>Decision Support Only:</strong> Calculated outcome results are derived using
+                deterministic rubric dimensions and published thresholds. They assist academic evaluation,
+                but <em>never</em> automatically certify OJT completion, approve a grade, or replace a
+                coordinator’s formal academic decision.
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Student Placement Selector for Coordinator */}
           {user.role === 'COORDINATOR' && visiblePlacements.length > 0 && (
@@ -435,6 +437,54 @@ export default function AssessmentWorkspace({
             </section>
           )}
 
+          {/* Baseline Self-Assessment Gating & Status Banner */}
+          {currentOutcomePlacement && (() => {
+            const baselineEval = data.evaluations.find(
+              (e) => e.placementId === currentOutcomePlacement.id && e.kind === 'BASELINE'
+            );
+            if (!baselineEval) {
+              return (
+                <div className="notice" role="alert" style={{ background: '#fffcf6', borderColor: '#f7e0b1', color: '#966914', marginBottom: 16 }}>
+                  <ShieldAlert size={18} style={{ color: '#d97706', flexShrink: 0 }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 12 }}>
+                    <div>
+                      <strong>HTE Evaluation Gate: Baseline Self-Assessment Pending.</strong>{' '}
+                      {user.role === 'STUDENT'
+                        ? 'You have not yet submitted your baseline Self-Assessment Competency Report. Host company evaluations cannot begin until this report is recorded in Weekly Reports.'
+                        : `Student ${text(currentOutcomePlacement, 'studentName')} has not yet submitted their baseline Self-Assessment Competency Report. Company evaluation remains gated until the student records their perceived skill baseline.`}
+                    </div>
+                    {user.role === 'STUDENT' && (
+                      <button
+                        type="button"
+                        className="primary"
+                        style={{ fontSize: 12, padding: '6px 14px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                        onClick={() => setShowSelfAssessmentModal(true)}
+                      >
+                        <Sparkles size={13} />
+                        <span>Complete self-assessment</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            if (user.role === 'STUDENT') {
+              return null;
+            }
+            return (
+              <div className="notice" role="status" style={{ background: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534', marginBottom: 16 }}>
+                <CheckCircle2 size={18} style={{ color: '#16a34a', flexShrink: 0 }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <strong>Student Competency Baseline Established:</strong>{' '}
+                    Baseline self-assessment (v{Number(baselineEval.version ?? 1)}) submitted on{' '}
+                    {dateLabel(text(baselineEval, 'createdAt').slice(0, 10))}. Evaluators compare self-perception with observed workplace performance.
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {outcome && currentOutcomePlacement ? (
             <>
               {/* Overall Outcome Attainment Hero Card */}
@@ -442,9 +492,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Rubric Outcome Attainment</h2>
-                    <p>
-                      {outcome.frameworkName} · Version {outcome.frameworkVersion} · Scale {outcome.scaleMin}–{outcome.scaleMax} · Published Threshold: {outcome.attainmentThreshold.toFixed(2)} / 5.0
-                    </p>
                   </div>
                   <span
                     className={`chip outcome-hero-badge ${
@@ -510,7 +557,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Transparent Calculation &amp; Formula</h2>
-                    <p>Explainable, deterministic calculation inputs and applied weights.</p>
                   </div>
                 </div>
                 <div className="panel-body outcome-derivation-body">
@@ -616,7 +662,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Dimension Details &amp; Weights</h2>
-                    <p>Evidence summary per configured rubric dimension.</p>
                   </div>
                 </div>
                 <div className="panel-body">
@@ -691,9 +736,6 @@ export default function AssessmentWorkspace({
                   <div className="panel-head">
                     <div>
                       <h2>Record Human Academic Decision</h2>
-                      <p>
-                        Review the calculated decision support and record your official evaluation decision.
-                      </p>
                     </div>
                   </div>
                   <div className="panel-body outcome-decision-form-body">
@@ -756,7 +798,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Academic Decision History</h2>
-                    <p>Audited records of coordinator evaluations for this student placement.</p>
                   </div>
                   <History size={18} className="muted-icon" />
                 </div>
@@ -838,7 +879,6 @@ export default function AssessmentWorkspace({
               <div className="panel-head">
                 <div>
                   <h2>Course assessment schedule</h2>
-                  <p>Choose weekly, monthly, or both for students in this course.</p>
                 </div>
               </div>
               <div className="panel-body assessment-controls">
@@ -890,15 +930,6 @@ export default function AssessmentWorkspace({
               <div className="panel-head">
                 <div>
                   <h2>My competency assessment</h2>
-                  <p>
-                    {schedule
-                      ? `${
-                          schedule.cadence === 'BOTH'
-                            ? 'Weekly and monthly'
-                            : kindLabel(text(schedule, 'cadence'))
-                        } assessments are enabled for your course.`
-                      : 'Your coordinator has not configured an assessment schedule.'}
-                  </p>
                 </div>
               </div>
               <div className="panel-body">
@@ -1015,7 +1046,6 @@ export default function AssessmentWorkspace({
               <div className="panel-head">
                 <div>
                   <h2>Assessments awaiting review</h2>
-                  <p>Approve student self-ratings or request a revision with a reason.</p>
                 </div>
                 <span className="chip orange">
                   {visible.filter((item) => item.status === 'SUBMITTED').length} pending
@@ -1117,10 +1147,6 @@ export default function AssessmentWorkspace({
             <div className="panel-head">
               <div>
                 <h2>Approved assessment trend</h2>
-                <p>
-                  Average of submitted rubric scores, grouped by period. Only coordinator-approved
-                  assessments are included.
-                </p>
               </div>
             </div>
             <div className="panel-body">
@@ -1153,7 +1179,6 @@ export default function AssessmentWorkspace({
             <div className="panel-head">
               <div>
                 <h2>Period assessment history</h2>
-                <p>Weekly and monthly submissions, including review feedback.</p>
               </div>
             </div>
             <div className="panel-body">
@@ -1182,10 +1207,6 @@ export default function AssessmentWorkspace({
               <div className="panel-head">
                 <div>
                   <h2>Earlier assessment records</h2>
-                  <p>
-                    Baseline and final records created before the weekly/monthly workflow. They remain
-                    read-only.
-                  </p>
                 </div>
               </div>
               <div className="panel-body">
@@ -1213,10 +1234,7 @@ export default function AssessmentWorkspace({
           <div className="industry-section-header">
             <div>
               <h2>Industry Supervisor Competency Evaluations</h2>
-              <p className="small muted">
-                Structured employer evaluations of student workplace readiness, competency relevance,
-                supervision support, and curriculum alignment under Framework v1.0.
-              </p>
+
             </div>
 
           </div>
@@ -1333,7 +1351,7 @@ export default function AssessmentWorkspace({
               <div className="privacy-suppressed-content">
                 <Lock size={36} className="text-amber-600" />
                 <h3>Aggregate Metrics Suppressed for Privacy</h3>
-                <p>{curriculumAnalytics.privacySuppressionNotice}</p>
+
                 <div className="privacy-rules-box">
                   <span>
                     Privacy Rule: Threshold is set to {curriculumAnalytics.privacyThreshold} evaluations. Current sample has {curriculumAnalytics.feedbackCount}.
@@ -1362,9 +1380,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Preparedness &amp; Alignment Dimensions</h2>
-                    <p>
-                      Evaluated on a 1 (Needs Improvement) to 5 (Exemplary) scale across 4 core competencies.
-                    </p>
                   </div>
                   {curriculumAnalytics.overallIndex !== null && (
                     <div className="overall-index-badge">
@@ -1416,10 +1431,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Recurring Curriculum &amp; Skill Gaps</h2>
-                    <p>
-                      Technical tools and workplace soft skills flagged by industry supervisors as
-                      requiring reinforcement, with transparent sample frequencies.
-                    </p>
                   </div>
                 </div>
                 <div className="panel-body">
@@ -1469,10 +1480,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Supervisor Curriculum Recommendations</h2>
-                    <p>
-                      Actionable industry insights and curriculum improvement proposals submitted by
-                      partner supervisors.
-                    </p>
                   </div>
                 </div>
                 <div className="panel-body">
@@ -1512,6 +1519,28 @@ export default function AssessmentWorkspace({
 
 
         </div>
+      )}
+
+      {showSelfAssessmentModal && currentOutcomePlacement && (
+        <SelfAssessmentModal
+          placement={currentOutcomePlacement}
+          data={data}
+          isLocked={
+            !!data.evaluations.find(
+              (e) => e.placementId === currentOutcomePlacement.id && e.kind === 'FINAL'
+            )
+          }
+          onClose={() => setShowSelfAssessmentModal(false)}
+          onSubmit={async (scores, version) => {
+            if (!onAction) return false;
+            await onAction('studentSelfAssessment', {
+              placementId: currentOutcomePlacement.id,
+              scores,
+              version,
+            });
+            return true;
+          }}
+        />
       )}
     </div>
   );

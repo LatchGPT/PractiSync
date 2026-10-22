@@ -41,7 +41,7 @@ export function HteRequestQueue({ data, onRefresh }: { data: Snapshot; onRefresh
  const names: Record<string,string> = { REGISTRATION:'Industry Partner registration', PROFILE:'Company profile changes', JOB_CREATE:'New internship post', JOB_EDIT:'Internship post changes', JOB_CLOSE:'Close internship post' };
  const fieldNames: Record<string,string> = { name:'Company name', industry:'Industry', location:'Location', description:'Description', contactName:'Contact person', email:'Contact email', contactEmail:'Contact email', contactPhone:'Contact phone', contactPosition:'Designation / position', website:'Company website', title:'Position title', courseId:'Primary program', courseIds:'Required programs / courses', skills:'Skills', openings:'Number of interns needed' };
  const requestValue = (key: string, value: unknown) => key === 'courseIds' && Array.isArray(value) ? value.map(id => text(data.courses.find(course => course.id === id),'name') || String(id)).join('\n') : key === 'courseId' ? text(data.courses.find(course => course.id === value),'name') || String(value) : String(value ?? '');
- return <section className="hte-card" id="hte-requests"><div className="hte-section-heading"><div><h2>{admin ? 'Industry Partner approval requests' : 'Your requests'}</h2><p className="muted">{admin ? 'Review partner registration and business changes before they take effect.' : 'Track Super Admin decisions. Rejected requests include the reason for correction.'}</p></div><label className="hte-filter">Status<select value={filter} onChange={e => setFilter(e.target.value)}>{['PENDING','APPROVED','REJECTED','ALL'].map(s => <option key={s} value={s}>{s === 'ALL' ? 'All requests' : statusLabel(s)}</option>)}</select></label></div><Failure error={error}/>
+ return <section className="hte-card" id="hte-requests"><div className="hte-section-heading"><div><h2>{admin ? 'Industry Partner approval requests' : 'Your requests'}</h2></div><label className="hte-filter">Status<select value={filter} onChange={e => setFilter(e.target.value)}>{['PENDING','APPROVED','REJECTED','ALL'].map(s => <option key={s} value={s}>{s === 'ALL' ? 'All requests' : statusLabel(s)}</option>)}</select></label></div><Failure error={error}/>
  {requests.length ? <div className="hte-request-list">{requests.map(r => {
   const proposed = JSON.parse(text(r,'payloadJson')) as Record<string,unknown>;
   const current = r.kind === 'PROFILE' ? data.companies.find(c => c.id === r.resourceId) : ['JOB_EDIT','JOB_CLOSE'].includes(text(r,'kind')) ? data.jobs.find(j => j.id === r.resourceId) : undefined;
@@ -148,7 +148,7 @@ export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; p
       <strong style={{fontSize:13,color:'var(--rtu-navy)'}}>
        {isExternal ? 'Signed company DTR or Certificate of Hours (Required)' : 'Signed physical DTR attachment (Optional)'}
       </strong>
-      <p className="small muted" style={{margin:0}}>PDF, PNG, or JPG up to 4 MB.</p>
+
      </div>
      {attachmentBase64 ? (
       <div className="hte-upload-meta">
@@ -182,7 +182,7 @@ export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; p
     <label>Review note <span className="muted">(identify incorrect dates or times when rejecting)</span>
      <textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/>
     </label>
-    <p className="small muted">Verify only after reviewing the entire submitted attendance record against your company records.</p>
+
     <div className="hte-actions">
      <button className="primary" disabled={busy} onClick={() => void act('finalDtrReview',{ placementId:placement.id,version:num(f,'version'),decision:'VERIFY',note })}>
       <Check size={15}/>Verify complete DTR
@@ -232,7 +232,7 @@ export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; p
 }
 
 export function FinalDtrWorkspace({ data,onRefresh }: { data: Snapshot; onRefresh: () => Promise<void> }) {
- return <section className="hte-card"><h2>Final attendance review</h2><p className="muted">Daily logs count as reported attendance. One Industry Partner verification covers the complete internship DTR.</p>{data.placements.length ? data.placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT' || Boolean(data.finalDtrReopens?.some(r=>r.placementId===p.id && r.status==='PENDING'))}><summary>{text(p,'studentName')} · {text(p,'companyName')} {num(p,'isExternal') === 1 ? '· (External Industry Partner)' : ''} · {statusLabel(text(data.finalDtrs?.find(f => f.placementId === p.id),'status')) || 'Not submitted'}</summary><FinalDtrCard data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">An assigned placement is needed before a final DTR can be submitted.</p>}</section>;
+ return <section className="hte-card"><h2>Final attendance review</h2>{data.placements.length ? data.placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT' || Boolean(data.finalDtrReopens?.some(r=>r.placementId===p.id && r.status==='PENDING'))}><summary>{text(p,'studentName')} · {text(p,'companyName')} {num(p,'isExternal') === 1 ? '· (External Industry Partner)' : ''} · {statusLabel(text(data.finalDtrs?.find(f => f.placementId === p.id),'status')) || 'Not submitted'}</summary><FinalDtrCard data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">An assigned placement is needed before a final DTR can be submitted.</p>}</section>;
 }
 
 function TemplateEditor({ template,onRefresh }: { template: Row; onRefresh: () => Promise<void> }) {
@@ -240,9 +240,9 @@ function TemplateEditor({ template,onRefresh }: { template: Row; onRefresh: () =
  const { busy,error,act } = useHteAction(onRefresh);
  const setup = {templateId:template.id,version:num(template,'version'),title,questions:questions.map(q=>({...q,options:q.options.map(o=>o.trim()).filter(Boolean)}))};
  const update = (i: number, patch: Partial<EvaluationQuestion>) => setQuestions(questions.map((q,n) => n === i ? {...q,...patch} : q));
- return <form className="hte-template-editor" onSubmit={e => { e.preventDefault(); void act('hteEvaluationPublish',setup); }}><h3>Prepare the uploaded form</h3><p className="muted">Copy the school’s questions and exact rating labels from the document. Fillable PDF fields appear below automatically. No questions or scores are invented.</p><label>Form title<input required maxLength={160} value={title} onChange={e => setTitle(e.target.value)}/></label><a className="textbutton" href={`/api/hte-evaluation-template/${template.id}/file`} target="_blank" rel="noreferrer">View original PDF</a>
+ return <form className="hte-template-editor" onSubmit={e => { e.preventDefault(); void act('hteEvaluationPublish',setup); }}><h3>Prepare the uploaded form</h3><label>Form title<input required maxLength={160} value={title} onChange={e => setTitle(e.target.value)}/></label><a className="textbutton" href={`/api/hte-evaluation-template/${template.id}/file`} target="_blank" rel="noreferrer">View original PDF</a>
   {questions.map((q,i) => <fieldset className="hte-question-editor" key={q.key}><legend>Question {i+1}</legend><label>Question wording<input required maxLength={500} value={q.label} onChange={e => update(i,{label:e.target.value})}/></label><label>Answer type<select value={q.type} onChange={e => update(i,{type:e.target.value as EvaluationQuestion['type']})}><option value="text">Written answer</option><option value="rating">Rating scale</option><option value="select">Single choice</option></select></label>{q.type !== 'text' && <label>Scale labels or choices, one per line<textarea required value={q.options.join('\n')} onChange={e => update(i,{options:e.target.value.split('\n')})}/><span className="small muted">Use the exact school scale; no automatic grade is calculated.</span></label>}<label className="hte-checkbox"><input type="checkbox" checked={q.required} onChange={e => update(i,{required:e.target.checked})}/>Required answer</label><button className="textbutton" type="button" onClick={() => setQuestions(questions.filter((_,n) => n !== i))}>Remove question {i+1}</button></fieldset>)}
-  {!questions.length && <p className="hte-empty">No online answer fields yet. Add the questions from the uploaded document before publishing.</p>}<Failure error={error}/><div className="hte-actions"><button type="button" className="secondary" disabled={busy || questions.length >= 60} onClick={() => setQuestions([...questions,{ key:'q'+crypto.randomUUID().replaceAll('-',''),label:'',type:'text',required:true,options:[] }])}>Add question</button><button type="button" className="secondary" disabled={busy} onClick={() => void act('hteEvaluationDraft',setup)}>Save form setup</button><button className="primary" disabled={busy}>{busy ? 'Saving…' : 'Publish for all courses'}</button></div></form>;
+  {!questions.length && <p className="hte-empty">No online answer fields yet.</p>}<Failure error={error}/><div className="hte-actions"><button type="button" className="secondary" disabled={busy || questions.length >= 60} onClick={() => setQuestions([...questions,{ key:'q'+crypto.randomUUID().replaceAll('-',''),label:'',type:'text',required:true,options:[] }])}>Add question</button><button type="button" className="secondary" disabled={busy} onClick={() => void act('hteEvaluationDraft',setup)}>Save form setup</button><button className="primary" disabled={busy}>{busy ? 'Saving…' : 'Publish for all courses'}</button></div></form>;
 }
 
 export function SchoolEvaluationLibrary({ data,onRefresh }: { data: Snapshot; onRefresh: () => Promise<void> }) {
@@ -255,9 +255,9 @@ export function SchoolEvaluationLibrary({ data,onRefresh }: { data: Snapshot; on
   catch(e) { setError(e instanceof Error ? e.message : 'Upload failed. Try again.'); }
   finally { setUploading(false); }
  }
- return <section className="hte-card school-evaluation"><div className="hte-section-heading"><div><h2><FileText size={19}/>School evaluation form</h2><p className="muted">One university-wide form for every course and program.</p></div><span className="chip blue">All programs</span></div>
-  {published ? <div className="hte-published-form"><HteStatus value="PUBLISHED"/><strong>{text(published,'title')}</strong><a className="textbutton" href={`/api/hte-evaluation-template/${published.id}/file`}>Download school form</a></div> : <div className="hte-form-placeholder"><FileClock size={28}/><div><h3>Waiting for evaluation form</h3><p>Super Admin will upload and publish the school document here. Online answers become available once its questions are ready.</p></div><span className="chip orange">Awaiting document</span></div>}
-  {data.user.role === 'SUPER_ADMIN' && <><label className="hte-upload secondary"><Upload size={15}/>{uploading ? 'Uploading PDF…' : 'Upload evaluation PDF'}<input type="file" accept=".pdf,application/pdf" disabled={uploading} onChange={e => {const file=e.target.files?.[0]; if(file)void upload(file,e.target);}}/></label><p className="small muted">PDF, up to 4 MB. Uploads remain drafts until the answer fields are checked and published. Replacing the form preserves earlier responses.</p><Failure error={error}/>{drafts.map(t => <TemplateEditor key={`${t.id}:${t.version}`} template={t} onRefresh={onRefresh}/>)}</>}
+ return <section className="hte-card school-evaluation"><div className="hte-section-heading"><div><h2><FileText size={19}/>School evaluation form</h2></div><span className="chip blue">All programs</span></div>
+  {published ? <div className="hte-published-form"><HteStatus value="PUBLISHED"/><strong>{text(published,'title')}</strong><a className="textbutton" href={`/api/hte-evaluation-template/${published.id}/file`}>Download school form</a></div> : <div className="hte-form-placeholder"><FileClock size={28}/><div><h3>Waiting for evaluation form</h3></div><span className="chip orange">Awaiting document</span></div>}
+  {data.user.role === 'SUPER_ADMIN' && <><label className="hte-upload secondary"><Upload size={15}/>{uploading ? 'Uploading PDF…' : 'Upload evaluation PDF'}<input type="file" accept=".pdf,application/pdf" disabled={uploading} onChange={e => {const file=e.target.files?.[0]; if(file)void upload(file,e.target);}}/></label><Failure error={error}/>{drafts.map(t => <TemplateEditor key={`${t.id}:${t.version}`} template={t} onRefresh={onRefresh}/>)}</>}
  </section>;
 }
 
@@ -265,7 +265,7 @@ export function HteEvaluationForm({ data,placement,onRefresh }: { data: Snapshot
  const response = data.hteEvaluationResponses?.find(r => r.placementId === placement.id);
  const template = response ? data.hteEvaluationTemplates?.find(t => t.id === response.templateId) : data.hteEvaluationTemplates?.find(t => t.status === 'PUBLISHED');
  const final = data.finalDtrs?.find(r => r.placementId === placement.id);
- if (!template) return <div className="hte-form-placeholder"><FileClock size={23}/><div><h3>Waiting for evaluation form</h3><p>Super Admin has not published the school’s form yet. It will apply to all courses and programs.</p></div></div>;
+ if (!template) return <div className="hte-form-placeholder"><FileClock size={23}/><div><h3>Waiting for evaluation form</h3></div></div>;
  if (!final || final.status !== 'VERIFIED') return <p className="hte-review-note"><LockKeyhole size={15}/> The school evaluation unlocks after the complete DTR is verified.</p>;
  return <EvaluationAnswers key={`${response?.id ?? template.id}:${response?.version ?? 0}:${final.version}`} data={data} placement={placement} template={template} response={response} final={final} onRefresh={onRefresh}/>;
 }
@@ -406,9 +406,7 @@ function EvaluationAnswers({ data,placement,template,response,final,onRefresh }:
       <span className="hte-step-badge">1</span>
       <span className="hte-flow-step-title">Upload Completed & Signed Evaluation Form</span>
      </div>
-     <p className="small muted" style={{margin:0}}>
-      Have your host company supervisor rate you on the printed form and sign it. Scan or save as PDF and upload it here.
-     </p>
+
      <label className="secondary hte-download-btn" style={{cursor: scanningPdf ? 'wait' : 'pointer', width:'fit-content', marginTop:6}}>
       {scanningPdf ? <LoaderCircle size={15} className="spin" /> : <Upload size={15} />}
       {scanningPdf ? 'Scanning PDF & detecting scores…' : evalFilename ? 'Replace evaluation PDF' : 'Upload signed evaluation PDF'}
@@ -435,9 +433,7 @@ function EvaluationAnswers({ data,placement,template,response,final,onRefresh }:
       <span className="hte-step-badge">2</span>
       <span className="hte-flow-step-title">Review & Confirm Evaluation Ratings</span>
      </div>
-     <p className="small muted" style={{margin:'0 0 12px'}}>
-      Verify that each rating matches the physical document signed by your supervisor.
-     </p>
+
 
      {questions.map(q => (
       <label key={q.key} style={{marginBottom:10}}>

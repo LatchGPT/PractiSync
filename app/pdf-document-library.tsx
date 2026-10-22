@@ -77,7 +77,6 @@ export default function PdfDocumentLibrary({ data }: { data: Snapshot }) {
       <div>
         <span className="chip blue">Original PDF documents</span>
         <h2>PDF templates</h2>
-        <p>{admin ? 'Upload a PDF for the practicum workspace. The original file is saved with the document record.' : 'Download the published PDF forms supplied by your university.'}</p>
       </div>
       <FileText size={22}/>
     </header>

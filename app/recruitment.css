@@ -1,7 +1,6 @@
 .recruitment{min-width:0;color:var(--foreground);font-variant-numeric:tabular-nums}
 .recruitment-intro{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin:4px 0 24px}
 .recruitment-intro h2{font-size:22px;line-height:1.35;color:var(--rtu-navy);margin:0 0 6px;letter-spacing:-.025em}
-.recruitment-intro p{margin:0;color:var(--muted-foreground);font-size:14px}
 .recruitment-intro>span{display:flex;align-items:center;gap:7px;color:var(--primary);font-size:12px;font-weight:600;padding-top:5px}
 .recruitment-categories{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
 .recruitment-categories button{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 14px;border:1px solid var(--border);background:var(--card);color:var(--rtu-navy);border-radius:8px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
@@ -50,7 +49,7 @@
 .recruitment-empty{padding:52px 24px;text-align:center;border:1px dashed var(--border);border-radius:12px;background:var(--card)}
 .recruitment-empty>svg{margin:0 auto 14px;color:var(--primary)}
 .recruitment-empty h3{font-size:18px;margin:0 0 8px;color:var(--rtu-navy)}
-.recruitment-empty p{font-size:14px;color:var(--muted-foreground);margin-bottom:18px}
+
 .recruitment-programs{border:1px solid var(--border);padding:14px;border-radius:8px;min-width:0}
 .recruitment-programs legend{font-weight:600;font-size:14px;color:var(--rtu-navy);padding:0 5px}
 .recruitment-programs>div{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;max-height:240px;overflow:auto}

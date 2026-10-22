@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { installTestDatabase, insert, list, one, seed, type PreparedStatement } from '../packages/db/demo';
 import { authHandler, identity } from '../packages/auth/auth';
+import { hashPassword } from '../packages/auth/password';
 import { ensureNewStudentDemo, lookupStudentClassCode, studentVerificationContext, submitStudentVerification } from '../packages/domain/student-verification';
 import { mutate } from '../packages/domain/actions';
 import { GET as dataRoute } from '../app/api/data/route';
@@ -17,7 +18,7 @@ const migration = (name: string) => readFileSync(`packages/db/prisma/migrations/
 function prepared(query: string, values: (string | number | null)[] = []): PreparedStatement {
  return { bind: (...next) => prepared(query, next), all: async <T extends Record<string,unknown>>() => ({ results: sql.prepare(query).all(...values) as T[] }), first: async <T extends Record<string,unknown>>() => (sql.prepare(query).get(...values) as T | undefined) ?? null, run: async () => ({ meta: sql.prepare(query).run(...values) }) };
 }
-async function signIn(values: Record<string,string> = {demoId:'demo-new-student'}) {
+async function signIn(values: Record<string,string> = {username:'demo.newstudent',password:'RegistrationFlow!2026'}) {
  const csrfResponse = await authHandler(new Request(origin + '/api/auth/csrf'));
  const csrf = await csrfResponse.json() as { csrfToken: string };
  const response = await authHandler(new Request(origin + '/api/auth/callback/credentials', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: csrfResponse.headers.getSetCookie().map(value => value.split(';')[0]).join('; '), 'X-Auth-Return-Redirect': '1' }, body: new URLSearchParams({ ...values, csrfToken: csrf.csrfToken, callbackUrl: origin }) }));
@@ -59,6 +60,7 @@ beforeAll(async () => {
 beforeEach(async () => {
  sql.exec("DELETE FROM student_verifications; DELETE FROM student_profiles; DELETE FROM enrollments WHERE student_id='demo-new-student'; UPDATE users SET status='ACTIVE',course_id=NULL,email='isabel.mendoza@rtu.edu.ph',email_domain_exception=0,session_version=1,name='Isabel Mendoza' WHERE id='demo-new-student'; UPDATE users SET status='ACTIVE' WHERE id='demo-student'; DELETE FROM audit WHERE resource_id='verification-demo-new-student'; DELETE FROM rate_limits;");
  await ensureNewStudentDemo();
+ sql.prepare("UPDATE users SET password_hash=? WHERE id='demo-new-student'").run(await hashPassword('RegistrationFlow!2026'));
 });
 afterAll(() => { installTestDatabase(undefined); sql.close(); vi.unstubAllEnvs(); });
 

@@ -30,6 +30,7 @@
     "documents:worker": "node --env-file-if-exists=.env --import tsx packages/documents/native-worker.ts",
     "documents:reference": "node --env-file-if-exists=.env --import tsx scripts/install-native-reference.ts",
     "documents:template": "node --env-file-if-exists=.env --import tsx scripts/install-native-template.ts",
+    "notion:ticket": "node --env-file-if-exists=.env.local scripts/notion-ticket.mjs",
     "documents:fidelity": "node --env-file-if-exists=.env --import tsx scripts/check-document-fidelity.ts",
     "db:bulk-demo": "node scripts/bulk-demo-students.mjs",
     "postinstall": "prisma generate --schema packages/db/prisma/schema.prisma"

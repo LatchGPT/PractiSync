@@ -94,7 +94,7 @@ Use **Inter** with the existing system sans-serif fallback stack. The base body 
 | Supporting copy | Usually 12â€“14px |
 | Badge, metadata, and eyebrow | Usually 10â€“12px |
 
-Use sentence case for actions and descriptions. Uppercase eyebrows are short contextual labels with expanded tracking. Keep numeric summaries aligned with tabular numerals where supported.
+Use sentence case for actions and descriptions. Use Title Case for module names and page headings, capitalizing each word while preserving standard acronyms. Uppercase eyebrows are short contextual labels with expanded tracking. Keep numeric summaries aligned with tabular numerals where supported.
 
 Use `lucide-react` for application icons. Most control icons are 14â€“18px; brand icons are larger. Pair unfamiliar icons with visible labels. Give icon-only controls an accessible name. The brand uses a graduation-cap mark, a blue rounded tile with a gold lower accent, and the PractiSync wordmark with a gold period. The favicon is the blue-and-gold monogram in [public/favicon.svg](public/favicon.svg).
 
@@ -160,12 +160,12 @@ Reuse primitives from `components/ui` and application patterns before introducin
 
 | Role | Primary design focus |
 | --- | --- |
-| Student | Placement context, daily attendance and narratives, target progress, document clearance, competency development, support, and portfolio |
+| Student | Placement context, daily attendance and narratives, target progress, document clearance, competency development, support, and OJT opportunities |
 | Coordinator | Class membership, student progress, document review, scoped announcements, and student support queues |
 | Supervisor | Assigned interns, whole-internship final DTR verification, evaluations, authorized hour policies, and company internship postings |
 | Super Admin | University office administration, account access, institution structure, and partner approvals |
 
-Super Admin navigation focuses on overview, accounts and roles, university structure, the internship board, and university announcements. Coordinator-facing class management, attendance review, document review, competency workflows, student portfolios, and support queues stay out of the office menu. Institutional read access still follows the permissions matrix. Other roles see modules according to their permissions and scope.
+Super Admin navigation focuses on overview, accounts and roles, university structure, the internship board, and university announcements. Coordinator-facing class management, attendance review, document review, competency workflows, and support queues stay out of the office menu. Institutional read access still follows the permissions matrix. Other roles see modules according to their permissions and scope.
 
 Role-specific summaries may use different accents, but should preserve the same card, typography, status, and action conventions. UI visibility follows permissions; server checks remain authoritative. Follow [docs/permissions.md](docs/permissions.md) when exposing a new action or record.
 
@@ -252,3 +252,8 @@ Feedback provenance, account recovery and deadline settings are Operate surfaces
 The HTE placement form leads with its attributed submission receipt. University reviewers can reach the provenance ledger even when sample-size rules suppress analytics; legacy and invalidated evidence remains visible with explicit labels. Keep destructive invalidation behind an expanded, reasoned confirmation. Pending submissions disable editable fields and preserve failed drafts. Associate labels explicitly with their inputs. On phones, contain wide tables and Settings tab scrolling, stack controls, and leave optional deadline times genuinely optional. Security controls must describe actual configured behavior; do not show simulated password changes, MFA, device locations or email digests as active. See `docs/backlog-5-8-evidence.md` for the rendered finish gate.
 
 Calendar defaults to Agenda on compact viewports while retaining a mode the user explicitly selects. Grid cells use `aria-selected`, and arrow-key navigation keeps focus with the selected date. Bound phone summary-card tracks with `minmax(0, 1fr)` so long deadline labels cannot widen the page.
+\n## 13. University structure register
+
+The Super Admin's academic structure view supports the OJT workflow: students, classes, policies, and internship eligibility rely on the university's academic units and degree programs. Use a searchable course register grouped by academic unit, with the unit index beside it on desktop and an in-flow unit selector on smaller screens. Preserve the seven RTU units and the exact program names supplied for the catalog.
+
+Keep create and edit actions close to the unit or program they affect. Course forms must show the owning academic unit, and edits that move a course must make that change explicit. Reject duplicate unit names, program names within a unit, and codes before saving, and explain stale records clearly. This view has no unit or course removal action; do not add one. Restrict management controls and writes to Super Admins, while search and browsing remain readable to authorized viewers.

@@ -276,10 +276,6 @@ export default function SettingsView({
                 <CheckCircle2 size={12} /> Active Account
               </span>
             </div>
-            <p className="settings-subtext">
-              {settings.maskSensitiveData ? '••••••••@rtu.edu.ph' : user.email} ·{' '}
-              <strong>Rizal Technological University</strong> · RTU Practicum System
-            </p>
           </div>
         </div>
 
@@ -330,7 +326,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Account Identity & University Affiliation</h3>
-                <p>Personal credentials and institutional practicum mapping for all accounts.</p>
+
               </div>
               <button type="button" className="secondary" onClick={onEditProfile}>
                 Edit display name
@@ -341,7 +337,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Display Name</strong>
-                  <p>Visible across class rosters, attendance records, and evaluations.</p>
+
                 </div>
                 <span className="settings-value-pill">{user.name}</span>
               </div>
@@ -349,7 +345,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Username</strong>
-                  <p>Permanent institutional identifier used during authentication.</p>
+
                 </div>
                 <code className="settings-code-pill">{user.username}</code>
               </div>
@@ -357,7 +353,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Institutional Email</strong>
-                  <p>Official university communication address.</p>
+
                 </div>
                 <span className="settings-value-pill">
                   {settings.maskSensitiveData ? '••••••••@rtu.edu.ph' : user.email}
@@ -367,7 +363,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Institutional Role</strong>
-                  <p>Permissions level and system scope granted by the Super Admin.</p>
+
                 </div>
                 <span className="chip blue">{titleRole[role]}</span>
               </div>
@@ -377,7 +373,7 @@ export default function SettingsView({
                   <div className="settings-item-row">
                     <div>
                       <strong>Degree Program & Section</strong>
-                      <p>Academic curricular assignment.</p>
+
                     </div>
                     <span className="settings-value-pill">
                       {String(ownPlacement.courseCode || 'BSIT')} · {String(ownPlacement.section || 'Section 4-1')}
@@ -386,7 +382,7 @@ export default function SettingsView({
                   <div className="settings-item-row">
                     <div>
                       <strong>Assigned OJT Partner Company</strong>
-                      <p>Industry Partner endorsed for internship.</p>
+
                     </div>
                     <span className="settings-value-pill">
                       {String(ownPlacement.companyName || 'Acme Innovations')}
@@ -399,7 +395,7 @@ export default function SettingsView({
                 <div className="settings-item-row">
                   <div>
                     <strong>Managed Classes</strong>
-                    <p>Total active academic sections under your coordination.</p>
+
                   </div>
                   <span className="settings-value-pill">{data.classes.length} active classes</span>
                 </div>
@@ -409,7 +405,7 @@ export default function SettingsView({
                 <div className="settings-item-row">
                   <div>
                     <strong>Tenant Authority</strong>
-                    <p>Full institutional administration access.</p>
+
                   </div>
                   <span className="chip green">Rizal Technological University (Root Admin)</span>
                 </div>
@@ -421,7 +417,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Locale & Regional Preferences</h3>
-                <p>Regional formatting for academic timetables and currency.</p>
+
               </div>
             </div>
 
@@ -429,7 +425,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Language & Terminology</strong>
-                  <p>Primary language for UI labels and notifications.</p>
+
                 </div>
                 <Select
                   value={settings.language}
@@ -448,7 +444,6 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>University Academic Year</strong>
-                  <p>Current active practicum term.</p>
                 </div>
                 <span className="settings-value-pill">AY 2026–2027 · 1st Semester</span>
               </div>
@@ -481,7 +476,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Time & Attendance Logging Preferences</h3>
-                <p>Configure how hours and daily reflections are formatted and captured.</p>
+
               </div>
             </div>
 
@@ -489,7 +484,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Time Display Format</strong>
-                  <p>Choose between standard 12-hour (AM/PM) or 24-hour military notation.</p>
+
                 </div>
                 <div className="settings-radio-group">
                   <button
@@ -512,7 +507,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Daily DTR Reminder Prompt</strong>
-                  <p>Receive an in-app banner alert if today&apos;s attendance has not been logged.</p>
+
                 </div>
                 <div className="flex items-center gap-4">
                   {settings.dailyReminder && (
@@ -542,7 +537,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Default Lunch Break Duration</strong>
-                  <p>Pre-populates break deduction when opening the Log Attendance dialog.</p>
+
                 </div>
                 <Select
                   value={String(settings.defaultBreakMinutes)}
@@ -563,7 +558,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Auto-Save Daily Narratives</strong>
-                  <p>Continuously cache your draft reflections to local browser storage.</p>
+
                 </div>
                 <Switch
                   checked={settings.autoSaveNarratives}
@@ -575,7 +570,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Progress Ring Primary Value</strong>
-                  <p>Display percentage or completed hours in the center of the DTR ring chart.</p>
+
                 </div>
                 <div className="settings-radio-group">
                   <button
@@ -598,7 +593,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Highlight Coordinator Confirmations</strong>
-                  <p>Show distinct visual indicators for confirmed vs reported hours.</p>
+
                 </div>
                 <Switch
                   checked={settings.showConfirmedBadge}
@@ -616,7 +611,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Notification Channels & Alert Triggers</h3>
-                <p>Manage how and when PractiSync notifies you about critical practicum milestones.</p>
+
               </div>
               <button
                 type="button"
@@ -631,7 +626,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>In-App Toast Alerts</strong>
-                  <p>Display real-time popup toasts on status updates and successful saves.</p>
+
                 </div>
                 <Switch
                   checked={settings.toastsEnabled}
@@ -643,7 +638,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Attendance & Hour Endorsements</strong>
-                  <p>Notify when hours are submitted, corrected, or verified by your coordinator.</p>
+
                 </div>
                 <Switch
                   checked={settings.notifyDtr}
@@ -654,13 +649,13 @@ export default function SettingsView({
 
               <div className="settings-item-row">
                 <div>
-                  <strong>Document Review Updates</strong>
-                  <p>Alert when a coordinator approves or requests changes to a submitted document.</p>
+                  <strong>Internship Document Review Updates</strong>
+
                 </div>
                 <Switch
                   checked={settings.notifyClearance}
-                  onCheckedChange={(c) => updateSetting('notifyClearance', c, 'Document review alerts updated.')}
-                  aria-label="Document review alerts"
+                  onCheckedChange={(c) => updateSetting('notifyClearance', c, 'Internship document review alerts updated.')}
+                  aria-label="Internship document review alerts"
                 />
               </div>
 
@@ -670,7 +665,7 @@ export default function SettingsView({
                     <strong>Support & Urgent SOS Cases</strong>
                     <span className="chip red">Priority</span>
                   </div>
-                  <p>Immediate notifications for confidential coordinator inquiries and responses.</p>
+
                 </div>
                 <Switch
                   checked={settings.notifySupport}
@@ -682,7 +677,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Campus & Class Announcements</strong>
-                  <p>Alerts when new official updates are broadcast by coordinators or faculty.</p>
+
                 </div>
                 <Switch
                   checked={settings.notifyAnnouncements}
@@ -693,20 +688,20 @@ export default function SettingsView({
 
               <div className="settings-item-row">
                 <div>
-                  <strong>OJT Recruitment & Job Matches</strong>
-                  <p>Notifies of new verified company openings matching your course curriculum.</p>
+                  <strong>Internship Recruitment & Job Matches</strong>
+
                 </div>
                 <Switch
                   checked={settings.notifyJobs}
                   onCheckedChange={(c) => updateSetting('notifyJobs', c, 'Job board alerts updated.')}
-                  aria-label="OJT Recruitment & job matches alerts"
+                  aria-label="Internship Recruitment & job matches alerts"
                 />
               </div>
 
               <div className="settings-item-row">
                 <div>
                   <strong>Institutional Email Digest</strong>
-                  <p>Email digests are not configured. Deadline reminders use the in-app notification center.</p>
+                  <p>Email digests are not configured.</p>
                 </div>
                 <Select
                   value="off"
@@ -727,7 +722,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Sound & Audio Effects</strong>
-                  <p>Play a subtle chime upon successful attendance logging or milestone completion.</p>
+
                 </div>
                 <Switch
                   checked={settings.soundEffects}
@@ -745,7 +740,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Theme & Visual Palette</h3>
-                <p>Customize the workspace aesthetics to your preferred lighting environment.</p>
+
               </div>
             </div>
 
@@ -822,7 +817,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Layout & Visual Density</h3>
-                <p>Adjust padding, sidebar behaviors, and visual accessibility.</p>
+
               </div>
             </div>
 
@@ -830,7 +825,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Table & Card Density</strong>
-                  <p>Choose between comfortable spacious rows or dense compact data tables.</p>
+
                 </div>
                 <div className="settings-radio-group">
                   <button
@@ -853,7 +848,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>High Contrast Borders</strong>
-                  <p>Enhance card, table, and partition borders for greater visibility.</p>
+
                 </div>
                 <Switch
                   checked={settings.highContrast}
@@ -865,7 +860,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Micro-Animations & Smooth Transitions</strong>
-                  <p>Enable fluid hover transitions, milestone stepper fills, and animated charts.</p>
+
                 </div>
                 <Switch
                   checked={settings.animations}
@@ -883,7 +878,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Credentials & Authentication Security</h3>
-                <p>Google accounts recover access through Google. Eligible local accounts use the application recovery flow.</p>
+
               </div>
               {user.isDemo?<span className="chip">Fixed demo credentials</span>:<Link className="secondary" href="/account-access"><Key size={14}/>Recover account access</Link>}
             </div>
@@ -892,7 +887,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Account Password</strong>
-                  <p>Local passwords use a salted PBKDF2 hash. Google identities are verified by their provider.</p>
+
                 </div>
                 <span className="chip green">
                   <ShieldCheck size={12} /> Server-managed access
@@ -902,7 +897,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Two-Factor Authentication (2FA)</strong>
-                  <p>RTU Google security is managed by the provider. Application-managed 2FA is not configured.</p>
+                  <p>Application-managed 2FA is not configured.</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="chip orange">Not configured</span>
@@ -917,7 +912,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Presentation Shield (Privacy Mode)</strong>
-                  <p>Masks personal student IDs, phone numbers, and email addresses during presentations.</p>
+
                 </div>
                 <Switch
                   checked={settings.maskSensitiveData}
@@ -932,7 +927,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Session access</h3>
-                <p>Sign out all active sessions for your own account. This also signs out this browser.</p>
+
               </div>
               <button
                 type="button"
@@ -968,7 +963,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>PractiSync System Architecture</h3>
-                <p>Sandbox runtime status and institutional specifications.</p>
+
               </div>
               <button
                 type="button"
@@ -992,7 +987,6 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Platform Edition</strong>
-                  <p>Higher education practicum & OJT tracking platform.</p>
                 </div>
                 <span className="settings-value-pill">PractiSync v2.4.0 (RTU-Inspired)</span>
               </div>
@@ -1000,7 +994,6 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Deployment Mode</strong>
-                  <p>Interactive demonstration runtime with seeded fixtures.</p>
                 </div>
                 <span className="chip orange">Fictional Demo Sandbox</span>
               </div>
@@ -1008,7 +1001,6 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Database Architecture</strong>
-                  <p>Multi-tenant relational PostgreSQL schema with Prisma ORM.</p>
                 </div>
                 <span className="settings-value-pill">Prisma Multi-Tenant v6</span>
               </div>
@@ -1019,7 +1011,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Personal Data & Workspace Backups</h3>
-                <p>Download a copy of your records or reset preferences to defaults.</p>
+
               </div>
             </div>
 
@@ -1027,7 +1019,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Export Complete Training Records</strong>
-                  <p>Export your full attendance history, reflections, and document metadata as JSON.</p>
+
                 </div>
                 <button type="button" className="secondary" onClick={handleExportData}>
                   <Download size={14} /> Export JSON Data
@@ -1037,7 +1029,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Reset Preferences to University Defaults</strong>
-                  <p>Restores theme, density, time formatting, and notifications to default configuration.</p>
+
                 </div>
                 <button type="button" className="secondary" onClick={handleReset}>
                   <RotateCcw size={14} /> Reset Defaults

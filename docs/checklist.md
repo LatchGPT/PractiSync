@@ -21,7 +21,6 @@
 | Company directory/reviews | Student reviews after formal completion; coordinator moderation; HTE sees anonymous approved feedback only after five distinct placements in the same period | PII detection in free-text comments and true institutional completion checklist remain |
 | HTE without a profile | Coordinator-only private host record and separate-code, expiring, revocable, single-use rubric link; coordinator reviews before student release | Email delivery and real HTE identity verification remain unconfigured |
 | End-of-OJT forms | Final competency self-assessment and OJT exit survey unlock at the reported DTR target; coordinator review is available; both submitted forms remain required for completion | Institution-approved question sets/versioning and live PostgreSQL verification remain |
-| Portfolio | User-triggered PDF with labels/missing records/scoped data | Private queued/versioned export artifacts remain unconfigured |
 | Sample generation/autofill | Separate preview/autofill/replace/undo/manual submit | No role/secrets/signatures/clearance autofill |
 | Scaling/operations | Indexes, bounded demo reads; guarded, resumable optional PostgreSQL synthetic-student generator | PostgreSQL cursor pagination, queues, cloud runbook/load measurements remain; generator database run untested |
 | App Router/monorepo | Native Next.js root, pnpm workspace domain/auth/db/validation packages | Local Next/PostgreSQL verification recorded in `validation.md`; Vercel preview remains to be configured before retiring the previous Cloudflare deployment path |
