@@ -60,4 +60,42 @@ PDF and Word uploads are limited to 4 MB so their requests fit within Vercel's 4
 
 ## Data and service boundaries
 
-Only fictional records are in scope. Google account linking, password recovery, email delivery, private student file upload/scanning, durable background exports, and institution bootstrap are not configured. Admin PDF template uploads are stored in the database. Document rows are sample metadata; they are not real clearances. Do not use this deployment for real student records.
+Only fictional records are in scope. RTU Google sign-in, explicit identity invitations, local recovery, account email delivery and initial-admin bootstrap have prepared implementations; authorized institutional configuration and live-provider acceptance remain outstanding. Private student file upload/scanning and durable background exports have separate operational requirements. Admin PDF template uploads are stored in the database. Sample document rows and generated downloads do not establish submitted or approved clearances. Do not use this demonstration deployment for real student records.
+
+## Deadline and account worker
+
+Run a separate process beside the web app, using the same database, deployment flags, tenant and `AUTH_SECRET`:
+
+```powershell
+pnpm workflows:worker
+# One operational check, then exit:
+pnpm workflows:worker --once
+```
+
+For the SQLite `pnpm dev:demo` runner, use `pnpm workflows:demo` instead. That variant reads the runner's `.local/auth-secret` and uses its local database. Do not mix the SQLite worker with a PostgreSQL web app. After applying migrations, restart web and worker processes so PostgreSQL prepared statements and schema assumptions are refreshed.
+
+The worker checks every 60 seconds. Document deadlines use 09:00 Asia/Manila three days and one day before the due date; date-only deadlines end at 23:59 Manila. Policies, slots, recipient deliveries and heartbeat are persisted. Repeated checks deduplicate delivery. After downtime, the latest eligible missed slot is considered while stale slots and expired deadlines are skipped. New or edited schedules create future slots only. Current enrollment, registration and the user's saved preference are rechecked before delivery. Removal also hides previously delivered class deadline/announcement notices.
+
+Calendar deadline controls can link a published form by its stable template ID. Only a genuine submitted/approved response suppresses the linked obligation; a correction request allows remaining future slots. An unlinked deadline is a general notice. Generated Word/PDF downloads and seeded document metadata never count as submission. FEAT-04 must connect any new wallet/clearance evidence through this resolver before claiming that integration.
+
+Coordinators and Super Admin see scoped reminder processing state and failed-slot retry controls in Calendar. Account email state and eligible failed-email retry are visible to Super Admin in Settings. Retries remain subject to live eligibility and token expiry. Automatic account email delivery stops after three failed attempts, with backoff between attempts; inspect sender configuration before retrying. Account email's provider-accepted state is not proof of arrival in a person's inbox. In-app reminder delivery does not send reminder email.
+
+## Prepared institutional account integration
+
+Keep `INSTITUTIONAL_ENABLED=false` in the demonstration environment. An authorized institutional installation needs its own PostgreSQL database, the committed migrations, an explicitly provisioned Prisma `Tenant` row with mode `INSTITUTIONAL`, and an approved university ID distinct from the fixed demo tenant. There is no public university onboarding endpoint. Never seed fictional demo records into that database.
+
+Configure `DEPLOYMENT_MODE=institutional`, `DEMO_ENABLED=false`, `INSTITUTIONAL_TENANT_ID`, `INSTITUTIONAL_ENABLED=true`, a strong `AUTH_SECRET`, and the approved HTTPS `APP_ORIGIN` only for the authorized integration test environment. Configure `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` for an authorized RTU Google Workspace OAuth client, with callback `<APP_ORIGIN>/api/auth/callback/google`. Auth.js validates the OIDC response; application admission additionally checks the Google issuer, stable subject, exact verified RTU email and hosted-domain claim. An email suffix alone never links an existing account.
+
+New RTU student identities receive a fresh registration gate. Existing users require an explicit invitation to bind their provider identity. Staff roles and university/class scope are preassigned by the office; the first Google login never grants administrator authority. HTEs and explicitly authorized student domain exceptions use local activation/recovery. Google manages recovery for SSO accounts. Local activation/invitation links last 24 hours; local recovery links last 30 minutes. Both are single use, and password reset or account deactivation invalidates previous sessions. Settings also provides actual self-session revocation, including the current browser; application MFA is not configured.
+
+For account email, configure `MAIL_TRANSPORT=resend`, an authorized `RESEND_API_KEY`, and a verified `MAIL_FROM`. Sender authorization, receipt and expiry/reuse acceptance must be checked using approved test identities. Outbox content is encrypted using a key derived from `AUTH_SECRET`; rotating that secret requires reissuing outstanding account mail. Never copy secret values or invitation links into Obsidian or the manuscript. The demo-only `MAIL_TRANSPORT=test` captures messages inside its server process for tests and has no public inbox endpoint.
+
+After the institution, provider and sender are configured, the authorized operator can create the first preassigned administrator invitation:
+
+```powershell
+pnpm accounts:bootstrap --name "Authorized staff name" --email authorized.staff@rtu.edu.ph
+```
+
+This CLI queues an invitation and refuses a university that already has a Super Admin; it does not link an identity or activate an account before acceptance. Keep the worker running to process that invitation. Subsequent invitations use the Super Admin account tools. Bootstrap and live OAuth/email were not executed for an institution during FEAT-05–08 verification.
+
+See [the scope contract](backlog-5-8-contract.md) and [dated verification evidence](backlog-5-8-evidence.md). Full institutional release remains gated on live provider/delivery checks and isolation acceptance after FEAT-01–04 integration.

@@ -1,3 +1,4 @@
+import {StudentVerificationRequired} from '@/packages/domain/student-verification';
 import {forbidden,notFound,redirect} from 'next/navigation';
 import PractiSync from '@/app/practisync';
 import {pageIdentity} from '@/app/server-identity';
@@ -30,6 +31,8 @@ export default async function DashboardPage({params,searchParams}:{params:Promis
  try{
   user=await pageIdentity();
  }catch(error){
+  console.error('Workspace authentication failed',error instanceof Error?error.message:'Unknown authentication error');
+  if(error instanceof StudentVerificationRequired)redirect('/student-verification');
   if(error instanceof DomainError&&error.status===401){
    const returnTo=dashboardPathForRole(expectedRole)+queryString(search);
    redirect('/login?redirect='+encodeURIComponent(returnTo));
@@ -48,6 +51,7 @@ export default async function DashboardPage({params,searchParams}:{params:Promis
  try{
   initial=await snapshot(user);
  }catch(error){
+  console.error('Workspace data load failed',error instanceof Error?error.message:'Unknown data error');
   initialError=error instanceof Error?error.message:'PractiSync could not load your workspace.';
  }
  return <PractiSync initial={initial} initialError={initialError} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} authConfigured={!!cfg.AUTH_SECRET}/>;

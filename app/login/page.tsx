@@ -1,3 +1,5 @@
+import {googleConfigured} from '@/packages/auth/runtime';
+import {StudentVerificationRequired} from '@/packages/domain/student-verification';
 import {forbidden,redirect} from 'next/navigation';
 import LoginClient from '@/app/login-client';
 import {pageIdentity} from '@/app/server-identity';
@@ -8,7 +10,7 @@ import type {Identity} from '@/packages/validation/contracts';
 
 export const dynamic='force-dynamic';
 
-export default async function LoginPage({searchParams}:{searchParams:Promise<{redirect?:string|string[]}>}){
+export default async function LoginPage({searchParams}:{searchParams:Promise<{redirect?:string|string[];error?:string|string[]}>}){
  const query=await searchParams;
  const requested=Array.isArray(query.redirect)?query.redirect[0]:query.redirect;
  const redirectTo=safeInternalPath(requested)??'/';
@@ -17,10 +19,11 @@ export default async function LoginPage({searchParams}:{searchParams:Promise<{re
  try{
   user=await pageIdentity();
  }catch(error){
+  if(error instanceof StudentVerificationRequired)redirect('/student-verification');
   if(error instanceof DomainError&&error.status===403)forbidden();
   unavailable=!(error instanceof DomainError&&(error.status===401||error.status===503));
  }
  if(user)redirect(postLoginPath(user.role,redirectTo));
  const cfg=settings();
- return <LoginClient demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} configured={!!cfg.AUTH_SECRET&&!unavailable} redirectTo={redirectTo}/>;
+ return <LoginClient initialAuthError={query.error?'Sign-in could not be completed. Use the RTU Google account in your invitation, or contact the OJT office for account linking. You can try again.':''} google={googleConfigured()} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} configured={!!cfg.AUTH_SECRET&&!unavailable} redirectTo={redirectTo}/>;
 }

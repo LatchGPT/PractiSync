@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 import React, { useState, useRef, type FormEvent } from 'react';
 import {
   GraduationCap,
@@ -19,21 +21,22 @@ import {
   AlertCircle,
   ArrowRight,
   Sparkles,
-  Check,
   HelpCircle,
   X,
-  ExternalLink,
 } from 'lucide-react';
 import { quickDemoAccounts as demoAccounts } from '@/packages/test-utils/fixtures';
 
 interface LoginViewProps {
+  initialAuthError?: string;
+  google?: boolean;
   demo: boolean;
   configured: boolean;
   redirectTo?: string;
   onAuthSubmit: (provider: string, values: Record<string, string>) => Promise<unknown>;
 }
 
-export default function LandingLoginView({ demo, configured, redirectTo = '/', onAuthSubmit }: LoginViewProps) {
+export default function LandingLoginView({ demo, configured, google=false, initialAuthError='', redirectTo = '/', onAuthSubmit }: LoginViewProps) {
+  const router=useRouter();
   const [activeTab, setActiveTab] = useState<'credentials' | 'demo'>('credentials');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -41,7 +44,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
   const [showPassword, setShowPassword] = useState(false);
   const [busyKey, setBusyKey] = useState<string>('');
   const [formErrors, setFormErrors] = useState<{ username?: string; password?: string }>({});
-  const [generalError, setGeneralError] = useState('');
+  const [generalError, setGeneralError] = useState(initialAuthError);
   const [helpOpen, setHelpOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
@@ -86,7 +89,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
         password,
         rememberMe: rememberMe ? '1' : '0',
       });
-      location.assign('/login/complete?redirect='+encodeURIComponent(redirectTo));
+      router.push('/login/complete?redirect='+encodeURIComponent(redirectTo));
     } catch (err) {
       setGeneralError(
         err instanceof Error
@@ -102,7 +105,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
     setGeneralError('');
     try {
       await onAuthSubmit('callback/credentials', { demoId: accountId });
-      location.assign('/login/complete?redirect='+encodeURIComponent(redirectTo));
+      router.push('/login/complete?redirect='+encodeURIComponent(redirectTo));
     } catch (err) {
       setGeneralError(err instanceof Error ? err.message : 'Demo sign-in failed.');
       setBusyKey('');
@@ -429,9 +432,14 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                       );
                     })}
                   </div>
+                  <button type="button" className="ps-first-login-demo" disabled={!!busyKey || !configured} onClick={() => handleDemoSignIn('demo-new-student')}>
+                    {busyKey === 'demo-new-student' ? <LoaderCircle size={17} className="spin"/> : <UserPlus size={17}/>}
+                    <span><strong>Try first-time student setup</strong><small>Fictional identity · join with a class code</small></span><ArrowRight size={16}/>
+                  </button>
                 </div>
               )}
 
+              <Link className="ps-forgot-link" href="/account-access">Forgot your local account password?</Link>
               {/* Divider & Secondary Sign-In */}
               <div className="ps-divider">
                 <span>or use university single sign-on</span>
@@ -440,16 +448,17 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               <div className="ps-sso-wrap">
                 <button
                   type="button"
-                  disabled
+                  disabled={!google||!!busyKey}
+                  onClick={async()=>{setBusyKey('google');setGeneralError('');try{const result=await onAuthSubmit('signin/google',{}) as {url?:string};if(result.url)window.location.assign(result.url);}catch(e){setGeneralError(e instanceof Error?e.message:'Google sign-in is unavailable. Try again.');setBusyKey('');}}}
                   className="ps-google-btn"
                   title="Google Workspace OAuth integration for RTU faculty & students"
                 >
                   <span className="ps-google-icon">G</span>
                   <span>Continue with @rtu.edu.ph Google Account</span>
-                  <span className="ps-sso-badge">Coming Soon</span>
+                  <span className="ps-sso-badge">{google?'RTU Workspace':'Not configured'}</span>
                 </button>
                 <p className="ps-sso-note">
-                  Institutional Google Workspace SSO will activate in the next enrollment cycle.
+                  {google?'Students complete registration after sign-in. Staff require an OJT office invitation.':'Google Workspace sign-in is unavailable in this fictional demo.'}
                 </p>
               </div>
 
@@ -478,12 +487,12 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               <div className="ps-feature-icon-wrap ps-icon-blue">
                 <Clock size={22} />
               </div>
-              <h3 className="ps-feature-card-title">HTE Supervisor Time Verification</h3>
+              <h3 className="ps-feature-card-title">Industry Partner Supervisor Time Verification</h3>
               <p className="ps-feature-card-text">
-                Company supervisors directly review and confirm intern Time-In and Time-Out
-                records, ensuring rendered hours are verified at the source before coordinator review.
+                Company supervisors review one complete DTR at the end of the internship,
+                verify its accuracy or return it for correction, then complete the school evaluation.
               </p>
-              <span className="ps-feature-tag">Dual-Audit Attendance</span>
+              <span className="ps-feature-tag">Final DTR Verification</span>
             </div>
 
             <div className="ps-feature-card ps-feature-navy">
@@ -529,7 +538,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
           <div className="ps-footer-col">
             <strong>Workflows</strong>
             <span>Student Daily Time Records</span>
-            <span>Host Training Validation</span>
+            <span>Industry Partner Validation</span>
             <span>Faculty Coordinator Review</span>
             <span>MOA Partner Registry</span>
           </div>
@@ -573,7 +582,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
                   Engineering &amp; Technology Dean&apos;s Office / Management Information System (MIS).
                 </li>
                 <li>
-                  <strong>HTE Industry Supervisors:</strong> Account invitations are issued once
+                  <strong>Industry Partner Supervisors:</strong> Account invitations are issued once
                   your company&apos;s Memorandum of Agreement (MOA) and training profile are verified by
                   the university.
                 </li>
@@ -599,6 +608,7 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
         </div>
       )}
 
+      <div className="hte-register-link"><a href="/register/industry-partner">Industry Partner supervisor? Register your company for approval</a></div>
       {/* Account Registration Modal */}
       {registerModalOpen && (
         <div className="ps-help-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="register-dialog-title">
@@ -623,20 +633,20 @@ export default function LandingLoginView({ demo, configured, redirectTo = '/', o
               </p>
               <ul>
                 <li>
-                  <strong>RTU Students:</strong> Student accounts are automatically provisioned upon enrollment in your practicum / OJT section. You can sign in using your official <code>@rtu.edu.ph</code> university credentials.
+                  <strong>RTU Students:</strong> The university provisions your account. On your first sign-in, enter your school details and the class code from your coordinator. The code identifies your program and practicum section. Completing registration opens your workspace immediately; no coordinator approval is needed. Student access requires an @rtu.edu.ph email or an explicitly authorized manual account.
                 </li>
                 <li>
-                  <strong>Class Section Join Codes:</strong> If your class coordinator gave you a section code (e.g. <code>SYNC4A</code>), you can enter it immediately after signing in to link your training section.
+                  <strong>Class Section Join Codes:</strong> A coordinator-provided code (e.g. <code>SYNC4A</code>) identifies a practicum section during first-time setup. Verified students can also use it in My class when they need to request enrollment.
                 </li>
                 <li>
-                  <strong>Host Training Establishments (HTE):</strong> Industry supervisors receive direct onboarding credentials upon verification of the university Memorandum of Agreement (MOA).
+                  <strong>Industry Partners:</strong> <a href="/register/industry-partner">Register your Industry Partner</a>. Industry supervisors can submit company and account details for Super Admin approval.
                 </li>
               </ul>
               <div className="ps-help-demo-tip">
                 <Sparkles size={14} />
                 <span>
                   Testing the system? You can jump straight in using the{' '}
-                  <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab to explore student, coordinator, or supervisor workflows immediately.
+                  <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab. Choose &ldquo;Try first-time student setup&rdquo; to explore student registration, or use a role card to open an established workspace.
                 </span>
               </div>
             </div>

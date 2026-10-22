@@ -9,7 +9,7 @@ import { toast } from 'sonner';
  * Worst case: A student mistakes unconfirmed hours for confirmed hours or misses an appointment, so states stay explicit.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   addDays,
   addMonths,
@@ -18,7 +18,6 @@ import {
   endOfMonth,
   endOfWeek,
   format,
-  isSameDay,
   isSameMonth,
   startOfMonth,
   startOfWeek,
@@ -39,17 +38,14 @@ import {
   ChevronRight,
   Clock3,
   Copy,
-  Download,
   ExternalLink,
   Eye,
   FileCheck,
   FileText,
   Filter,
   GraduationCap,
-  Info,
   MapPin,
   Pencil,
-  Plus,
   Search,
   Sparkles,
   Target,
@@ -99,6 +95,15 @@ const eventClassByType: Record<string, string> = {
 const value = (row: Row, key: string) => String(row[key] ?? '');
 const hours = (minutes: number) => `${(minutes / 60).toFixed(1)} hrs`;
 
+const compactCalendarQuery = '(max-width: 767px)';
+function subscribeToCalendarViewport(onChange: () => void) {
+  const query = window.matchMedia(compactCalendarQuery);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+const compactCalendarSnapshot = () => window.matchMedia(compactCalendarQuery).matches;
+const serverCalendarSnapshot = () => false;
+
 function manilaToday(): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Manila',
@@ -142,19 +147,6 @@ function dateLabel(
 ): string {
   const parsed = parseCalendarDate(date);
   return parsed ? new Date(`${date}T12:00:00Z`).toLocaleDateString('en-PH', { ...options, timeZone: 'UTC' }) : date;
-}
-
-function relativeDayTag(dateStr: string, todayStr: string): string | null {
-  if (dateStr === todayStr) return 'Today';
-  const target = parseCalendarDate(dateStr);
-  const today = parseCalendarDate(todayStr);
-  if (!target || !today) return null;
-  const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 3600 * 24));
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays > 1 && diffDays <= 7) return `In ${diffDays} days`;
-  if (diffDays < -1) return 'Past date';
-  return null;
 }
 
 function eventOccursOn(event: Row, date: string): boolean {
@@ -219,7 +211,7 @@ export interface CalendarViewProps {
   onEditEvent?: (event: Row) => void;
   onCancelEvent?: (eventId: string) => void;
   onDeleteEvent?: (eventId: string) => void;
-    onCorrectEntry?: (entry: Row) => void;
+  onCorrectEntry?: (entry: Row) => void;
   onViewEntry?: (entry: Row) => void;
   onConfirmEntry?: (entryId: string, version: number) => void;
   onRegisterExport?: (fn: (formatType?: 'ics' | 'csv' | 'json') => void) => void;
@@ -235,32 +227,16 @@ export default function CalendarView({
   classes,
   documents,
   evaluations,
-  assessmentSchedules,
-  canCreateEvents = false,
-  onCreateEvent,
   onEditEvent,
   onCancelEvent,
   onDeleteEvent,
-    onCorrectEntry,
-  onViewEntry,
-  onConfirmEntry,
   onRegisterExport,
-  onLogAttendanceForDate,
   onNavigate,
 }: CalendarViewProps) {
   const today = manilaToday();
-  const [mode, setMode] = useState<CalendarMode>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      return 'agenda';
-    }
-    return 'month';
-  });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setMode('agenda');
-    }
-  }, []);
+  const compactViewport = useSyncExternalStore(subscribeToCalendarViewport, compactCalendarSnapshot, serverCalendarSnapshot);
+  const [selectedMode, setMode] = useState<CalendarMode | null>(null);
+  const mode = selectedMode ?? (compactViewport ? 'agenda' : 'month');
 
   const [cursor, setCursor] = useState<Date>(() => parseCalendarDate(today) ?? new Date());
   const [selectedDate, setSelectedDate] = useState<string>(today);
@@ -275,7 +251,6 @@ export default function CalendarView({
   const [schedPage, setSchedPage] = useState(1);
   const [schedPageSize, setSchedPageSize] = useState(5);
   const [viewingSchedule, setViewingSchedule] = useState<Row | null>(null);
-  const [inspectingDay, setInspectingDay] = useState<string | null>(null);
   const [leftRailTab, setLeftRailTab] = useState<'MILESTONES' | 'CLEARANCE'>('MILESTONES');
 
 
@@ -408,7 +383,7 @@ export default function CalendarView({
     return grouped;
   }, [entries]);
 
-  const totalsFor = (date: string): DayTotals => {
+  const totalsFor = useCallback((date: string): DayTotals => {
     const rows = entriesByDate.get(date) ?? [];
     const minutes = rows.reduce((sum, entry) => sum + Math.max(0, Number(entry.minutes) || 0), 0);
     const confirmed = rows.reduce(
@@ -417,15 +392,13 @@ export default function CalendarView({
       0
     );
     return { minutes, confirmed, pending: Math.max(0, minutes - confirmed), entries: rows };
-  };
+  }, [entriesByDate]);
 
   const eventsFor = (date: string) => combinedEvents.filter((event) => eventOccursOn(event, date));
 
   // Calendar dates
-  const monthStart = startOfMonth(cursor);
-  const monthEnd = endOfMonth(cursor);
   const monthDays = useMemo(
-    () => eachDayOfInterval({ start: startOfWeek(monthStart, { weekStartsOn: 1 }), end: endOfWeek(monthEnd, { weekStartsOn: 1 }) }),
+    () => eachDayOfInterval({ start: startOfWeek(startOfMonth(cursor), { weekStartsOn: 1 }), end: endOfWeek(endOfMonth(cursor), { weekStartsOn: 1 }) }),
     [cursor]
   );
   const weekDays = useMemo(
@@ -440,6 +413,8 @@ export default function CalendarView({
 
   // Month Statistics
   const currentMonthStats = useMemo(() => {
+    const monthStart = startOfMonth(cursor);
+    const monthEnd = endOfMonth(cursor);
     const daysInCurrentMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
     let totalMinutes = 0;
     let confirmedMinutes = 0;
@@ -479,7 +454,7 @@ export default function CalendarView({
       missedWeekdaysCount,
       monthEventsCount,
     };
-  }, [cursor, entriesByDate, combinedEvents, placements, user.id, user.role, today]);
+  }, [cursor, totalsFor, combinedEvents, placements, user.id, user.role, today]);
 
   // Student placement and requirement calculations
   const studentPlacement = useMemo(() => {
@@ -540,33 +515,12 @@ export default function CalendarView({
     });
   }, [documents, studentPlacement, user.role]);
 
-  // Selected details
-  const selectedTotals = totalsFor(selectedKey);
-  const selectedEvents = eventsFor(selectedKey);
-  const selectedDateObject = parseCalendarDate(selectedKey) ?? new Date();
-  const selectedIsNoHours = selectedDateObject
-    ? noHoursWeekday(selectedDateObject, selectedKey, user.role, placements, user.id, selectedTotals, today)
-    : false;
-  const selectedRelativeTag = relativeDayTag(selectedKey, today);
-
-  // Inspecting Day details (for student on-demand inspection dialog)
-  const inspectingKey = inspectingDay || selectedKey;
-  const inspectingTotals = totalsFor(inspectingKey);
-  const inspectingEvents = eventsFor(inspectingKey);
-  const inspectingDateObject = parseCalendarDate(inspectingKey) ?? new Date();
-  const inspectingIsNoHours = inspectingDateObject
-    ? noHoursWeekday(inspectingDateObject, inspectingKey, user.role, placements, user.id, inspectingTotals, today)
-    : false;
-
-    const upcomingEvents = useMemo(() => {
+  const upcomingEvents = useMemo(() => {
     return combinedEvents
       .filter((ev) => value(ev, 'endDate') >= today && value(ev, 'status') !== 'CANCELLED')
       .sort((a, b) => value(a, 'startDate').localeCompare(value(b, 'startDate')))
       .slice(0, 4);
   }, [combinedEvents, today]);
-
-  const totalHoursLabel =
-    user.role === 'STUDENT' ? 'Your DTR hours' : user.role === 'COORDINATOR' ? 'Class DTR hours' : 'Institution DTR hours';
 
   // Managed schedules directory for Coordinator & Super Admin
   const managedEvents = useMemo(() => {
@@ -808,21 +762,14 @@ export default function CalendarView({
     else setCursor((current) => (direction < 0 ? subMonths(current, 1) : addMonths(current, 1)));
   }
 
-  function chooseDay(date: Date, openDayInspector = false) {
+  function chooseDay(date: Date) {
     const key = calendarDateValue(date);
     setSelectedDate(key);
     if (mode === 'month' && !isSameMonth(date, cursor)) setCursor(date);
     if (mode === 'week') setCursor(date);
-    if (openDayInspector || user.role === 'STUDENT') {
-      setInspectingDay(key);
-    }
   }
 
-    useEffect(() => {
-    onRegisterExport?.(exportCalendar);
-  }, [onRegisterExport, combinedEvents, entriesByDate]);
-
-  function exportCalendar(formatType: 'ics' | 'csv' | 'json' = 'ics') {
+  const exportCalendar = useCallback((formatType: 'ics' | 'csv' | 'json' = 'ics') => {
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 
     function triggerDownload(blob: Blob, filename: string) {
@@ -869,7 +816,7 @@ export default function CalendarView({
           `DTR Log (${rows.length} shift${rows.length === 1 ? '' : 's'})`,
           (totals.minutes / 60).toFixed(1),
           confirmed ? 'Confirmed' : 'Pending Review',
-          String(placements.find(p => p.studentId === user.id)?.companyName ?? 'Host Training Establishment'),
+          String(placements.find(p => p.studentId === user.id)?.companyName ?? 'Industry Partner'),
           user.name
         ]);
       }
@@ -974,9 +921,9 @@ export default function CalendarView({
       if (!totals.minutes) continue;
       const status =
         totals.pending === 0
-          ? 'Coordinator confirmed'
+          ? 'Industry Partner verified'
           : totals.confirmed === 0
-          ? 'Pending confirmation'
+          ? 'Awaiting final Industry Partner verification'
           : `${hours(totals.confirmed)} confirmed; ${hours(totals.pending)} pending`;
       lines.push(
         'BEGIN:VEVENT',
@@ -994,10 +941,14 @@ export default function CalendarView({
     const blob = new Blob([lines.join('\r\n') + '\r\n'], { type: 'text/calendar;charset=utf-8' });
     triggerDownload(blob, 'practisync-calendar.ics');
     toast.success('Calendar exported as iCalendar (.ics)');
-  }
+  }, [combinedEvents, entriesByDate, placements, user.id, user.name, user.role]);
+
+  useEffect(() => {
+    onRegisterExport?.(exportCalendar);
+  }, [onRegisterExport, exportCalendar]);
 
   // Filter checker
-  function matchesFilter(type: 'DTR' | 'ACADEMIC' | 'DEADLINE' | 'APPOINTMENT' | 'HOLIDAY') {
+  function matchesFilter(type: string) {
     if (categoryFilter === 'ALL') return true;
     if (categoryFilter === 'CONFIRMED') return type === 'DTR';
     return categoryFilter === type;
@@ -1241,7 +1192,6 @@ export default function CalendarView({
   // Render day cell in month view
   function renderDay(
     date: Date,
-    dayIndex = 0,
     multiDaySlots: Array<MultiDaySlot | null> = []
   ) {
     const dateKey = calendarDateValue(date);
@@ -1322,7 +1272,7 @@ export default function CalendarView({
         role="gridcell"
         tabIndex={isSelected ? 0 : -1}
         aria-label={accessible}
-        aria-pressed={isSelected}
+        aria-selected={isSelected}
         aria-current={isToday ? 'date' : undefined}
         onClick={() => chooseDay(date)}
         onKeyDown={(e) => handleDayKeyDown(e, date)}
@@ -1414,9 +1364,9 @@ export default function CalendarView({
               style={{ cursor: 'pointer' }}
               onClick={(e) => {
                 e.stopPropagation();
-                setInspectingDay(dateKey);
+                chooseDay(date);
               }}
-              title={`${hours(totals.minutes)} rendered · ${confirmedOnly ? 'Coordinator confirmed' : `${hours(totals.confirmed)} confirmed, ${hours(totals.pending)} pending`}`}
+              title={`${hours(totals.minutes)} rendered · ${confirmedOnly ? 'Industry Partner verified' : `${hours(totals.confirmed)} confirmed, ${hours(totals.pending)} pending`}`}
             >
               <Clock3 size={11} />
               <span>{hours(totals.minutes)}</span>
@@ -1434,7 +1384,7 @@ export default function CalendarView({
               style={{ cursor: 'pointer' }}
               onClick={(e) => {
                 e.stopPropagation();
-                setInspectingDay(dateKey);
+                chooseDay(date);
               }}
               title="No DTR hours recorded on this placement weekday."
             >
@@ -1539,10 +1489,10 @@ export default function CalendarView({
                 {totals.minutes > 0 && (
                   <div className={`${styles.weekDtrCard} ${isDtrDimmed ? styles.itemDimmed : ''}`}
                     style={{ cursor: 'pointer' }}
-                    onClick={() => setInspectingDay(dateKey)}
+                    onClick={() => chooseDay(date)}
                     role="button"
                     tabIndex={0}
-                    title="Click to inspect shift records">
+                    title="Select this day">
                     <div className={styles.weekDtrCardTop}>
                       <span className={styles.weekDtrHours}>{hours(totals.minutes)}</span>
                       <span className={`chip ${totals.pending === 0 ? 'green' : 'orange'}`}>
@@ -1556,10 +1506,10 @@ export default function CalendarView({
                 {missed && (
                   <div className={`${styles.missingPill} ${isMissedDimmed ? styles.itemDimmed : ''}`}
                     style={{ padding: '6px 8px', cursor: 'pointer' }}
-                    onClick={() => setInspectingDay(dateKey)}
+                    onClick={() => chooseDay(date)}
                     role="button"
                     tabIndex={0}
-                    title="No hours logged · Click to log attendance">
+                    title="No hours logged · Select this placement day">
                     <AlertTriangle size={12} />
                     <span>No hours logged</span>
                   </div>
@@ -1744,7 +1694,7 @@ export default function CalendarView({
     const end = endOfMonth(cursor);
     const dates = eachDayOfInterval({ start, end }).filter((date) => {
       const key = calendarDateValue(date);
-      const evs = eventsFor(key).filter((ev) => matchesFilter(value(ev, 'eventType') as any));
+      const evs = eventsFor(key).filter((ev) => matchesFilter(value(ev, 'eventType')));
       const dtrMatches = totalsFor(key).minutes > 0 && matchesFilter('DTR');
       return evs.length > 0 || dtrMatches;
     });
@@ -1774,7 +1724,7 @@ export default function CalendarView({
       <div className={styles.agendaContainer}>
         {dates.map((date) => {
           const key = calendarDateValue(date);
-          const dayEvents = eventsFor(key).filter((ev) => matchesFilter(value(ev, 'eventType') as any));
+          const dayEvents = eventsFor(key).filter((ev) => matchesFilter(value(ev, 'eventType')));
           const totals = totalsFor(key);
           const showDtr = totals.minutes > 0 && matchesFilter('DTR');
           const isToday = key === today;
@@ -1796,17 +1746,17 @@ export default function CalendarView({
                 {showDtr && (
                   <div className={styles.agendaDtrBanner}
                     style={{ cursor: 'pointer' }}
-                    onClick={() => setInspectingDay(key)}
+                    onClick={() => chooseDay(date)}
                     role="button"
                     tabIndex={0}
-                    title="Click to inspect daily shift details">
+                    title="Select this day">
                     <div className={styles.agendaDtrLeft}>
                       <Clock3 size={15} color="var(--rtu-blue)" />
                       <strong>{hours(totals.minutes)} rendered</strong>
                     </div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <span className={`chip ${totals.pending === 0 ? 'green' : 'orange'}`}>
-                        {totals.pending === 0 ? 'Coordinator confirmed' : `${hours(totals.pending)} pending verification`}
+                        {totals.pending === 0 ? 'Industry Partner verified' : `${hours(totals.pending)} pending verification`}
                       </span>
                       {totals.confirmed > 0 && totals.pending > 0 && (
                         <span className="chip green">{hours(totals.confirmed)} confirmed</span>
@@ -2282,7 +2232,7 @@ export default function CalendarView({
           </span>
         </div>
         <p className={styles.legendCardSubtitle}>
-          HTE partner meetings, student consultations, and supervisor alignments.
+          Industry Partner partner meetings, student consultations, and supervisor alignments.
         </p>
         <div className={styles.upcomingList} style={{ maxHeight: 170 }}>
           {coeAppointments.length ? (
@@ -2553,7 +2503,7 @@ export default function CalendarView({
                     const weekTracks = getWeekMultiDayTracks(week, combinedEvents);
                     return (
                       <div className={styles.weekRow} role="row" key={`${index}-${calendarDateValue(week[0]!)}`}>
-                        {week.map((date, dayIdx) => renderDay(date, dayIdx, weekTracks[dayIdx]))}
+                        {week.map((date, dayIdx) => renderDay(date, weekTracks[dayIdx]))}
                       </div>
                     );
                   })}
@@ -2644,7 +2594,7 @@ export default function CalendarView({
                   <select
                     value={schedTypeFilter}
                     onChange={(e) => {
-                      setSchedTypeFilter(e.target.value as any);
+                      setSchedTypeFilter(e.target.value as typeof schedTypeFilter);
                       setSchedPage(1);
                     }}
                     className={styles.filterSelect}
@@ -2660,7 +2610,7 @@ export default function CalendarView({
                   <select
                     value={schedStatusFilter}
                     onChange={(e) => {
-                      setSchedStatusFilter(e.target.value as any);
+                      setSchedStatusFilter(e.target.value as typeof schedStatusFilter);
                       setSchedPage(1);
                     }}
                     className={styles.filterSelect}
@@ -2676,7 +2626,7 @@ export default function CalendarView({
                   <select
                     value={schedSort}
                     onChange={(e) => {
-                      setSchedSort(e.target.value as any);
+                      setSchedSort(e.target.value as typeof schedSort);
                       setSchedPage(1);
                     }}
                     className={styles.filterSelect}

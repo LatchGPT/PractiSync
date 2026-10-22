@@ -1,3 +1,4 @@
+import {installSqliteScopeGuards} from './isolation-sqlite';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -56,7 +57,11 @@ const sqliteGlobal = globalThis as typeof globalThis & {
 
 function migrate(sql: DatabaseSync) {
   const root = process.cwd();
-  const read = (path: string) => readFileSync(join(root, path), 'utf8');
+  const read = (file: string) => {
+    if(file.startsWith('packages/db/prisma/migrations/'))return readFileSync(join(root,'packages/db/prisma/migrations',file.slice('packages/db/prisma/migrations/'.length)),'utf8');
+    if(file.startsWith('drizzle/'))return readFileSync(join(root,'drizzle',file.slice('drizzle/'.length)),'utf8');
+    throw new Error('Local schema files must stay inside the migration directories.');
+  };
 
   sql.exec('BEGIN');
   try {
@@ -216,8 +221,9 @@ function upgradeCalendarEventsV6(sql: DatabaseSync) {
 }
 
 export function openLocalDemoDatabase(): DemoDatabase {
-  const path = resolve(process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
-  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 7) return sqliteGlobal.practiSyncLocalDemo.database;
+  // The operator's local demo file must not make the production tracer bundle the workspace.
+  const path = resolve(/*turbopackIgnore: true*/ process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
+  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 17) return sqliteGlobal.practiSyncLocalDemo.database;
 
   mkdirSync(dirname(path), { recursive: true });
   const sql = new DatabaseSync(path);
@@ -247,8 +253,47 @@ export function openLocalDemoDatabase(): DemoDatabase {
       sql.exec('COMMIT');
     } catch (error) { sql.exec('ROLLBACK'); throw error; }
   }
-  sql.exec('PRAGMA user_version = 7');
+  if (!hasTable('final_dtrs')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610190001_hte_approvals_final_dtr/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  if (!hasTable('student_verifications')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610200001_student_verification/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  const userColumns = sql.prepare("PRAGMA table_info('users')").all() as { name: string }[];
+  if (!userColumns.some(column => column.name === 'email_domain_exception')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610200003_student_registration/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  const feedbackColumns = sql.prepare("PRAGMA table_info('industry_feedback')").all() as { name: string }[];
+  if (!feedbackColumns.some(column => column.name === 'verification_state')) sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610210001_feedback_provenance/migration.sql'), 'utf8'));
+  if (!hasTable('account_tokens')) sql.exec(readFileSync(join(process.cwd(),'packages/db/prisma/migrations/202610210002_account_lifecycle/migration.sql'),'utf8'));
+  if (!hasTable('deadline_reminder_policies')) sql.exec(readFileSync(join(process.cwd(),'packages/db/prisma/migrations/202610210003_deadline_reminders/migration.sql'),'utf8'));
+  const placementColumns = sql.prepare("PRAGMA table_info('placements')").all() as { name: string }[];
+  if (!placementColumns.some(column => column.name === 'is_external')) {
+    sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610220001_external_hte_workflows/migration.sql'), 'utf8'));
+  }
+  const companyColumns = sql.prepare("PRAGMA table_info('companies')").all() as { name: string }[];
+  if (!companyColumns.some(column => column.name === 'contact_phone')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610220002_industry_partner_recruitment/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  installSqliteScopeGuards(sql);
+  sql.exec('PRAGMA user_version = 17');
   const database = new LocalDemoDatabase(sql);
-  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 7 };
+  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 17 };
   return database;
 }

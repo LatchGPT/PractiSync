@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 import {useState, useEffect} from 'react';
 import {
   UserRound,
@@ -16,14 +18,11 @@ import {
   Sun,
   CheckCircle2,
   Globe,
-  Eye,
-  EyeOff,
   RotateCcw,
 } from 'lucide-react';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
 import {Switch} from '@/components/ui/switch';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '@/components/ui/select';
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from '@/components/ui/dialog';
 import {toast} from 'sonner';
 import type {Snapshot, Identity, Role} from '@/packages/validation/contracts';
 
@@ -95,7 +94,7 @@ const DEFAULT_SETTINGS: PractiSyncSettings = {
 const titleRole: Record<Role, string> = {
   STUDENT: 'Student',
   COORDINATOR: 'Coordinator',
-  SUPERVISOR: 'HTE Supervisor',
+  SUPERVISOR: 'Industry Partner Supervisor',
   SUPER_ADMIN: 'Super Admin'
 };
 
@@ -126,12 +125,9 @@ export default function SettingsView({
     return DEFAULT_SETTINGS;
   });
 
+  const router=useRouter();
+  const [revoking,setRevoking]=useState(false);
   const [activeTab, setActiveTab] = useState('general');
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPasswords, setShowPasswords] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -218,29 +214,6 @@ export default function SettingsView({
     toast.info('Preferences reset to Rizal Technological University defaults.');
   };
 
-  // Change password submission handler
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword) {
-      toast.error('Please enter your current password.');
-      return;
-    }
-    if (newPassword.length < 12) {
-      toast.error('New password must be at least 12 characters.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match.');
-      return;
-    }
-
-    toast.success('Password updated successfully. Session token renewed.');
-    setPasswordModalOpen(false);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-  };
-
   // Export User JSON Data
   const handleExportData = () => {
     const userPlacements = data.placements.filter((p) => p.studentId === user.id);
@@ -322,8 +295,8 @@ export default function SettingsView({
             <span className="stat-label">
               <Laptop size={13} /> Active Session
             </span>
-            <strong className="stat-value">Windows · Chrome</strong>
-            <small className="stat-meta">Localhost (Metro Manila)</small>
+            <strong className="stat-value">Signed in</strong>
+            <small className="stat-meta">Access checked by the server</small>
           </div>
         </div>
       </section>
@@ -413,7 +386,7 @@ export default function SettingsView({
                   <div className="settings-item-row">
                     <div>
                       <strong>Assigned OJT Partner Company</strong>
-                      <p>Host training establishment endorsed for internship.</p>
+                      <p>Industry Partner endorsed for internship.</p>
                     </div>
                     <span className="settings-value-pill">
                       {String(ownPlacement.companyName || 'Acme Innovations')}
@@ -494,7 +467,7 @@ export default function SettingsView({
               <strong>Philippine Standard Time (PHT, UTC+8) Mandatory Anchor</strong>
               <p>
                 To adhere to Philippine higher education internship policies, all daily training
-                records, attendance time-in/out timestamps, and coordinator confirmations are
+                records, attendance time-in/out timestamps, and final Industry Partner verifications are
                 calculated strictly in <strong>Asia/Manila (UTC+8)</strong>.
               </p>
             </div>
@@ -630,7 +603,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.showConfirmedBadge}
                   onCheckedChange={(c) => updateSetting('showConfirmedBadge', c, 'Confirmation badge setting saved.')}
-                  aria-label="Highlight coordinator confirmations"
+                  aria-label="Highlight final Industry Partner verifications"
                 />
               </div>
             </div>
@@ -720,24 +693,24 @@ export default function SettingsView({
 
               <div className="settings-item-row">
                 <div>
-                  <strong>Internship Board & Job Matches</strong>
+                  <strong>OJT Recruitment & Job Matches</strong>
                   <p>Notifies of new verified company openings matching your course curriculum.</p>
                 </div>
                 <Switch
                   checked={settings.notifyJobs}
                   onCheckedChange={(c) => updateSetting('notifyJobs', c, 'Job board alerts updated.')}
-                  aria-label="Internship board & job matches alerts"
+                  aria-label="OJT Recruitment & job matches alerts"
                 />
               </div>
 
               <div className="settings-item-row">
                 <div>
                   <strong>Institutional Email Digest</strong>
-                  <p>Frequency of consolidated summary emails sent to your registered address.</p>
+                  <p>Email digests are not configured. Deadline reminders use the in-app notification center.</p>
                 </div>
                 <Select
-                  value={settings.emailDigest}
-                  onValueChange={(v) => updateSetting('emailDigest', v as PractiSyncSettings['emailDigest'], 'Email digest preference saved.')}
+                  value="off"
+                  disabled
                 >
                   <SelectTrigger className="w-56 h-10" aria-label="Institutional email digest frequency">
                     <SelectValue />
@@ -746,7 +719,7 @@ export default function SettingsView({
                     <SelectItem value="immediate">Real-time alerts</SelectItem>
                     <SelectItem value="daily">Daily digest (6:00 PM PHT)</SelectItem>
                     <SelectItem value="weekly">Weekly briefing (Mondays)</SelectItem>
-                    <SelectItem value="off">Disabled in demo</SelectItem>
+                    <SelectItem value="off">Not configured</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -910,40 +883,32 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Credentials & Authentication Security</h3>
-                <p>Password management and access validation per university compliance.</p>
+                <p>Google accounts recover access through Google. Eligible local accounts use the application recovery flow.</p>
               </div>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setPasswordModalOpen(true)}
-              >
-                <Key size={14} /> Change password
-              </button>
+              {user.isDemo?<span className="chip">Fixed demo credentials</span>:<Link className="secondary" href="/account-access"><Key size={14}/>Recover account access</Link>}
             </div>
 
             <div className="settings-grid-rows">
               <div className="settings-item-row">
                 <div>
                   <strong>Account Password</strong>
-                  <p>Encrypted using argon2/PBKDF2 salted hash with minimum 12-character policy.</p>
+                  <p>Local passwords use a salted PBKDF2 hash. Google identities are verified by their provider.</p>
                 </div>
                 <span className="chip green">
-                  <ShieldCheck size={12} /> Compliant with Security Policy
+                  <ShieldCheck size={12} /> Server-managed access
                 </span>
               </div>
 
               <div className="settings-item-row">
                 <div>
                   <strong>Two-Factor Authentication (2FA)</strong>
-                  <p>Extra verification via institutional authenticator app or email OTP.</p>
+                  <p>RTU Google security is managed by the provider. Application-managed 2FA is not configured.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`chip ${settings.twoFactorEnabled ? 'green' : 'orange'}`}>
-                    {settings.twoFactorEnabled ? 'Active (Authenticator)' : 'Not configured'}
-                  </span>
+                  <span className="chip orange">Not configured</span>
                   <Switch
-                    checked={settings.twoFactorEnabled}
-                    onCheckedChange={(c) => updateSetting('twoFactorEnabled', c, c ? '2FA enabled.' : '2FA disabled.')}
+                    checked={false}
+                    disabled
                     aria-label="Two-factor authentication (2FA)"
                   />
                 </div>
@@ -966,15 +931,16 @@ export default function SettingsView({
           <div className="settings-panel-card">
             <div className="settings-card-header">
               <div>
-                <h3>Active Browser Sessions</h3>
-                <p>Currently authorized login sessions and device tokens.</p>
+                <h3>Session access</h3>
+                <p>Sign out all active sessions for your own account. This also signs out this browser.</p>
               </div>
               <button
                 type="button"
                 className="secondary destructive"
-                onClick={() => toast.success('All other remote sessions have been revoked.')}
+                disabled={revoking}
+                onClick={async()=>{if(!confirm('Sign out all sessions for '+user.name+', including this browser? You will need to sign in again.'))return;setRevoking(true);try{const response=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'revokeOwnSessions',values:{}})});const result=await response.json() as {error?:string};if(!response.ok)throw new Error(result.error??'Sessions could not be revoked. Try again.');router.replace('/login');}catch(error){toast.error(error instanceof Error?error.message:'Sessions could not be revoked.');}finally{setRevoking(false);}}}
               >
-                Revoke other sessions
+                {revoking?'Signing out…':'Sign out all sessions'}
               </button>
             </div>
 
@@ -985,11 +951,11 @@ export default function SettingsView({
                 </div>
                 <div className="session-details">
                   <div className="flex items-center gap-2">
-                    <strong>Windows 11 · Chrome Modern</strong>
+                    <strong>Current sign-in</strong>
                     <span className="chip green">This Device</span>
                   </div>
-                  <p>Metro Manila, Philippines · IP 120.29.112.44 · Asia/Manila</p>
-                  <small className="muted">Active now · Session rolling token v{user.sessionVersion || 1}</small>
+                  <p>Device and location details are not collected here.</p>
+                  <small className="muted">Changing your password or signing out all sessions invalidates existing access.</small>
                 </div>
               </div>
             </div>
@@ -1082,77 +1048,7 @@ export default function SettingsView({
         </TabsContent>
       </Tabs>
 
-      {/* Change Password Dialog Modal */}
-      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
-        <DialogContent className="sm:max-w-[460px]">
-          <DialogHeader>
-            <DialogTitle>Change Account Password</DialogTitle>
-            <DialogDescription>
-              Enter your current password and choose a secure new password (minimum 12 characters).
-            </DialogDescription>
-          </DialogHeader>
 
-          <form onSubmit={handlePasswordSubmit} className="modal-form">
-            <div className="field">
-              <label htmlFor="current-pw">Current Password</label>
-              <input
-                id="current-pw"
-                type={showPasswords ? 'text' : 'password'}
-                placeholder="Enter current password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="new-pw">New Password</label>
-              <input
-                id="new-pw"
-                type={showPasswords ? 'text' : 'password'}
-                placeholder="Minimum 12 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                minLength={12}
-                required
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="confirm-pw">Confirm New Password</label>
-              <input
-                id="confirm-pw"
-                type={showPasswords ? 'text' : 'password'}
-                placeholder="Repeat new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                minLength={12}
-                required
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="textbutton text-xs"
-                onClick={() => setShowPasswords(!showPasswords)}
-              >
-                {showPasswords ? <EyeOff size={13} className="inline mr-1" /> : <Eye size={13} className="inline mr-1" />}
-                {showPasswords ? 'Hide passwords' : 'Show passwords'}
-              </button>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" className="secondary" onClick={() => setPasswordModalOpen(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="primary">
-                Update password
-              </button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

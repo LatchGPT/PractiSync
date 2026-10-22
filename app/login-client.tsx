@@ -17,7 +17,7 @@ export async function authSubmit(provider:string,values:Record<string,string>,re
  return result;
 }
 
-export default function LoginClient({demo,configured,redirectTo='/'}:{demo:boolean;configured:boolean;redirectTo?:string}){
+export default function LoginClient({demo,configured,google=false,initialAuthError='',redirectTo='/'}:{demo:boolean;configured:boolean;google?:boolean;initialAuthError?:string;redirectTo?:string}){
  const safeRedirect=safeInternalPath(redirectTo)??'/';
- return <LandingLoginView demo={demo} configured={configured} redirectTo={safeRedirect} onAuthSubmit={(provider,values)=>authSubmit(provider,values,safeRedirect)}/>;
+ return <LandingLoginView initialAuthError={initialAuthError} google={google} demo={demo} configured={configured} redirectTo={safeRedirect} onAuthSubmit={(provider,values)=>authSubmit(provider,values,safeRedirect)}/>;
 }

@@ -168,7 +168,7 @@ export default function PracticumMilestoneStepper({
           {label: 'Remaining', value: goal.target ? hours(goal.remaining) : '—'},
           {label: 'Expected completion', value: studentForecastLabel(goal.forecast)},
           {label: 'Estimate basis', value: studentForecastDetail(goal.forecast)},
-          {label: 'Awaiting review', value: `${hours(pendingMinutes)} · ${pendingEntries.length} DTRs`},
+          {label: 'Awaiting final Industry Partner verification', value: `${hours(pendingMinutes)} · ${pendingEntries.length} DTRs`},
           {label: 'Submitted DTRs', value: String(ownEntries.length)},
           {label: 'Days on record', value: String(daysOnRecord)},
           {label: 'Reported average per day', value: daysOnRecord ? hours(goal.averagePerDay) : '—'},
@@ -235,7 +235,7 @@ export default function PracticumMilestoneStepper({
     const confirmedMinutes = data.entries.filter(e => e.confirmedVersion === e.version)
       .reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
     const reportedMinutes = data.entries.reduce((sum, e) => sum + Math.max(0, Number(e.minutes) || 0), 0);
-    const dtrsToConfirm = data.entries.filter(e => e.confirmedVersion !== e.version).length;
+    const dtrsToConfirm = (data.finalDtrReopens ?? []).filter(r => r.status === 'PENDING').length;
     const averageProgress = data.placements.length
       ? Math.round(data.placements.reduce((sum, placement) => {
           const entries = data.entries.filter(entry => entry.placementId === placement.id);
@@ -280,7 +280,7 @@ export default function PracticumMilestoneStepper({
           {label: 'Average reported progress', value: `${averageProgress}%`},
           {label: 'Reported hours · all records', value: hours(reportedMinutes)},
           {label: 'Confirmed hours · all records', value: hours(confirmedMinutes)},
-          {label: 'DTRs to confirm', value: String(dtrsToConfirm)},
+          {label: 'DTR reopening requests', value: String(dtrsToConfirm)},
         ],
       },
       {

@@ -1,3 +1,4 @@
+import {StudentVerificationRequired} from '@/packages/domain/student-verification';
 import {forbidden,redirect} from 'next/navigation';
 import {pageIdentity} from '@/app/server-identity';
 import {dashboardPathForRole} from '@/packages/auth/routes';
@@ -14,6 +15,7 @@ export default async function Page(){
  try{
   user=await pageIdentity();
  }catch(error){
+  if(error instanceof StudentVerificationRequired)redirect('/student-verification');
   console.error('Page error:',error);
   if(error instanceof DomainError&&error.status===403)denied=true;
   else if(!(error instanceof DomainError&&(error.status===401||error.status===503)))initialError='PractiSync could not load your workspace. Check your connection and try again.';

@@ -1,3 +1,4 @@
+import { latestEmployerEvidence } from './feedback-evidence';
 import type { Row } from '../validation/contracts';
 
 export interface CurriculumAnalyticsOptions {
@@ -90,7 +91,7 @@ export function calculateCurriculumAnalytics(
   const cohortSize = matchingPlacements.length;
 
   // 2. Filter industry supervisor feedback to matching cohorts and compatible scale
-  const matchingFeedback = feedbackList.filter((fb) => {
+  const matchingFeedback = latestEmployerEvidence(matchingPlacements, feedbackList).filter((fb) => {
     if (filterCourseId !== 'ALL' && String(fb.courseId) !== filterCourseId) return false;
     if (filterPeriod !== 'ALL' && String(fb.academicPeriod) !== filterPeriod) return false;
     if (filterCompanyId !== 'ALL' && String(fb.companyId) !== filterCompanyId) return false;

@@ -1,7 +1,6 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
 
-const viewPath = path.resolve(__dirname, '../app/calendar-view.tsx');
+const viewPath = new URL('../app/calendar-view.tsx', import.meta.url);
 let code = fs.readFileSync(viewPath, 'utf8');
 
 // 1. Add upcomingEvents calculation if not present
@@ -166,7 +165,6 @@ code = code.replace(kpiRibbonRegex, '\n\n      ');
 
 // 4. Adaptive Day Overview columns
 const eventsColStart = code.indexOf('{/* 2. Scheduled Events Column */}');
-const overviewEndMatch = code.match(/<\/div>\s*<\/div>\s*\)\s*:\s*\(\s*<div className=\{styles\.dayOverviewGrid\}>[\s\S]*?{\/\* 2\. Scheduled Events Column \*\/}[\s\S]*?(<\/div>\s*<\/div>\s*\}\)\s*<\/section>)/);
 
 const targetReplaceChunkEnd = code.indexOf('</div>\n              )}\n            </section>', eventsColStart);
 const targetReplaceChunkEndCRLF = code.indexOf('</div>\r\n              )}\r\n            </section>', eventsColStart);

@@ -4,6 +4,10 @@ PractiSync is a login-first cooperative education and on-the-job training worksp
 
 This document describes the current visual system and gives conventions for extending it. Values marked as current come from the repository; review guidance describes expectations for future changes, not a claim that every existing screen already meets them.
 
+OJT Recruitment is an Operate surface: use program categories first, then industry/location filters and optional search. Desktop uses a compact opportunity list beside full details; intermediate/phone widths stack these with keyboard-accessible return navigation. Reuse the RTU palette and Inter. Blue identifies interaction and selection; gold identifies focus. Keep the position and company above program, location, and intern-count metadata. Students have one primary Apply action, with explicit already-applied and ineligible states. Posting selects multiple programs using labeled checkboxes and preserves input on failures. Applicant contact actions remain within authorized application views and open an email app. Scoped styles are in `app/recruitment.css`; the full contract and finish-gate evidence are in `docs/latch-revision-plan.md`.
+
+Student registration is an Operate surface using the existing Inter and RTU blue-and-gold system. Its contract is in `docs/student-verification-design.md`. Keep the required first-login form in a bounded, internally scrolling dialog with labels, retained input, inline errors and a single primary action: Complete registration. The class-code preview shows the program, section and coordinator; successful registration opens the student workspace immediately. There is no student approval queue or waiting dialog. Class rosters include students without placements and offer a quieter destructive Remove action with a confirmation naming the student and section. Preserve account access and records when removing class membership. On phones, keep student details and actions visible, with placement information beneath the student name. Styles are scoped in `app/student-verification.css`.
+
 ## 1. Design direction
 
 The visual identity is inspired by Rizal Technological University's blue and gold. The product is a fictional demonstration, and the visual inspiration does not imply institutional endorsement. Demo content currently uses Rizal Technological University and fictional people, companies, policies, and records.
@@ -14,7 +18,7 @@ The interface should feel orderly, reassuring, and focused on practical work:
 - Place white surfaces on a pale blue-gray background.
 - Make progress, outstanding work, and the next useful action easy to find.
 - Use compact tables and summaries while preserving readable labels and values.
-- Explain statuses precisely. Reported hours, company-confirmed hours, document approval, and formal completion are separate concepts.
+- Explain statuses precisely. Reported hours, HTE-verified hours, document approval, and formal completion are separate concepts.
 - Keep sample data and unavailable services visibly identified.
 
 Gradients, gentle shadows, and small movement give the interface depth. Reserve stronger decoration for the sign-in identity panel, overview greeting, brand mark, and key actions.
@@ -158,7 +162,7 @@ Reuse primitives from `components/ui` and application patterns before introducin
 | --- | --- |
 | Student | Placement context, daily attendance and narratives, target progress, document clearance, competency development, support, and portfolio |
 | Coordinator | Class membership, student progress, document review, scoped announcements, and student support queues |
-| Supervisor | Assigned interns, optional attendance confirmation, evaluations, authorized hour policies, and company internship postings |
+| Supervisor | Assigned interns, whole-internship final DTR verification, evaluations, authorized hour policies, and company internship postings |
 | Super Admin | University office administration, account access, institution structure, and partner approvals |
 
 Super Admin navigation focuses on overview, accounts and roles, university structure, the internship board, and university announcements. Coordinator-facing class management, attendance review, document review, competency workflows, student portfolios, and support queues stay out of the office menu. Institutional read access still follows the permissions matrix. Other roles see modules according to their permissions and scope.
@@ -236,3 +240,15 @@ The generator is an Operate surface for students completing documents and admini
 - Fit the document preview to its available width initially. Preserve manual zoom, and provide a labeled fit-to-width control.
 - Keep field help beside its input, retain input after failures, and show persistent action errors inside the modal. Confirm saves in the footer and downloads inside the dialog so floating notifications cannot cover its actions. Explicitly save drafts/settings; warn before closing with unsaved changes and prevent accidental backdrop dismissal. Retain Radix focus trapping and Escape handling.
 - Use a restrained 200ms modal entrance and honor the application's reduced-motion setting. Reuse existing field drag and keyboard reordering, server actions, document rendering, and permission rules.
+
+## HTE approval and final review extension
+
+The Operate surface and existing blue-and-gold identity remain authoritative. See `docs/hte-workflows.md` for the design contract. Use a compact approval queue with requested/current values, explicit reasons for rejection, and a single primary action per review. Whole-internship DTR verification replaces daily confirmation controls and queue counts. The school evaluation placeholder reads “Waiting for evaluation form” and explains that Super Admin must upload and publish the document for every course and program. Preserve the school’s wording and scale labels when configuring its online answer fields; no sample questionnaire is seeded.
+
+## Tasks 5–8 extension
+
+Feedback provenance, account recovery and deadline settings are Operate surfaces. Follow `docs/backlog-5-8-contract.md`; reuse the existing Inter/RTU tokens and shared controls, use one primary action per form, retain failed input and state the verification/configuration status in text.
+
+The HTE placement form leads with its attributed submission receipt. University reviewers can reach the provenance ledger even when sample-size rules suppress analytics; legacy and invalidated evidence remains visible with explicit labels. Keep destructive invalidation behind an expanded, reasoned confirmation. Pending submissions disable editable fields and preserve failed drafts. Associate labels explicitly with their inputs. On phones, contain wide tables and Settings tab scrolling, stack controls, and leave optional deadline times genuinely optional. Security controls must describe actual configured behavior; do not show simulated password changes, MFA, device locations or email digests as active. See `docs/backlog-5-8-evidence.md` for the rendered finish gate.
+
+Calendar defaults to Agenda on compact viewports while retaining a mode the user explicitly selects. Grid cells use `aria-selected`, and arrow-key navigation keeps focus with the selected date. Bound phone summary-card tracks with `minmax(0, 1fr)` so long deadline labels cannot widen the page.
