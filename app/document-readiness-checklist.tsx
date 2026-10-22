@@ -42,14 +42,11 @@ export default function DocumentReadinessChecklist({
   return (
     <section className="role-card doc-readiness-card" aria-label="Document Readiness Checklist">
       <div className="role-card-heading">
-        <div>
-          <h2>Prerequisite Document Checklist</h2>
-          <p>Pre-deployment clearances required for formal OJT endorsement.</p>
-        </div>
+        <h2>Internship Documents Checklist</h2>
         <button
           className="role-link"
           onClick={() => navigate('documents')}
-          title="Open Document Clearance module"
+          title="Open Internship Documents module"
         >
           View all records <ArrowRight size={14} />
         </button>
@@ -62,7 +59,7 @@ export default function DocumentReadinessChecklist({
             <div className="doc-meter-label">
               <FileCheck size={16} className="doc-meter-icon" />
               <span>
-                <strong>{approvedCount} of {totalCount}</strong> clearances approved
+                <strong>{approvedCount} of {totalCount}</strong> documents approved
               </span>
             </div>
             <span
@@ -114,7 +111,7 @@ export default function DocumentReadinessChecklist({
                       navigate('documents');
                     }
                   }}
-                  title="Click to view document clearance"
+                  title="Click to view Internship Documents"
                 >
                   {/* Status Indicator Icon */}
                   <div className="doc-item-icon-wrap">
@@ -136,7 +133,7 @@ export default function DocumentReadinessChecklist({
                   {/* Document Information */}
                   <div className="doc-item-content">
                     <div className="doc-item-header">
-                      <strong className="doc-item-title">{String(doc.name ?? 'Clearance Document')}</strong>
+                      <strong className="doc-item-title">{String(doc.name ?? 'Internship Document')}</strong>
                       <span
                         className={`doc-status-chip chip-${statusLower}`}
                       >
@@ -163,30 +160,18 @@ export default function DocumentReadinessChecklist({
                     )}
                   </div>
 
-                  {/* Action prompt */}
-                  <div className="doc-item-action">
-                    {isRejected ? (
-                      <button
-                        type="button"
-                        className="doc-fix-btn"
-                        onClick={e => {
-                          e.stopPropagation();
-                          navigate('documents');
-                        }}
-                      >
-                        Fix <ArrowRight size={12} />
-                      </button>
-                    ) : (
+                  {!isRejected && (
+                    <div className="doc-item-action">
                       <ArrowRight size={14} className="doc-arrow-ghost" />
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         ) : (
           <div className="role-empty">
-            No document clearance records uploaded yet. Ask your coordinator for required pre-deployment templates.
+            No internship documents uploaded yet. Ask your coordinator for the required templates.
           </div>
         )}
 
@@ -194,7 +179,7 @@ export default function DocumentReadinessChecklist({
         <div className="doc-checklist-footer">
           <ShieldCheck size={14} />
           <span>
-            Clearances are evaluated and verified by your assigned class coordinator before academic clearance.
+            Internship documents are reviewed and verified by your class coordinator before academic clearance.
           </span>
         </div>
       </div>

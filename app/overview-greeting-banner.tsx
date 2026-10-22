@@ -6,7 +6,6 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
-  Download,
   FileText,
   GraduationCap,
   Plus,
@@ -100,20 +99,6 @@ export default function OverviewGreetingBanner({
             {timeGreeting}, {firstName} 👋
           </h1>
 
-          <p className="banner-subtitle">
-            <GraduationCap size={15} />
-            <span>
-              {course?.name ?? 'BS Information Technology'}
-              {placement ? (
-                <>
-                  {' '}· <strong style={{color: '#fff'}}>{placement.companyName}</strong> ({placement.section})
-                </>
-              ) : (
-                ' · Awaiting placement allocation'
-              )}
-            </span>
-          </p>
-
           <div className="banner-pills">
             {/* Primary Placement Status */}
             <span className={`banner-pill ${isPlacementActive ? 'pill-green' : 'pill-amber'}`}>
@@ -164,7 +149,7 @@ export default function OverviewGreetingBanner({
                 type="button"
                 className="banner-pill pill-amber clickable"
                 onClick={() => navigate('documents')}
-                title="View document clearance"
+                title="View Internship Documents"
               >
                 <FileText size={13} />
                 <span>{pendingDocs.length} doc{pendingDocs.length > 1 ? 's' : ''} pending review</span>
@@ -180,7 +165,7 @@ export default function OverviewGreetingBanner({
               <button
                 type="button"
                 className="banner-pill pill-amber clickable"
-                onClick={() => navigate('portfolio')}
+                onClick={() => navigate('competencies')}
                 title="Establish your baseline competency self-assessment before supervisor grading"
               >
                 <Sparkles size={13} />
@@ -201,7 +186,7 @@ export default function OverviewGreetingBanner({
               type="button"
               className="overview-btn secondary"
               style={{ borderColor: '#f7e0b1', color: '#966914', background: '#fffdf8' }}
-              onClick={() => navigate('portfolio')}
+              onClick={() => navigate('competencies')}
               title="Complete your competency self-assessment baseline"
             >
               <Sparkles size={14} color="#d97706" />
@@ -215,14 +200,6 @@ export default function OverviewGreetingBanner({
           >
             <Plus size={15} />
             <span>Log attendance</span>
-          </button>
-          <button
-            type="button"
-            className="overview-btn secondary"
-            onClick={() => navigate('portfolio')}
-          >
-            <Download size={14} />
-            <span>My portfolio</span>
           </button>
         </div>
       </section>
@@ -245,11 +222,6 @@ export default function OverviewGreetingBanner({
           <h1 className="banner-title">
             {timeGreeting}, {user.name} 👋
           </h1>
-
-          <p className="banner-subtitle">
-            <BookOpen size={15} />
-            <span>OJT Practicum Coordinator</span>
-          </p>
 
           <div className="banner-pills">
             <span className="banner-pill pill-green">
@@ -327,11 +299,6 @@ export default function OverviewGreetingBanner({
         <h1 className="banner-title">
           {timeGreeting}, {firstName} 👋
         </h1>
-
-        <p className="banner-subtitle">
-          <ShieldCheck size={15} />
-          <span>Practicum Office Administration</span>
-        </p>
 
         <div className="banner-pills">
           <span className="banner-pill pill-green">

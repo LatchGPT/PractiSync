@@ -221,10 +221,6 @@ export default function SelfAssessmentModal({
             >
               Student Self-Assessment Competency Report
             </h2>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#5e7490', lineHeight: 1.45 }}>
-              Record your perceived skill baseline across RTU practicum competencies. Your host company
-              supervisor will compare observed workplace performance with this baseline.
-            </p>
           </div>
           <button
             type="button"

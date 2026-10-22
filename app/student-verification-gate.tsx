@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { GraduationCap, LogOut, LoaderCircle, AlertCircle, ArrowRight, FilePenLine, RefreshCw } from 'lucide-react';
+import { LogOut, LoaderCircle, AlertCircle, ArrowRight, FilePenLine, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { RtuSeal } from '@/components/rtu-seal';
 import { authSubmit } from './login-client';
 import { studentDetailsInput, type StudentVerificationContext } from '@/packages/validation/student-verification';
 
@@ -118,14 +119,13 @@ export default function StudentVerificationGate({ initial }: { initial: StudentV
  const fieldError = (name: keyof Details) => errors[name] ? <p className="verification-field-error" id={'student-' + name + '-error'}>{errors[name]}</p> : null;
 
  return <main className="verification-canvas">
-  <div className="verification-brand"><GraduationCap size={24}/><span>PractiSync<span className="verification-brand-dot">.</span></span></div>
-  <p className="verification-canvas-caption">Your practicum journey starts here.</p>
+  <div className="verification-brand"><RtuSeal size={32}/><span>PractiSync<span className="verification-brand-dot">.</span></span></div>
   <Dialog open onOpenChange={() => {}}>
-   <DialogContent showCloseButton={false} className={'verification-dialog ' + (statusScreen ? 'verification-dialog-status' : 'verification-dialog-form')} onEscapeKeyDown={event => event.preventDefault()} onPointerDownOutside={event => event.preventDefault()} onInteractOutside={event => event.preventDefault()}>
+   <DialogContent aria-describedby={(forbidden || unavailable) ? 'student-verification-description' : undefined} showCloseButton={false} className={'verification-dialog ' + (statusScreen ? 'verification-dialog-status' : 'verification-dialog-form')} onEscapeKeyDown={event => event.preventDefault()} onPointerDownOutside={event => event.preventDefault()} onInteractOutside={event => event.preventDefault()}>
     <div className="verification-symbol">{statusScreen ? <AlertCircle size={26}/> : <FilePenLine size={26}/>}</div>
     <div className="verification-heading">
      <DialogTitle>{forbidden ? 'RTU student account required' : unavailable ? 'Registration is unavailable' : 'Let’s set up your student account'}</DialogTitle>
-     <DialogDescription>{forbidden ? 'Sign in with an @rtu.edu.ph account. Outside-domain accounts must be authorized by the university office during manual account setup.' : unavailable ? 'We couldn’t load your registration right now. Check your connection and try again.' : 'Enter your school details and class code to join your practicum section and open your workspace.'}</DialogDescription>
+     {(forbidden || unavailable) && <DialogDescription id="student-verification-description">{forbidden ? 'Sign in with an @rtu.edu.ph account. Outside-domain accounts must be authorized by the university office during manual account setup.' : 'We couldn’t load your registration right now. Check your connection and try again.'}</DialogDescription>}
     </div>
     {context.demo && <p className="verification-demo"><span/>Fictional demo · no Google account is connected</p>}
     {error && <div className="verification-error" role="alert"><AlertCircle size={17}/><span>{error}</span></div>}
@@ -134,7 +134,7 @@ export default function StudentVerificationGate({ initial }: { initial: StudentV
      <button type="button" className="primary" onClick={() => void retry()} disabled={retrying || signingOut}>{retrying ? <LoaderCircle size={16} className="spin"/> : <RefreshCw size={16}/>} {retrying ? 'Loading registration…' : 'Try again'}</button>
     </div> : <form className="verification-form" onSubmit={submit} noValidate aria-busy={busy}>
      <div className="verification-field"><label htmlFor="student-legalName">Full legal name</label><input {...fieldProps('legalName')} autoComplete="name" maxLength={120} required/>{fieldError('legalName')}</div>
-     <div className="verification-field"><label htmlFor="student-email">Sign-in email</label><input id="student-email" type="email" value={context.email} readOnly aria-describedby="student-email-help"/><p id="student-email-help">Your sign-in email is managed with your account.</p></div>
+     <div className="verification-field"><label htmlFor="student-email">Sign-in email</label><input id="student-email" type="email" value={context.email} readOnly/></div>
      <div className="verification-field-pair">
       <div className="verification-field"><label htmlFor="student-studentNumber">Student number</label><input {...fieldProps('studentNumber')} maxLength={40} autoCapitalize="characters" spellCheck={false} required placeholder="Student number"/>{fieldError('studentNumber')}</div>
       <div className="verification-field"><label htmlFor="student-yearLevel">Year level</label><select {...fieldProps('yearLevel')} required><option value="">Choose</option>{[1,2,3,4,5,6].map(year => <option key={year} value={year}>Year {year}</option>)}</select>{fieldError('yearLevel')}</div>
@@ -144,7 +144,6 @@ export default function StudentVerificationGate({ initial }: { initial: StudentV
       <div className="verification-code-row"><input {...fieldProps('classCode')} disabled={busy || checkingCode || signingOut} autoCapitalize="characters" spellCheck={false} maxLength={16} placeholder="Enter your class code"/><button type="button" className="secondary" onClick={() => void checkClassCode()} disabled={busy || checkingCode || signingOut}>{checkingCode && <LoaderCircle size={15} className="spin"/>}{checkingCode ? 'Checking…' : 'Check code'}</button></div>
       {fieldError('classCode')}
       {classMatch && <div className="verification-class-match" role="status" aria-live="polite"><div><span>Course / program</span><strong>{classMatch.courseCode} · {classMatch.courseName}</strong></div><div><span>Practicum section</span><strong>{classMatch.section}</strong></div><div><span>Class coordinator</span><strong>{classMatch.coordinatorName}</strong></div></div>}
-      <p>Use the code from your coordinator. It identifies your course and practicum section.</p>
      </div>
      <div className="verification-form-footer"><button type="button" className="verification-logout" onClick={() => void logOut()} disabled={signingOut || busy || checkingCode}><LogOut size={16}/>{signingOut ? 'Logging out…' : 'Log out'}</button><button className="primary" disabled={busy || signingOut || checkingCode}>{busy ? <LoaderCircle size={16} className="spin"/> : <ArrowRight size={16}/>} {busy ? 'Opening your workspace…' : 'Complete registration'}</button></div>
     </form>}

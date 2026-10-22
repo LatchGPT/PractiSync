@@ -313,11 +313,6 @@ export default function StudentMyClassView({
                   {String(ownPlacement.externalCompanyLocation || ownPlacement.location || 'Company Office')} · Immediate Supervisor: <strong>{String(ownPlacement.externalSupervisorName || 'Assigned Supervisor')}</strong>
                   {ownPlacement.externalSupervisorEmail ? ` (${ownPlacement.externalSupervisorEmail})` : ''}
                 </p>
-                {Number(ownPlacement.isExternal || 0) === 1 && (
-                  <p className="small muted" style={{ margin: '4px 0 0' }}>
-                    This host company does not maintain an online account in PractiSync. Continue recording daily attendance in Attendance. At target hours, submit your company-signed DTR and School Evaluation PDF for your coordinator’s verification.
-                  </p>
-                )}
               </div>
             </section>
           ) : (
@@ -329,9 +324,7 @@ export default function StudentMyClassView({
                   </span>
                 </div>
                 <h3 className="myclass-placement-company">Internship at a Company Without a PractiSync Account?</h3>
-                <p className="small muted" style={{ margin: '4px 0 0' }}>
-                  If your internship company does not have a profile on PractiSync and opts out of registering, you can register their details directly to start logging your practicum hours immediately.
-                </p>
+
               </div>
               {openExternalPlacement && (
                 <button
@@ -355,10 +348,7 @@ export default function StudentMyClassView({
                   <Star size={18} fill="#d7aa3e" color="#d7aa3e" style={{ marginRight: 6 }} />
                   Class Section Leadership
                 </h2>
-                <p className="myclass-section-desc">
-                  Designated student officers serving as direct communication liaisons between your coordinator and
-                  classmates.
-                </p>
+
               </div>
             </div>
 
@@ -379,16 +369,13 @@ export default function StudentMyClassView({
                   </div>
                 </div>
 
-                <p className="myclass-leader-desc">
-                  Main student point of contact for coordinator announcements, class attendance submissions, and
-                  section inquiries.
-                </p>
+
 
                 <div className="myclass-leader-footer">
                   {classRepPeer?.studentEmail ? (
                     <a href={`mailto:${classRepPeer.studentEmail}`} className="myclass-peer-email-link">
                       <Mail size={13} />
-                      <span>{classRepPeer.studentEmail}</span>
+                      <span>Email class representative</span>
                     </a>
                   ) : (
                     <span className="small muted">Official Class Liaison</span>
@@ -418,15 +405,13 @@ export default function StudentMyClassView({
                   </div>
                 </div>
 
-                <p className="myclass-leader-desc">
-                  Assists the Class Representative with peer coordination, emergency check-ins, and section activities.
-                </p>
+
 
                 <div className="myclass-leader-footer">
                   {viceRepPeer?.studentEmail ? (
                     <a href={`mailto:${viceRepPeer.studentEmail}`} className="myclass-peer-email-link">
                       <Mail size={13} />
-                      <span>{viceRepPeer.studentEmail}</span>
+                      <span>Email vice representative</span>
                     </a>
                   ) : (
                     <span className="small muted">Peer Support Lead</span>
@@ -451,9 +436,7 @@ export default function StudentMyClassView({
                   <Users size={18} style={{ marginRight: 6 }} />
                   Classmate Directory
                 </h2>
-                <p className="myclass-section-desc">
-                  Explore enrolled peers in your section and their Industry Partner placements.
-                </p>
+
               </div>
 
               <div className="myclass-directory-count-badge">
@@ -563,7 +546,7 @@ export default function StudentMyClassView({
                           title={`Email ${peer.studentName}`}
                         >
                           <Mail size={12} />
-                          <span className="truncate">{peer.studentEmail}</span>
+                          <span className="truncate">Email classmate</span>
                         </a>
 
                         {onViewStudent && data.placements.some(placement => placement.studentId === peer.studentId) && (
@@ -585,7 +568,7 @@ export default function StudentMyClassView({
               <div className="myclass-directory-empty">
                 <Users size={32} className="myclass-empty-icon" />
                 <h3>No classmates found</h3>
-                <p>No peers match your search filter &ldquo;{search}&rdquo;. Try searching by another name or company.</p>
+                <p>No peers match your search filter &ldquo;{search}&rdquo;.</p>
                 <button
                   type="button"
                   className="secondary mt-2"
@@ -607,10 +590,7 @@ export default function StudentMyClassView({
             <BookOpen size={28} />
           </div>
           <h3>Join your Practicum Class</h3>
-          <p>
-            You are not currently enrolled in an active practicum section. Ask your coordinator for your section
-            enrollment code to sync your class roster, milestone tracker, and daily time records.
-          </p>
+          <p>You are not currently enrolled in an active practicum section.</p>
           <button className="primary" onClick={openJoinModal}>
             <Plus size={15} />
             Join a class

@@ -81,8 +81,8 @@
 .native-generated-document-card { padding:20px; }
 .native-drafts-section { margin-top:26px; padding:18px; border:1px solid var(--border); border-radius:12px; background:var(--background); }
 .native-drafts-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; }
-.native-drafts-header h3 { margin:0 0 5px; font-size:16px; }
-.native-drafts-header p { margin:0; color:var(--muted-foreground); font-size:12px; line-height:1.5; }
+.native-drafts-header h3 { margin:0; font-size:16px; }
+
 .native-drafts-list { display:grid; gap:10px; }
 .native-drafts-list .interactive-form-card { margin:0; }
 .native-discard-draft { color:#a12b2b!important; border-color:#efc5c5!important; }
@@ -92,14 +92,13 @@
 .recommendation-config-field>summary small { display:block; margin:4px 0 0 16px; font-weight:400; color:var(--muted-foreground); }
 .native-occurrence-settings { margin:14px 0; padding:12px; border:1px solid var(--border); border-radius:8px; background:#f8faf9; }
 .native-occurrence-settings>strong { display:block; font-size:12px; }
-.native-occurrence-settings>p { margin:4px 0 10px; color:var(--muted-foreground); font-size:11px; line-height:1.45; }
 .native-occurrence-setting + .native-occurrence-setting { margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
 .native-occurrence-setting .recommendation-toggle { margin:0; }
 .native-occurrence-setting small { display:block; margin:4px 0 0 24px; color:var(--muted-foreground); font-size:10px; overflow-wrap:anywhere; }
 .native-field-manager { display:grid; gap:10px; }
 .native-field-manager-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .native-field-manager-heading h3 { display:flex; align-items:center; gap:8px; margin:0 0 3px; }
-.native-field-manager-heading .muted { margin:0; font-size:11px; line-height:1.4; }
+
 .native-field-manager-heading button { flex:none; display:inline-flex; align-items:center; gap:6px; padding:8px 10px; font-size:12px; }
 .native-field-guidance { padding:10px 12px; border:1px solid #cde7d7; border-radius:9px; background:#f1f8f3; }
 .native-field-guidance strong { display:block; font-size:12px; }

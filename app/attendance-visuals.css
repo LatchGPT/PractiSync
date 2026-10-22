@@ -3,7 +3,6 @@
 .attendance-chart-card{min-width:0;padding:20px 22px 16px;background:#fff;border:1px solid #dce5f0;border-radius:12px;box-shadow:0 4px 16px #143d730b}
 .attendance-chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .attendance-chart-head h2{font-size:15px;font-weight:650;color:#1b4073}
-.attendance-chart-head p{margin-top:4px;font-size:11px;color:#60758e}
 .attendance-chart-head>strong{white-space:nowrap;font-size:15px;color:#164b88}
 .attendance-plot{display:block;width:100%;height:auto;max-height:210px;margin-top:12px;overflow:visible}
 .attendance-plot-scroll{overflow-x:auto}
@@ -42,7 +41,6 @@
 .days-card .goal-info-label svg{color:#124c91}
 .goal-info-card>strong{color:var(--primary,#13835d);font-size:23px;font-weight:750;line-height:1.15;letter-spacing:-.5px}
 .days-card>strong{color:#1684c6}
-.goal-info-card>span{color:#637b95;font-size:11px;line-height:1.35}
 .goal-activity-card{padding:14px 17px 11px}
 .goal-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .goal-section-heading>svg{color:#56728f}
@@ -54,9 +52,8 @@
 .goal-activity-metric.waiting{background:#fbf6ea;border-color:#f0e3c5}
 .goal-activity-metric.waiting strong{color:#ac7510}
 .goal-activity-metric:last-child strong{font-size:13px;color:#1684c6}
-.goal-activity-foot{display:flex;justify-content:space-between;gap:8px;margin-top:9px;color:#627995;font-size:10px;line-height:1.35}
 .goal-bottom-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.goal-status-card,.goal-forecast-card{display:flex;min-height:105px;flex-direction:column;gap:6px;padding:13px 16px;background:#fff}
+.goal-status-card,.goal-forecast-card{display:flex;min-height:82px;flex-direction:column;gap:6px;padding:13px 16px;background:#fff}
 .goal-status-card.active{background:#f5f9fe}
 .goal-status-card.reached{background:#f1f8f4;border-color:#d8eadf}
 .goal-status-card.neutral{background:#f8fafc}
@@ -64,15 +61,11 @@
 .goal-status-value strong{color:var(--foreground,#102f62);font-size:17px;line-height:1.25;font-weight:750}
 .goal-status-card.reached .goal-status-value,.goal-status-card.reached .goal-status-value strong{color:#168052}
 .goal-status-card.neutral .goal-status-value{color:#74869a}
-.goal-status-card p,.goal-forecast-card p{color:#60758e;font-size:10.5px;line-height:1.4}
 .goal-forecast-card>.goal-card-eyebrow{gap:6px}
 .goal-forecast-card>.goal-card-eyebrow svg{color:#1684c6}
 .goal-forecast-card>strong{color:#1684c6;font-size:15px;line-height:1.25;font-weight:750}
 .goal-forecast-card.completed{background:var(--success-muted);border-color:var(--success-border)}
 .goal-forecast-card.completed>.goal-card-eyebrow svg,.goal-forecast-card.completed>strong{color:var(--success)}
-.goal-footer-bar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f6f8fb;border-radius:8px;border:1px solid #e9eef5}
-.footer-icon{flex-shrink:0;color:#69809c}
-.goal-disclaimer-text{margin:0;color:#586f8a;font-size:10.5px;line-height:1.45}
 @media(max-width:980px){
  .goal-summary{grid-template-columns:1fr;gap:12px}
  .goal-hero-card{display:grid;grid-template-columns:minmax(145px,190px) minmax(0,1fr);align-items:center;justify-items:center}
@@ -93,8 +86,7 @@
  .goal-info-card>strong{font-size:20px}
  .goal-activity-card{padding:13px 12px 10px}
  .goal-activity-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
- .goal-activity-foot{flex-direction:column;gap:3px}
- .goal-status-card,.goal-forecast-card{min-height:112px;padding:12px}
+ .goal-status-card,.goal-forecast-card{min-height:82px;padding:12px}
  .goal-status-value strong{font-size:15px}
 }
 @media(max-width:390px){

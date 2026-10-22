@@ -116,7 +116,7 @@ export default function PracticumMilestoneStepper({
       ? 'completed'
       : evaluations.length > 0 ? 'current' : 'upcoming';
 
-    // Step 4: Final Clearance & Portfolio
+    // Step 4: Final Clearance
     const step4Complete = completion?.status === 'APPROVED';
     const step4Status: StepStatus = step4Complete
       ? 'completed'
@@ -186,7 +186,7 @@ export default function PracticumMilestoneStepper({
         detail:
           evaluations.length > 0
             ? `${approvedEvaluations.length} approved · ${evaluations.length - approvedEvaluations.length} awaiting review or revision`
-            : 'Choose a period in Competency Insights',
+            : 'Choose a period in Weekly Reports',
         to: 'competencies',
         icon: Award,
         metrics: [
@@ -206,7 +206,7 @@ export default function PracticumMilestoneStepper({
         detail: step4Complete
           ? 'Formal completion is recorded as approved.'
           : 'Only an approved formal completion record clears this phase. Hours alone are not sufficient.',
-        to: 'portfolio',
+        to: 'documents',
         icon: GraduationCap,
         metrics: [
           {label: 'Formal record', value: String(completion?.status ?? 'Not recorded').replaceAll('_', ' ')},
@@ -248,7 +248,7 @@ export default function PracticumMilestoneStepper({
       {
         id: 'coor-docs',
         phase: 'STAGE 01',
-        title: 'Document Clearances',
+        title: 'Internship Documents',
         status: pendingDocuments.length ? 'attention' : data.documents.length ? 'clear' : 'empty',
         badgeLabel: pendingDocuments.length ? 'Needs review' : data.documents.length ? 'Queue clear' : 'No records',
         kpiValue: `${approvedDocs.length} / ${data.documents.length}`,
@@ -351,7 +351,7 @@ export default function PracticumMilestoneStepper({
       {
         id: 'adm-academics',
         phase: 'SYSTEM 02',
-        title: 'University Structure',
+        title: 'Curriculum Management',
         status: data.departments.length || data.courses.length ? 'current' : 'empty',
         badgeLabel: data.departments.length || data.courses.length ? 'Active' : 'No structure',
         kpiValue: `${data.departments.length} Depts`,
@@ -409,7 +409,6 @@ export default function PracticumMilestoneStepper({
   const completedCount = isStudent ? steps.filter(step => step.status === 'completed').length : 0;
   let completedPrefix = 0;
   while (isStudent && steps[completedPrefix]?.status === 'completed') completedPrefix++;
-  const nextStep = isStudent ? steps.find(step => step.status !== 'completed') : undefined;
 
   useEffect(() => () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -443,11 +442,6 @@ export default function PracticumMilestoneStepper({
             <span>PRACTICUM LIFECYCLE &amp; KEY METRICS</span>
           </div>
           <h2 className="stepper-title">{isStudent ? 'Your practicum phases' : 'Areas in your practicum workspace'}</h2>
-          <p className="stepper-subtitle">
-            {isStudent
-              ? nextStep ? `Next milestone: ${nextStep.title}` : 'Formal clearance recorded'
-              : 'Select an area to see its current details.'}
-          </p>
         </div>
         <div className="stepper-badge">
           <Sparkles size={12} className="stepper-badge-icon" />
@@ -531,7 +525,7 @@ export default function PracticumMilestoneStepper({
                     <div><span>{step.phase}</span><h3>{step.title}</h3></div>
                     <span className={`phase-detail-status phase-${step.status}`}>{step.badgeLabel}</span>
                   </div>
-                  <p className="phase-detail-description">{step.detail}</p>
+
                   <dl className="phase-detail-metrics">
                     {(step.metrics ?? [
                       {label: step.kpiSubLabel, value: step.kpiValue},
@@ -553,7 +547,6 @@ export default function PracticumMilestoneStepper({
           );
         })}
       </div>
-      {isStudent && <p className="phase-disclaimer">Hours progress and estimates do not certify formal completion.</p>}
     </section>
   );
 }

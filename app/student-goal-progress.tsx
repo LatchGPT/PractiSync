@@ -1,8 +1,8 @@
 'use client';
 
-import {CalendarDays, CheckCircle2, ClipboardList, Clock3, Info, Target, TrendingUp} from 'lucide-react';
+import {CalendarDays, CheckCircle2, ClipboardList, Clock3, Target, TrendingUp} from 'lucide-react';
 import type {Row} from '@/packages/validation/contracts';
-import {studentForecastDetail, studentForecastLabel, studentGoal} from './student-goal';
+import {studentForecastLabel, studentGoal} from './student-goal';
 
 const hours=(minutes:number)=>`${Number((minutes/60).toFixed(1))} hrs`;
 const circumference=2*Math.PI*66;
@@ -14,18 +14,10 @@ export default function StudentGoalProgress({entries,requiredMinutes,calendarEve
  const latestEntry=entries.map(entry=>String(entry.date??'')).filter(Boolean).sort((a,b)=>b.localeCompare(a))[0];
  const latestDate=latestEntry?formatLogDate(latestEntry):'No entries yet';
  const forecast=studentForecastLabel(goal.forecast);
- const forecastDetail=studentForecastDetail(goal.forecast);
  const isCompleted=goal.forecast.status==='completed';
  const awaitingConfirmation=goal.target>0&&goal.remaining===0&&!isCompleted;
  const status=!goal.target?'Target not set':isCompleted?'Target verified':awaitingConfirmation?'Awaiting confirmation':goal.reported===0?'Not started':'In progress';
  const statusTone=!goal.target?'neutral':isCompleted?'reached':goal.reported===0?'neutral':'active';
- const statusDetail=!goal.target
-  ?'A required-hours target is needed to track progress.'
-  :isCompleted
-  ?'Your required hours are coordinator-confirmed.'
-  :awaitingConfirmation
-  ?'Your reported hours meet the target and are waiting for coordinator confirmation.'
-  :'Keep logging DTR entries to build your hours progress.';
 
  return <div className="goal-summary">
   <section className="goal-hero-card" aria-label="Goal progress">
@@ -48,12 +40,10 @@ export default function StudentGoalProgress({entries,requiredMinutes,calendarEve
     <div className="goal-info-card target-card">
      <div className="goal-info-label"><Target size={15}/> Goal</div>
      <strong>{goal.target?hours(goal.target):'Not set'}</strong>
-     <span>Required total</span>
     </div>
     <div className="goal-info-card days-card">
      <div className="goal-info-label"><CalendarDays size={15}/> Days on record</div>
      <strong>{goal.daysOnRecord}</strong>
-     <span>Distinct days with a DTR</span>
     </div>
    </div>
 
@@ -65,27 +55,20 @@ export default function StudentGoalProgress({entries,requiredMinutes,calendarEve
      <div className="goal-activity-metric"><strong>{goal.daysOnRecord?hours(goal.averagePerDay):'—'}</strong><span>Reported average per logged day</span></div>
      <div className="goal-activity-metric"><strong>{latestDate}</strong><span>Most recent log</span></div>
     </div>
-    <div className="goal-activity-foot"><span>{entries.length && !pendingMinutes ? 'Complete DTR verified by the Industry Partner' : 'One final Industry Partner verification covers your complete DTR'}</span><span>{goal.target?`${goal.percent}% of required hours reported`:'Set a target to track progress'}</span></div>
    </section>
 
    <div className="goal-bottom-cards">
     <section className={`goal-status-card ${statusTone}`} aria-label="Progress status">
      <span className="goal-card-eyebrow">Status</span>
      <div className="goal-status-value">{goal.remaining===0&&goal.target?<CheckCircle2 size={22}/>:<Clock3 size={22}/>}<strong>{status}</strong></div>
-     <p>{statusDetail}</p>
     </section>
     <section className={`goal-forecast-card${isCompleted?' completed':''}`} aria-label="Expected completion">
      <span className="goal-card-eyebrow">{isCompleted?<CheckCircle2 size={14}/>:<TrendingUp size={14}/>} Expected completion</span>
      <strong>{forecast}</strong>
-     <p>{forecastDetail}</p>
     </section>
    </div>
   </div>
 
-  <div className="goal-footer-bar">
-   <Info size={14} className="footer-icon"/>
-   <p className="goal-disclaimer-text">Hours progress and estimates do not certify formal completion.</p>
-  </div>
  </div>;
 }
 

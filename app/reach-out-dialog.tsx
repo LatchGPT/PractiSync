@@ -71,7 +71,7 @@ export default function ReachOutDialog({
   const topicLabel = {
     GENERAL: 'Practicum Academic Inquiry',
     DTR: 'Attendance & DTR Confirmation Question',
-    CLEARANCE: 'Document Clearance Requirement Assistance',
+    CLEARANCE: 'Internship Documents & Forms Assistance',
     INCIDENT: 'Urgent Workplace Concern / Safety Report',
   }[inquiryTopic];
 
@@ -211,9 +211,6 @@ export default function ReachOutDialog({
             >
               Contact Your Practicum Coordinator
             </h2>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#5e7490', lineHeight: 1.45 }}>
-              Prepare and launch an official email to your assigned coordinator using your device’s native mail app.
-            </p>
           </div>
 
           <button
@@ -387,7 +384,7 @@ export default function ReachOutDialog({
                 [
                   { id: 'GENERAL', label: 'General Inquiry' },
                   { id: 'DTR', label: 'DTR / Attendance' },
-                  { id: 'CLEARANCE', label: 'Clearances & Forms' },
+                  { id: 'CLEARANCE', label: 'Internship Documents & Forms' },
                   { id: 'INCIDENT', label: 'Urgent Concern' },
                 ] as const
               ).map((topic) => {

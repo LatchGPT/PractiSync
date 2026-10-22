@@ -4,7 +4,7 @@ import {forbidden,redirect} from 'next/navigation';
 import LoginClient from '@/app/login-client';
 import {pageIdentity} from '@/app/server-identity';
 import {postLoginPath,safeInternalPath} from '@/packages/auth/routes';
-import {DomainError,demoAllowed} from '@/packages/domain/policies';
+import {DomainError} from '@/packages/domain/policies';
 import {settings} from '@/packages/db/demo';
 import type {Identity} from '@/packages/validation/contracts';
 
@@ -25,5 +25,5 @@ export default async function LoginPage({searchParams}:{searchParams:Promise<{re
  }
  if(user)redirect(postLoginPath(user.role,redirectTo));
  const cfg=settings();
- return <LoginClient initialAuthError={query.error?'Sign-in could not be completed. Use the RTU Google account in your invitation, or contact the OJT office for account linking. You can try again.':''} google={googleConfigured()} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} configured={!!cfg.AUTH_SECRET&&!unavailable} redirectTo={redirectTo}/>;
+ return <LoginClient initialAuthError={query.error?'Sign-in could not be completed. Check your credentials or contact the OJT office for account access. You can try again.':''} google={googleConfigured()} configured={!!cfg.AUTH_SECRET&&!unavailable} redirectTo={redirectTo}/>;
 }

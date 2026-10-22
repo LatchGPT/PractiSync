@@ -65,9 +65,6 @@ export default function OverallStudentsProgress({
       <div className="overall-card-header">
         <div>
           <h2>Overall Students Progress</h2>
-          <p>
-            Comprehensive tracking of training hours, verification rates, and student leaders by section.
-          </p>
         </div>
         <button
           type="button"
