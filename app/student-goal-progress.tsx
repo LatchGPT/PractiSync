@@ -52,11 +52,11 @@ export default function StudentGoalProgress({entries,requiredMinutes}:{entries:R
     <div className="goal-section-heading"><div><span className="goal-card-eyebrow">Attendance summary</span><h3>DTR activity</h3></div><ClipboardList size={18}/></div>
     <div className="goal-activity-metrics">
      <div className="goal-activity-metric"><strong>{entries.length}</strong><span>Submitted entries</span></div>
-     <div className="goal-activity-metric waiting"><strong>{hours(pendingMinutes)}</strong><span>Awaiting final HTE verification</span></div>
+     <div className="goal-activity-metric waiting"><strong>{hours(pendingMinutes)}</strong><span>Awaiting final Industry Partner verification</span></div>
      <div className="goal-activity-metric"><strong>{goal.daysOnRecord?hours(goal.averagePerDay):'—'}</strong><span>Average per logged day</span></div>
      <div className="goal-activity-metric"><strong>{latestDate}</strong><span>Most recent log</span></div>
     </div>
-    <div className="goal-activity-foot"><span>{entries.length && !pendingMinutes ? 'Complete DTR verified by the HTE' : 'One final HTE verification covers your complete DTR'}</span><span>{goal.target?`${goal.percent}% of required hours reported`:'Set a target to track progress'}</span></div>
+    <div className="goal-activity-foot"><span>{entries.length && !pendingMinutes ? 'Complete DTR verified by the Industry Partner' : 'One final Industry Partner verification covers your complete DTR'}</span><span>{goal.target?`${goal.percent}% of required hours reported`:'Set a target to track progress'}</span></div>
    </section>
 
    <div className="goal-bottom-cards">

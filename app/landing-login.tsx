@@ -487,7 +487,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
               <div className="ps-feature-icon-wrap ps-icon-blue">
                 <Clock size={22} />
               </div>
-              <h3 className="ps-feature-card-title">HTE Supervisor Time Verification</h3>
+              <h3 className="ps-feature-card-title">Industry Partner Supervisor Time Verification</h3>
               <p className="ps-feature-card-text">
                 Company supervisors review one complete DTR at the end of the internship,
                 verify its accuracy or return it for correction, then complete the school evaluation.
@@ -538,7 +538,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
           <div className="ps-footer-col">
             <strong>Workflows</strong>
             <span>Student Daily Time Records</span>
-            <span>Host Training Validation</span>
+            <span>Industry Partner Validation</span>
             <span>Faculty Coordinator Review</span>
             <span>MOA Partner Registry</span>
           </div>
@@ -582,7 +582,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                   Engineering &amp; Technology Dean&apos;s Office / Management Information System (MIS).
                 </li>
                 <li>
-                  <strong>HTE Industry Supervisors:</strong> Account invitations are issued once
+                  <strong>Industry Partner Supervisors:</strong> Account invitations are issued once
                   your company&apos;s Memorandum of Agreement (MOA) and training profile are verified by
                   the university.
                 </li>
@@ -608,7 +608,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
         </div>
       )}
 
-      <div className="hte-register-link"><a href="/register/hte">HTE supervisor? Register your company for approval</a></div>
+      <div className="hte-register-link"><a href="/register/industry-partner">Industry Partner supervisor? Register your company for approval</a></div>
       {/* Account Registration Modal */}
       {registerModalOpen && (
         <div className="ps-help-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="register-dialog-title">
@@ -639,7 +639,7 @@ export default function LandingLoginView({ demo, configured, google=false, initi
                   <strong>Class Section Join Codes:</strong> A coordinator-provided code (e.g. <code>SYNC4A</code>) identifies a practicum section during first-time setup. Verified students can also use it in My class when they need to request enrollment.
                 </li>
                 <li>
-                  <strong>Host Training Establishments (HTE):</strong> <a href="/register/hte">Register your HTE</a>. Industry supervisors can submit company and account details for Super Admin approval.
+                  <strong>Industry Partners:</strong> <a href="/register/industry-partner">Register your Industry Partner</a>. Industry supervisors can submit company and account details for Super Admin approval.
                 </li>
               </ul>
               <div className="ps-help-demo-tip">

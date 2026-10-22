@@ -23,3 +23,13 @@ The application remains confined to the configured fictional demo runtime. No ho
 The approved scope, provenance, account lifecycle, reminder policy and verification boundaries are recorded in `docs/backlog-5-8-contract.md`. University tenancy is the institutional boundary; program/class scope remains explicit. Existing fictional feedback is not independent verified employer evidence.
 
 The working implementation includes direct assigned-supervisor attribution and history, prepared account invitations/recovery, persistent in-app document reminder scheduling, and university ownership guards. Real RTU Google/email acceptance and the complete isolation gate after FEAT-01–04 remain outstanding. The October 21 evidence in `docs/backlog-5-8-evidence.md` defines what was actually demonstrated.
+
+## Latch recruitment revisions
+
+Current user-facing terminology is **Industry Partner** (company), **Industry Partners** (directory), and **Industry Partner Supervisor** (role). The board is **OJT Recruitment**. Internal role/action identifiers, historical records, and older URLs remain compatible. This terminology supersedes the HTE wording in the earlier product notes.
+
+New partner registrations require company name, industry, office address, description, contact name, designation, work email, phone, and credentials; website is optional. Existing approved companies remain usable without invented contact data. Company profile changes retain the existing approval workflow.
+
+Each opportunity states the number of interns needed and one or more eligible institutional programs. Older posts retain their original single program. Application eligibility and placement confirmation respect every selected program, with the applicant's actual course determining the class and hours policy. Partner posts and changes still require approval before publication.
+
+Recruitment browsing starts with program categories and includes industry/location filters, optional search, a listing/detail view, and application status. Applicant email and optional application phone are visible only within the existing application access scope. **Email applicant** opens the user's email app with the position in the subject; PractiSync does not send the message. See `docs/latch-revision-plan.md` for scope and verified behavior. Lei's and Gab's assigned revisions are outside this change.

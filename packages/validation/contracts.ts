@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { documentFormAnswerValueSchema, documentFormTypeSchema } from './document-forms';
-import { hteInputs } from './hte';
+import { hteInputs, jobDetails, companyDetails, contactPhone } from './hte';
 export const roles=['SUPER_ADMIN','COORDINATOR','SUPERVISOR','STUDENT'] as const;
 export type Role=typeof roles[number];
 export type Row={id:string;tenantId:string;createdAt:string;[key:string]:string|number|null};
@@ -41,11 +41,11 @@ export const inputs={
  documentReview:z.object({documentId:str(),status:z.enum(['APPROVED','REJECTED']),reason:str(1000)}),
  incident:z.object({subject:str(160),narrative:str(8000),placementId:str()}),
  resolveCase:z.object({caseId:str(),status:z.enum(['IN_PROGRESS','RESOLVED']),resolution:str(4000)}),
- job:z.object({title:str(160),description:str(8000),location:str(160),courseId:str(),skills:str(400),openings:z.coerce.number().int().min(1).max(1000),companyId:z.string().optional()}),
- companyProfile:z.object({name:str(160),industry:str(120),location:str(240),description:str(2000)}),
+ job:jobDetails.extend({companyId:z.string().optional()}),
+ companyProfile:companyDetails,
  companyVerification:z.object({companyId:str(),decision:z.enum(['APPROVE','REJECT'])}),
  jobReview:z.object({jobId:str(),decision:z.enum(['APPROVE','REJECT']),note:z.string().trim().max(1000).optional()}),
- application:z.object({jobId:str(),coverLetter:str(5000)}),
+ application:z.object({jobId:str(),coverLetter:str(5000),contactPhone:contactPhone.or(z.literal('')).optional()}),
  applicationStatus:z.object({applicationId:str(),status:z.enum(['SHORTLISTED','ACCEPTED','REJECTED'])}),
  selectApplication:z.object({applicationId:str(),decision:z.enum(['SHORTLISTED','REJECTED'])}),
  confirmPlacement:z.object({applicationId:str(),classId:str(),startsAt:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),endsAt:z.string().regex(/^\d{4}-\d{2}-\d{2}$/)}),

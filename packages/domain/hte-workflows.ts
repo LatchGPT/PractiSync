@@ -6,6 +6,7 @@ import { limit } from '../auth/auth';
 import { hteRegistration, companyDetails, jobDetails, evaluationQuestions } from '../validation/hte';
 import { inputs, type Action, type Identity, type Row, type Snapshot } from '../validation/contracts';
 import { DomainError, requireRole, scope } from './policies';
+import { companyContacts, validateRecruitmentCourses } from './recruitment';
 
 const num = (row: Row, key: string) => Number(row[key] ?? 0);
 const str = (row: Row, key: string) => String(row[key] ?? '');
@@ -66,11 +67,12 @@ export async function registerHte(payload: unknown) {
  const tenantId=runtimeTenantId();
  const activation=process.env.DEPLOYMENT_MODE==='institutional'?await hteActivationStatements(tenantId,userId,d.email.toLowerCase()):[];
  const user = { id: userId, tenantId } as Identity;
- const req = requestRecord(user, companyId, companyId, 'REGISTRATION', { name: d.name, industry: d.industry, location: d.location, description: d.description, contactName: d.contactName, email: d.email }, 1);
+ const details = { name: d.name, industry: d.industry, location: d.location, description: d.description, contactName: d.contactName, contactEmail: d.email, contactPhone: d.contactPhone, contactPosition: d.contactPosition, website: d.website ?? '' };
+ const req = requestRecord(user, companyId, companyId, 'REGISTRATION', details, 1);
  return commit(user, 'HTE_REGISTRATION_SUBMITTED', req.id, [
-  insert('companies', { tenant_id: tenantId, name: d.name, industry: d.industry, location: d.location, description: d.description, status: 'PENDING', can_post: 0 }, companyId),
+  insert('companies', { tenant_id: tenantId, name: d.name, industry: d.industry, location: d.location, description: d.description, ...companyContacts(details), status: 'PENDING', can_post: 0 }, companyId),
   insert('users', { tenant_id: tenantId, name: d.contactName, username: d.username, email: d.email.toLowerCase(), role: 'SUPERVISOR', status: process.env.DEPLOYMENT_MODE==='institutional'?'INVITED':'ACTIVE', password_hash: await hashPassword(d.password), session_version: 1, is_demo: 0, company_id: companyId, supervisor_verified: 0, can_post: 0 }, userId),
-  ...activation,req.query, ...await notifyAdmins(user, 'HTE registration awaiting approval', `${d.name} submitted an HTE registration request.`),
+  ...activation,req.query, ...await notifyAdmins(user, 'Industry Partner registration awaiting approval', `${d.name} submitted an Industry Partner registration request.`),
  ], process.env.DEPLOYMENT_MODE==='institutional'?'Registration submitted. Activate your account using the emailed link, then sign in to track Super Admin approval.':'Registration submitted. Sign in to track Super Admin approval.');
 }
 
@@ -93,15 +95,15 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   const id = company?.id ?? crypto.randomUUID();
   const req = requestRecord(user, id, id, 'REGISTRATION', d, company ? num(company, 'version') : 1);
   return commit(user, 'HTE_REGISTRATION_SUBMITTED', id, [
-   ...(company ? [statement("UPDATE companies SET name=?,industry=?,location=?,description=?,status='PENDING' WHERE tenant_id=? AND id=? AND status='REJECTED'", d.name, d.industry, d.location, d.description, user.tenantId, id)] : [insert('companies', { tenant_id: user.tenantId, ...d, status: 'PENDING', can_post: 0 }, id), statement('UPDATE users SET company_id=?,supervisor_verified=0,can_post=0 WHERE tenant_id=? AND id=?', id, user.tenantId, user.id)]),
-   req.query, ...await notifyAdmins(user, 'HTE registration awaiting approval', `${d.name} requested verification.`),
+   ...(company ? [statement("UPDATE companies SET name=?,industry=?,location=?,description=?,contact_name=?,contact_email=?,contact_phone=?,contact_position=?,website=?,status='PENDING' WHERE tenant_id=? AND id=? AND status='REJECTED'", d.name, d.industry, d.location, d.description, ...Object.values(companyContacts(d, company)), user.tenantId, id)] : [insert('companies', { tenant_id: user.tenantId, name:d.name, industry:d.industry, location:d.location, description:d.description, ...companyContacts(d), status: 'PENDING', can_post: 0 }, id), statement('UPDATE users SET company_id=?,supervisor_verified=0,can_post=0 WHERE tenant_id=? AND id=?', id, user.tenantId, user.id)]),
+   req.query, ...await notifyAdmins(user, 'Industry Partner registration awaiting approval', `${d.name} requested verification.`),
   ], 'Company details submitted for Super Admin approval.');
  }
  if (action === 'job' && user.role === 'SUPERVISOR') {
   const company = await verifiedHte(user), d = jobDetails.parse(payload), id = crypto.randomUUID();
-  if (!await one('SELECT id FROM courses WHERE tenant_id=? AND id=?', user.tenantId, d.courseId)) throw new DomainError('Choose a valid course.');
+  const requiredCoursesJson = await validateRecruitmentCourses(user, d);
   const req = requestRecord(user, company.id, id, 'JOB_CREATE', d, 1);
-  return commit(user, 'HTE_JOB_REQUESTED', id, [insert('jobs', { tenant_id: user.tenantId, company_id: company.id, author_id: user.id, title: d.title, description: d.description, location: d.location, course_id: d.courseId, skills: d.skills, openings: d.openings, status: 'DRAFT' }, id), req.query, ...await notifyAdmins(user, 'Internship post awaiting approval', `${user.name} submitted ${d.title}.`)], 'Internship post submitted for Super Admin approval.');
+  return commit(user, 'HTE_JOB_REQUESTED', id, [insert('jobs', { tenant_id: user.tenantId, company_id: company.id, author_id: user.id, title: d.title, description: d.description, location: d.location, course_id: d.courseId, required_courses_json:requiredCoursesJson, skills: d.skills, openings: d.openings, status: 'DRAFT' }, id), req.query, ...await notifyAdmins(user, 'Internship post awaiting approval', `${user.name} submitted ${d.title}.`)], 'Internship post submitted for Super Admin approval.');
  }
  if (action === 'hteProfileChange' || action === 'hteJobChange' || action === 'hteJobClose') {
   const company = await verifiedHte(user);
@@ -109,14 +111,14 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
    const d = inputs.hteProfileChange.parse(payload);
    if (d.version !== num(company, 'version')) throw conflict();
    const req = requestRecord(user, company.id, company.id, 'PROFILE', companyDetails.parse(d), d.version);
-   return commit(user, 'HTE_PROFILE_REQUESTED', req.id, [req.query, ...await notifyAdmins(user, 'HTE profile changes awaiting approval', `${str(company, 'name')} requested a profile update.`)], 'Profile changes requested. The approved profile stays in use until approval.');
+   return commit(user, 'HTE_PROFILE_REQUESTED', req.id, [req.query, ...await notifyAdmins(user, 'Industry Partner profile changes awaiting approval', `${str(company, 'name')} requested a profile update.`)], 'Profile changes requested. The approved profile stays in use until approval.');
   }
   const d = action === 'hteJobChange' ? inputs.hteJobChange.parse(payload) : inputs.hteJobClose.parse(payload);
   const job = await one('SELECT * FROM jobs WHERE tenant_id=? AND id=? AND company_id=?', user.tenantId, d.jobId, company.id);
   if (!job || num(job, 'version') !== d.version) throw conflict();
   if (action === 'hteJobClose' && job.status !== 'PUBLISHED') throw new DomainError('Only a published post can be closed.');
   if (action === 'hteJobChange' && !['PUBLISHED','ARCHIVED'].includes(str(job, 'status'))) throw new DomainError('Wait for the current post review before editing.');
-   if ('courseId' in d && !await one('SELECT id FROM courses WHERE tenant_id=? AND id=?', user.tenantId, String(d.courseId))) throw new DomainError('Choose a valid course.');
+  if (action === 'hteJobChange') await validateRecruitmentCourses(user, inputs.hteJobChange.parse(payload));
   const req = requestRecord(user, company.id, job.id, action === 'hteJobClose' ? 'JOB_CLOSE' : 'JOB_EDIT', action === 'hteJobChange' ? jobDetails.parse(d) : {}, d.version);
   return commit(user, 'HTE_JOB_CHANGE_REQUESTED', req.id, [req.query, ...await notifyAdmins(user, 'Internship post change awaiting approval', `${user.name} requested a change to ${str(job, 'title')}.`)], 'Request submitted. The current post stays unchanged until Super Admin approval.');
  }
@@ -137,19 +139,20 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
    if (company.status !== 'APPROVED' || !num(company, 'canPost')) throw new DomainError('The company must be approved before this change can be approved.', 409);
    if (r.kind === 'PROFILE') {
     const p = companyDetails.parse(data);
-    tx.push(statement('UPDATE companies SET version=CASE WHEN version=? THEN version+1 ELSE NULL END,name=?,industry=?,location=?,description=? WHERE tenant_id=? AND id=?', num(r, 'baseVersion'), p.name, p.industry, p.location, p.description, user.tenantId, company.id));
+    tx.push(statement('UPDATE companies SET version=CASE WHEN version=? THEN version+1 ELSE NULL END,name=?,industry=?,location=?,description=?,contact_name=?,contact_email=?,contact_phone=?,contact_position=?,website=? WHERE tenant_id=? AND id=?', num(r, 'baseVersion'), p.name, p.industry, p.location, p.description, ...Object.values(companyContacts(p, company)), user.tenantId, company.id));
    } else {
     const job = await one('SELECT * FROM jobs WHERE tenant_id=? AND id=? AND company_id=?', user.tenantId, r.resourceId, company.id);
     if (!job || num(job, 'version') !== num(r, 'baseVersion')) throw conflict();
     if (r.kind === 'JOB_CLOSE') tx.push(statement("UPDATE jobs SET version=CASE WHEN version=? THEN version+1 ELSE NULL END,status='ARCHIVED' WHERE tenant_id=? AND id=?", num(r, 'baseVersion'), user.tenantId, job.id));
     else {
      const p = jobDetails.parse(data);
-     tx.push(statement("UPDATE jobs SET version=CASE WHEN version=? THEN version+1 ELSE NULL END,title=?,description=?,location=?,course_id=?,skills=?,openings=?,status='PUBLISHED' WHERE tenant_id=? AND id=?", num(r, 'baseVersion'), p.title, p.description, p.location, p.courseId, p.skills, p.openings, user.tenantId, job.id));
+     const requiredCoursesJson = await validateRecruitmentCourses(user, p);
+     tx.push(statement("UPDATE jobs SET version=CASE WHEN version=? THEN version+1 ELSE NULL END,title=?,description=?,location=?,course_id=?,required_courses_json=?,skills=?,openings=?,status='PUBLISHED' WHERE tenant_id=? AND id=?", num(r, 'baseVersion'), p.title, p.description, p.location, p.courseId, requiredCoursesJson, p.skills, p.openings, user.tenantId, job.id));
     }
    }
   } else if (r.kind === 'JOB_CREATE') tx.push(statement("UPDATE jobs SET status='ARCHIVED' WHERE tenant_id=? AND id=? AND status='DRAFT'", user.tenantId, r.resourceId));
-  tx.push(notify(user, str(r, 'requesterId'), approve ? 'HTE request approved' : 'HTE request rejected', `${str(r, 'kind').replaceAll('_',' ').toLowerCase()}: ${d.note || 'Approved by Super Admin.'}`, 'jobs'));
-  return commit(user, 'HTE_REQUEST_REVIEWED', r.id, tx, approve ? 'Request approved and changes applied.' : 'Request rejected. The HTE can review your reason and submit a corrected request.');
+  tx.push(notify(user, str(r, 'requesterId'), approve ? 'Industry Partner request approved' : 'Industry Partner request rejected', `${str(r, 'kind').replaceAll('_',' ').toLowerCase()}: ${d.note || 'Approved by Super Admin.'}`, 'jobs'));
+  return commit(user, 'HTE_REQUEST_REVIEWED', r.id, tx, approve ? 'Request approved and changes applied.' : 'Request rejected. The Industry Partner can review your reason and submit a corrected request.');
  }
  if (action === 'finalDtrSubmit') {
   requireRole(user, 'STUDENT'); const d = inputs.finalDtrSubmit.parse(payload), p = await placement(user, d.placementId);
@@ -171,10 +174,10 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
    if (cls?.coordinatorId) tx.push(notify(user, str(cls, 'coordinatorId'), 'Final DTR awaiting coordinator verification', `${user.name} submitted attendance with an attached signed company DTR.`, 'attendance'));
   } else {
    const supervisors = await list("SELECT u.id FROM assignments a JOIN users u ON u.id=a.supervisor_id AND u.tenant_id=a.tenant_id JOIN companies c ON c.id=u.company_id AND c.tenant_id=u.tenant_id WHERE a.tenant_id=? AND a.placement_id=? AND a.active=1 AND u.status='ACTIVE' AND u.role='SUPERVISOR' AND u.supervisor_verified=1 AND c.id=? AND c.status='APPROVED'", user.tenantId, p.id, p.companyId);
-   if (!supervisors.length) throw new DomainError('Your coordinator must assign an approved HTE supervisor before you submit the final DTR.', 409);
+   if (!supervisors.length) throw new DomainError('Your coordinator must assign an approved Industry Partner supervisor before you submit the final DTR.', 409);
    tx.push(...supervisors.map(s => notify(user, s.id, 'Final DTR awaiting verification', `${user.name} submitted their complete attendance for review.`, 'attendance')));
   }
-  return commit(user, 'FINAL_DTR_SUBMITTED', id, tx, isExternal ? 'Final DTR and signed timesheet submitted for coordinator verification.' : 'Final DTR submitted. Attendance is locked while the HTE reviews it.');
+  return commit(user, 'FINAL_DTR_SUBMITTED', id, tx, isExternal ? 'Final DTR and signed timesheet submitted for coordinator verification.' : 'Final DTR submitted. Attendance is locked while the Industry Partner reviews it.');
  }
  if (action === 'finalDtrReview') {
   const d = inputs.finalDtrReview.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.version);
@@ -183,7 +186,7 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   else requireRole(user, 'SUPERVISOR', 'COORDINATOR');
   if (p.status !== 'ACTIVE' || f.status !== 'SUBMITTED' || num(f, 'attendanceRevision') !== num(p, 'dtrRevision')) throw conflict();
   if (d.decision === 'REJECT' && !d.note) throw new DomainError('Explain which dates or times need correction.');
-  return commit(user, 'FINAL_DTR_REVIEWED', f.id, [attendanceGuard(user, p), archiveDtr(user, f), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,attendance_revision=?,note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", d.version, d.decision === 'VERIFY' ? 'VERIFIED' : 'REVISION_REQUESTED', num(p, 'dtrRevision') + 1, d.note, user.id, now(), user.tenantId, f.id), notify(user, str(p, 'studentId'), d.decision === 'VERIFY' ? 'Final DTR verified' : 'Final DTR needs correction', d.note || (isSignedDoc ? 'Coordinator verified your signed DTR.' : 'Your HTE verified the complete attendance record.'), 'attendance')], d.decision === 'VERIFY' ? 'Complete DTR verified. The school evaluation is the next step.' : 'DTR returned to the student for correction and resubmission.');
+  return commit(user, 'FINAL_DTR_REVIEWED', f.id, [attendanceGuard(user, p), archiveDtr(user, f), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,attendance_revision=?,note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", d.version, d.decision === 'VERIFY' ? 'VERIFIED' : 'REVISION_REQUESTED', num(p, 'dtrRevision') + 1, d.note, user.id, now(), user.tenantId, f.id), notify(user, str(p, 'studentId'), d.decision === 'VERIFY' ? 'Final DTR verified' : 'Final DTR needs correction', d.note || (isSignedDoc ? 'Coordinator verified your signed DTR.' : 'Your Industry Partner verified the complete attendance record.'), 'attendance')], d.decision === 'VERIFY' ? 'Complete DTR verified. The school evaluation is the next step.' : 'DTR returned to the student for correction and resubmission.');
  }
  if (action === 'finalDtrReopen') {
   requireRole(user, 'STUDENT'); const d = inputs.finalDtrReopen.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.version);
@@ -199,19 +202,19 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   if (f.status !== 'VERIFIED') throw conflict();
   const tx = [statement("UPDATE final_dtr_reopens SET version=CASE WHEN version=? AND status='PENDING' THEN version+1 ELSE NULL END,status=?,note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", d.version, d.decision === 'APPROVE' ? 'APPROVED' : 'REJECTED', d.note, user.id, now(), user.tenantId, r.id)];
   if (d.decision === 'APPROVE') {
-   tx.push(attendanceGuard(user, p), archiveDtr(user, f), statement("UPDATE final_dtrs SET version=CASE WHEN version=? THEN version+1 ELSE NULL END,status='REVISION_REQUESTED',note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", num(f, 'version'), d.note, user.id, now(), user.tenantId, f.id), statement("UPDATE placements SET status='ACTIVE' WHERE tenant_id=? AND id=?", user.tenantId, p.id), statement("UPDATE completion SET status='PENDING',reason=?,decided_at=NULL,decided_by=NULL WHERE tenant_id=? AND placement_id=?", 'DTR reopened; renewed HTE verification and evaluation review required.', user.tenantId, p.id));
+   tx.push(attendanceGuard(user, p), archiveDtr(user, f), statement("UPDATE final_dtrs SET version=CASE WHEN version=? THEN version+1 ELSE NULL END,status='REVISION_REQUESTED',note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", num(f, 'version'), d.note, user.id, now(), user.tenantId, f.id), statement("UPDATE placements SET status='ACTIVE' WHERE tenant_id=? AND id=?", user.tenantId, p.id), statement("UPDATE completion SET status='PENDING',reason=?,decided_at=NULL,decided_by=NULL WHERE tenant_id=? AND placement_id=?", 'DTR reopened; renewed Industry Partner verification and evaluation review required.', user.tenantId, p.id));
    const evaluation = await one('SELECT * FROM hte_evaluation_responses WHERE tenant_id=? AND placement_id=?', user.tenantId, p.id);
    if (evaluation) tx.push(archiveEvaluation(user, evaluation), statement("UPDATE hte_evaluation_responses SET status='REVISION_REQUESTED',version=version+1,note=?,reviewed_by=NULL,reviewed_at=NULL,updated_at=? WHERE tenant_id=? AND id=?", 'DTR reopened. Review and resubmit after attendance is verified again.', now(), user.tenantId, evaluation.id));
   }
   tx.push(notify(user, str(r, 'studentId'), d.decision === 'APPROVE' ? 'DTR reopening approved' : 'DTR reopening declined', d.note, 'attendance'));
-  return commit(user, 'FINAL_DTR_REOPEN_REVIEWED', r.id, tx, d.decision === 'APPROVE' ? 'Attendance reopened. The corrected DTR will require HTE verification again.' : 'Reopening declined. The verified DTR remains unchanged.');
+  return commit(user, 'FINAL_DTR_REOPEN_REVIEWED', r.id, tx, d.decision === 'APPROVE' ? 'Attendance reopened. The corrected DTR will require Industry Partner verification again.' : 'Reopening declined. The verified DTR remains unchanged.');
  }
  if (action === 'hteEvaluationPublish' || action === 'hteEvaluationDraft') {
   requireRole(user, 'SUPER_ADMIN'); const d = inputs[action].parse(payload);
   const template = await one("SELECT * FROM hte_evaluation_templates WHERE tenant_id=? AND id=? AND status='DRAFT'", user.tenantId, d.templateId);
   if (!template || num(template, 'version') !== d.version) throw conflict();
   const publish = action === 'hteEvaluationPublish';
-  return commit(user, publish ? 'HTE_EVALUATION_PUBLISHED' : 'HTE_EVALUATION_DRAFT_SAVED', template.id, [...(publish ? [statement("UPDATE hte_evaluation_templates SET status='ARCHIVED' WHERE tenant_id=? AND status='PUBLISHED'", user.tenantId)] : []), statement("UPDATE hte_evaluation_templates SET version=CASE WHEN version=? AND status='DRAFT' THEN version+1 ELSE NULL END,title=?,questions_json=?,status=? WHERE tenant_id=? AND id=?", d.version, d.title, JSON.stringify(d.questions), publish ? 'PUBLISHED' : 'DRAFT', user.tenantId, template.id)], publish ? 'School evaluation published for every course and program.' : 'Form setup saved as a draft. It is not visible to HTEs or students yet.');
+  return commit(user, publish ? 'HTE_EVALUATION_PUBLISHED' : 'HTE_EVALUATION_DRAFT_SAVED', template.id, [...(publish ? [statement("UPDATE hte_evaluation_templates SET status='ARCHIVED' WHERE tenant_id=? AND status='PUBLISHED'", user.tenantId)] : []), statement("UPDATE hte_evaluation_templates SET version=CASE WHEN version=? AND status='DRAFT' THEN version+1 ELSE NULL END,title=?,questions_json=?,status=? WHERE tenant_id=? AND id=?", d.version, d.title, JSON.stringify(d.questions), publish ? 'PUBLISHED' : 'DRAFT', user.tenantId, template.id)], publish ? 'School evaluation published for every course and program.' : 'Form setup saved as a draft. It is not visible to Industry Partners or students yet.');
  }
  if (action === 'hteEvaluationSave') {
   requireRole(user, 'SUPERVISOR'); const d = inputs.hteEvaluationSave.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.finalDtrVersion);
@@ -238,7 +241,7 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
    tx.push(statement("UPDATE hte_evaluation_responses SET assignment_id=?,entered_by=?,authorship_method='DIRECT',verification_state='VERIFIED',verified_at=? WHERE tenant_id=? AND id=?",assignment.id,user.id,now(),user.tenantId,id));
   }
   const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, p.classId);
-  if (d.mode === 'SUBMIT' && cls) tx.push(notify(user, str(cls, 'coordinatorId'), 'School evaluation awaiting review', `${user.name} submitted an HTE evaluation.`, 'jobs'));
+  if (d.mode === 'SUBMIT' && cls) tx.push(notify(user, str(cls, 'coordinatorId'), 'School evaluation awaiting review', `${user.name} submitted an Industry Partner evaluation.`, 'jobs'));
   return commit(user, 'HTE_EVALUATION_SAVED', id, tx, d.mode === 'SUBMIT' ? 'Evaluation submitted for coordinator review.' : 'Evaluation draft saved.');
  }
  if (action === 'externalEvaluationSubmit') {
@@ -261,7 +264,7 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   if (existing) tx.push(archiveEvaluation(user, existing), statement("UPDATE hte_evaluation_responses SET version=CASE WHEN version=? AND status IN ('DRAFT','REVISION_REQUESTED') THEN version+1 ELSE NULL END,answers_json=?,status='SUBMITTED',final_dtr_version=?,note=NULL,reviewed_by=NULL,reviewed_at=NULL,updated_at=?,attachment_filename=?,attachment_base64=?,submission_channel='UPLOADED_DOCUMENT',entered_by=?,authorship_method='DIRECT',verification_state='PENDING' WHERE tenant_id=? AND id=?", d.version, JSON.stringify(d.answers), d.finalDtrVersion, now(), d.attachmentFilename, d.attachmentBase64, user.id, user.tenantId, id));
   else tx.push(insert('hte_evaluation_responses', { tenant_id: user.tenantId, placement_id: p.id, evaluator_id: user.id, template_id: template.id, final_dtr_version: d.finalDtrVersion, answers_json: JSON.stringify(d.answers), status: 'SUBMITTED', updated_at: now(), attachment_filename: d.attachmentFilename, attachment_base64: d.attachmentBase64, submission_channel: 'UPLOADED_DOCUMENT', entered_by: user.id, authorship_method: 'DIRECT', verification_state: 'PENDING' }, id));
   const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, p.classId);
-  if (cls?.coordinatorId) tx.push(notify(user, str(cls, 'coordinatorId'), 'School evaluation awaiting review', `${user.name} uploaded a signed HTE evaluation.`, 'competencies'));
+  if (cls?.coordinatorId) tx.push(notify(user, str(cls, 'coordinatorId'), 'School evaluation awaiting review', `${user.name} uploaded a signed Industry Partner evaluation.`, 'competencies'));
   return commit(user, 'EXTERNAL_EVALUATION_SUBMITTED', id, tx, 'Signed school evaluation submitted for coordinator review.');
  }
  if (action === 'hteEvaluationReview') {
@@ -271,7 +274,7 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   const p = await placement(user, str(e, 'placementId')), f = await finalDtr(user, p.id, e.finalDtrVersion);
   if (f.status !== 'VERIFIED') throw new DomainError('The current final DTR must be verified.', 409);
   if (d.decision === 'REVISION_REQUESTED' && !d.note) throw new DomainError('Explain what the evaluator needs to revise.');
-  return commit(user, 'HTE_EVALUATION_REVIEWED', e.id, [attendanceGuard(user, p), statement('UPDATE final_dtrs SET attendance_revision=? WHERE tenant_id=? AND id=?', num(p, 'dtrRevision') + 1, user.tenantId, f.id), archiveEvaluation(user, e), statement("UPDATE hte_evaluation_responses SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,note=?,reviewed_by=?,reviewed_at=?,updated_at=?,verification_state=CASE WHEN ?='APPROVED' THEN 'VERIFIED' ELSE verification_state END,verified_at=CASE WHEN ?='APPROVED' THEN ? ELSE verified_at END WHERE tenant_id=? AND id=?", d.version, d.decision, d.note, user.id, now(), now(), d.decision, d.decision, now(), user.tenantId, e.id), notify(user, str(e, 'evaluatorId'), 'School evaluation reviewed', d.note || 'Evaluation approved.', 'jobs'), notify(user, str(p, 'studentId'), 'School evaluation status updated', d.decision === 'APPROVED' ? 'Your school evaluation has been reviewed and released.' : 'The coordinator requested evaluation follow-up from the HTE.', 'competencies')], d.decision === 'APPROVED' ? 'Evaluation approved and released to the student.' : 'Evaluation returned for revision.');
+  return commit(user, 'HTE_EVALUATION_REVIEWED', e.id, [attendanceGuard(user, p), statement('UPDATE final_dtrs SET attendance_revision=? WHERE tenant_id=? AND id=?', num(p, 'dtrRevision') + 1, user.tenantId, f.id), archiveEvaluation(user, e), statement("UPDATE hte_evaluation_responses SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,note=?,reviewed_by=?,reviewed_at=?,updated_at=?,verification_state=CASE WHEN ?='APPROVED' THEN 'VERIFIED' ELSE verification_state END,verified_at=CASE WHEN ?='APPROVED' THEN ? ELSE verified_at END WHERE tenant_id=? AND id=?", d.version, d.decision, d.note, user.id, now(), now(), d.decision, d.decision, now(), user.tenantId, e.id), notify(user, str(e, 'evaluatorId'), 'School evaluation reviewed', d.note || 'Evaluation approved.', 'jobs'), notify(user, str(p, 'studentId'), 'School evaluation status updated', d.decision === 'APPROVED' ? 'Your school evaluation has been reviewed and released.' : 'The coordinator requested evaluation follow-up from the Industry Partner.', 'competencies')], d.decision === 'APPROVED' ? 'Evaluation approved and released to the student.' : 'Evaluation returned for revision.');
  }
  if (action === 'hteCredentials') {
   requireRole(user, 'SUPERVISOR'); const d = inputs.hteCredentials.parse(payload);
@@ -307,6 +310,6 @@ export async function requireFinalCompletion(user: Identity, p: Row) {
  const f = await one("SELECT * FROM final_dtrs WHERE tenant_id=? AND placement_id=? AND status='VERIFIED'", user.tenantId, p.id);
  if (!f || num(f, 'attendanceRevision') !== num(p, 'dtrRevision') || num(f, 'totalMinutes') < num(p, 'requiredMinutes')) throw new DomainError('A verified final DTR meeting the required hours is required before completion.', 409);
  const e = await one("SELECT id FROM hte_evaluation_responses WHERE tenant_id=? AND placement_id=? AND final_dtr_version=? AND status='APPROVED'", user.tenantId, p.id, f.version);
- if (!e) throw new DomainError('The school HTE evaluation must be approved before completion. If the form is unavailable, wait for Super Admin to publish it.', 409);
+ if (!e) throw new DomainError('The school Industry Partner evaluation must be approved before completion. If the form is unavailable, wait for Super Admin to publish it.', 409);
  return f;
 }

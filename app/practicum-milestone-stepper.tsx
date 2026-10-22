@@ -176,7 +176,7 @@ export default function PracticumMilestoneStepper({
           {label: 'Reported', value: hours(goal.reported)},
           {label: 'Required', value: goal.target ? hours(goal.target) : 'Not set'},
           {label: 'Remaining', value: goal.target ? hours(goal.remaining) : '—'},
-          {label: 'Awaiting final HTE verification', value: hours(pendingMinutes)},
+          {label: 'Awaiting final Industry Partner verification', value: hours(pendingMinutes)},
           {label: 'Submitted DTRs', value: String(ownEntries.length)},
           {label: 'Days on record', value: String(daysOnRecord)},
           {label: 'Average per day', value: daysOnRecord ? hours(goal.averagePerDay) : '—'},

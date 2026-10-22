@@ -816,7 +816,7 @@ export default function CalendarView({
           `DTR Log (${rows.length} shift${rows.length === 1 ? '' : 's'})`,
           (totals.minutes / 60).toFixed(1),
           confirmed ? 'Confirmed' : 'Pending Review',
-          String(placements.find(p => p.studentId === user.id)?.companyName ?? 'Host Training Establishment'),
+          String(placements.find(p => p.studentId === user.id)?.companyName ?? 'Industry Partner'),
           user.name
         ]);
       }
@@ -921,9 +921,9 @@ export default function CalendarView({
       if (!totals.minutes) continue;
       const status =
         totals.pending === 0
-          ? 'HTE verified'
+          ? 'Industry Partner verified'
           : totals.confirmed === 0
-          ? 'Awaiting final HTE verification'
+          ? 'Awaiting final Industry Partner verification'
           : `${hours(totals.confirmed)} confirmed; ${hours(totals.pending)} pending`;
       lines.push(
         'BEGIN:VEVENT',
@@ -1366,7 +1366,7 @@ export default function CalendarView({
                 e.stopPropagation();
                 chooseDay(date);
               }}
-              title={`${hours(totals.minutes)} rendered · ${confirmedOnly ? 'HTE verified' : `${hours(totals.confirmed)} confirmed, ${hours(totals.pending)} pending`}`}
+              title={`${hours(totals.minutes)} rendered · ${confirmedOnly ? 'Industry Partner verified' : `${hours(totals.confirmed)} confirmed, ${hours(totals.pending)} pending`}`}
             >
               <Clock3 size={11} />
               <span>{hours(totals.minutes)}</span>
@@ -1756,7 +1756,7 @@ export default function CalendarView({
                     </div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <span className={`chip ${totals.pending === 0 ? 'green' : 'orange'}`}>
-                        {totals.pending === 0 ? 'HTE verified' : `${hours(totals.pending)} pending verification`}
+                        {totals.pending === 0 ? 'Industry Partner verified' : `${hours(totals.pending)} pending verification`}
                       </span>
                       {totals.confirmed > 0 && totals.pending > 0 && (
                         <span className="chip green">{hours(totals.confirmed)} confirmed</span>
@@ -2232,7 +2232,7 @@ export default function CalendarView({
           </span>
         </div>
         <p className={styles.legendCardSubtitle}>
-          HTE partner meetings, student consultations, and supervisor alignments.
+          Industry Partner partner meetings, student consultations, and supervisor alignments.
         </p>
         <div className={styles.upcomingList} style={{ maxHeight: 170 }}>
           {coeAppointments.length ? (

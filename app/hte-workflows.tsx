@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Action, Row, Snapshot } from '@/packages/validation/contracts';
 import type { EvaluationQuestion } from '@/packages/validation/hte';
 import DtrPagination from './dtr-pagination';
+import { recruitmentCourseIds } from '@/packages/validation/recruitment';
 
 const text = (r: Row | undefined, k: string) => String(r?.[k] ?? '');
 const num = (r: Row | undefined, k: string) => Number(r?.[k] ?? 0);
@@ -37,14 +38,15 @@ export function HteRequestQueue({ data, onRefresh }: { data: Snapshot; onRefresh
  const [filter, setFilter] = useState(data.user.role === 'SUPER_ADMIN' ? 'PENDING' : 'ALL'), [notes, setNotes] = useState<Record<string,string>>({});
  const admin = data.user.role === 'SUPER_ADMIN';
  const requests = (data.hteRequests ?? []).filter(r => filter === 'ALL' || r.status === filter);
- const names: Record<string,string> = { REGISTRATION:'HTE registration', PROFILE:'Company profile changes', JOB_CREATE:'New internship post', JOB_EDIT:'Internship post changes', JOB_CLOSE:'Close internship post' };
- const fieldNames: Record<string,string> = { name:'Company name', industry:'Industry', location:'Location', description:'Description', contactName:'Contact person', email:'Contact email', title:'Position title', courseId:'Course', skills:'Skills', openings:'Openings' };
- return <section className="hte-card" id="hte-requests"><div className="hte-section-heading"><div><h2>{admin ? 'HTE approval requests' : 'Your requests'}</h2><p className="muted">{admin ? 'Review partner registration and business changes before they take effect.' : 'Track Super Admin decisions. Rejected requests include the reason for correction.'}</p></div><label className="hte-filter">Status<select value={filter} onChange={e => setFilter(e.target.value)}>{['PENDING','APPROVED','REJECTED','ALL'].map(s => <option key={s} value={s}>{s === 'ALL' ? 'All requests' : statusLabel(s)}</option>)}</select></label></div><Failure error={error}/>
+ const names: Record<string,string> = { REGISTRATION:'Industry Partner registration', PROFILE:'Company profile changes', JOB_CREATE:'New internship post', JOB_EDIT:'Internship post changes', JOB_CLOSE:'Close internship post' };
+ const fieldNames: Record<string,string> = { name:'Company name', industry:'Industry', location:'Location', description:'Description', contactName:'Contact person', email:'Contact email', contactEmail:'Contact email', contactPhone:'Contact phone', contactPosition:'Designation / position', website:'Company website', title:'Position title', courseId:'Primary program', courseIds:'Required programs / courses', skills:'Skills', openings:'Number of interns needed' };
+ const requestValue = (key: string, value: unknown) => key === 'courseIds' && Array.isArray(value) ? value.map(id => text(data.courses.find(course => course.id === id),'name') || String(id)).join('\n') : key === 'courseId' ? text(data.courses.find(course => course.id === value),'name') || String(value) : String(value ?? '');
+ return <section className="hte-card" id="hte-requests"><div className="hte-section-heading"><div><h2>{admin ? 'Industry Partner approval requests' : 'Your requests'}</h2><p className="muted">{admin ? 'Review partner registration and business changes before they take effect.' : 'Track Super Admin decisions. Rejected requests include the reason for correction.'}</p></div><label className="hte-filter">Status<select value={filter} onChange={e => setFilter(e.target.value)}>{['PENDING','APPROVED','REJECTED','ALL'].map(s => <option key={s} value={s}>{s === 'ALL' ? 'All requests' : statusLabel(s)}</option>)}</select></label></div><Failure error={error}/>
  {requests.length ? <div className="hte-request-list">{requests.map(r => {
-  const proposed = JSON.parse(text(r,'payloadJson')) as Record<string,string | number>;
+  const proposed = JSON.parse(text(r,'payloadJson')) as Record<string,unknown>;
   const current = r.kind === 'PROFILE' ? data.companies.find(c => c.id === r.resourceId) : ['JOB_EDIT','JOB_CLOSE'].includes(text(r,'kind')) ? data.jobs.find(j => j.id === r.resourceId) : undefined;
   return <article key={r.id} className="hte-request"><div className="hte-section-heading"><div><h3>{names[text(r,'kind')]}</h3><p>{text(r,'companyName')} · {text(r,'requesterName')} · {date(text(r,'createdAt'))}</p></div><HteStatus value={text(r,'status')}/></div>
-   <details><summary>Review request details</summary>{r.kind === 'JOB_CLOSE' ? <p>Close “{text(current,'title')}” and hide it from the student internship board. Existing applications and placements are retained.</p> : <div className="hte-table-scroll"><table className="hte-review-table"><thead><tr><th>Field</th>{current && <th>Current approved value</th>}<th>Requested value</th></tr></thead><tbody>{Object.entries(proposed).map(([k,v]) => <tr key={k}><th>{fieldNames[k] ?? k}</th>{current && <td>{text(current,k) || '—'}</td>}<td>{k === 'courseId' ? text(data.courses.find(c => c.id === v),'name') || String(v) : String(v)}</td></tr>)}</tbody></table></div>}</details>
+   <details><summary>Review request details</summary>{r.kind === 'JOB_CLOSE' ? <p>Close “{text(current,'title')}” and hide it from the student OJT recruitment board. Existing applications and placements are retained.</p> : <div className="hte-table-scroll"><table className="hte-review-table"><thead><tr><th>Field</th>{current && <th>Current approved value</th>}<th>Requested value</th></tr></thead><tbody>{Object.entries(proposed).map(([k,v]) => <tr key={k}><th>{fieldNames[k] ?? k}</th>{current && <td>{requestValue(k,k === 'courseIds' && current ? recruitmentCourseIds(current) : current?.[k]) || '—'}</td>}<td>{requestValue(k,v)}</td></tr>)}</tbody></table></div>}</details>
    {text(r,'note') && <p className="hte-review-note"><strong>Super Admin note:</strong> {text(r,'note')}</p>}
    {admin && r.status === 'PENDING' && <div className="hte-request-decision"><label>Decision note <span className="muted">(required when rejecting)</span><textarea maxLength={2000} value={notes[r.id] ?? ''} onChange={e => setNotes({ ...notes,[r.id]:e.target.value })}/></label><div className="hte-actions"><button className="primary" disabled={busy} onClick={() => void act('hteRequestReview',{ requestId:r.id,version:num(r,'version'),decision:'APPROVE',note:notes[r.id] ?? '' })}><Check size={15}/>Approve request</button><button className="secondary" disabled={busy} onClick={() => void act('hteRequestReview',{ requestId:r.id,version:num(r,'version'),decision:'REJECT',note:notes[r.id] ?? '' })}>Reject with reason</button></div></div>}
   </article>;
@@ -56,7 +58,7 @@ function FinalDtrCopy({ record }: { record: Row }) {
  const [page,setPage] = useState(1), [size,setSize] = useState(10);
  const entries = JSON.parse(text(record,'snapshotJson')) as Row[];
  const current = Math.min(page,Math.max(1,Math.ceil(entries.length / size)));
- return <details className="hte-dtr-copy"><summary>Review submitted DTR · {entries.length} logs · {hours(num(record,'totalMinutes'))}</summary><p className="small muted">Fixed submission version {record.version}. Times use Asia/Manila. Daily narratives are excluded from the HTE copy.</p><div className="hte-table-scroll"><table className="hte-review-table"><thead><tr><th>Date</th><th>Time in</th><th>Time out</th><th>Break</th><th>Hours</th></tr></thead><tbody>{entries.slice((current-1)*size,current*size).map(e => <tr key={e.id}><th>{text(e,'date')}</th><td>{date(text(e,'startsAt'))}</td><td>{date(text(e,'endsAt'))}</td><td>{e.breakMinutes} min</td><td>{hours(num(e,'minutes'))}</td></tr>)}</tbody></table></div><DtrPagination page={current} pageSize={size} totalItems={entries.length} itemLabel="logs" onPageChange={setPage} onPageSizeChange={s => {setSize(s);setPage(1);}}/></details>;
+ return <details className="hte-dtr-copy"><summary>Review submitted DTR · {entries.length} logs · {hours(num(record,'totalMinutes'))}</summary><p className="small muted">Fixed submission version {record.version}. Times use Asia/Manila. Daily narratives are excluded from the Industry Partner copy.</p><div className="hte-table-scroll"><table className="hte-review-table"><thead><tr><th>Date</th><th>Time in</th><th>Time out</th><th>Break</th><th>Hours</th></tr></thead><tbody>{entries.slice((current-1)*size,current*size).map(e => <tr key={e.id}><th>{text(e,'date')}</th><td>{date(text(e,'startsAt'))}</td><td>{date(text(e,'endsAt'))}</td><td>{e.breakMinutes} min</td><td>{hours(num(e,'minutes'))}</td></tr>)}</tbody></table></div><DtrPagination page={current} pageSize={size} totalItems={entries.length} itemLabel="logs" onPageChange={setPage} onPageSizeChange={s => {setSize(s);setPage(1);}}/></details>;
 }
 
 export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; placement: Row; onRefresh: () => Promise<void> }) {
@@ -103,7 +105,7 @@ export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; p
    <div>
     <h3>
      <FileCheck2 size={18}/>Final DTR verification
-     {isExternal && <span className="chip purple" style={{fontSize:11,fontWeight:600}}>Offline / External HTE</span>}
+     {isExternal && <span className="chip purple" style={{fontSize:11,fontWeight:600}}>Offline / External Industry Partner</span>}
     </h3>
     <p>{hours(reported)} reported · {hours(num(placement,'requiredMinutes'))} required</p>
    </div>
@@ -129,14 +131,14 @@ export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; p
    )}
    {f.note && <p className="hte-review-note"><strong>Review note:</strong> {text(f,'note')}</p>}
    {f.reviewedAt && <p className="small muted">Reviewed {date(text(f,'reviewedAt'))}</p>}
-  </> : <p className="muted">The student submits the complete DTR once the required hours are reached. {isExternal ? 'Your Class Coordinator verifies the DTR against your signed company timesheet.' : 'The HTE reviews attendance once for the whole internship.'}</p>}
+  </> : <p className="muted">The student submits the complete DTR once the required hours are reached. {isExternal ? 'Your Class Coordinator verifies the DTR against your signed company timesheet.' : 'The Industry Partner reviews attendance once for the whole internship.'}</p>}
 
   {canSubmit && <>
    <p className="small muted">
     {eligible
      ? (isExternal
       ? 'Required hours reached. Upload your signed company DTR or Certificate of Hours for Class Coordinator verification.'
-      : 'Submitting locks attendance until the HTE verifies it or returns it for correction.')
+      : 'Submitting locks attendance until the Industry Partner verifies it or returns it for correction.')
      : 'Keep recording attendance. Final submission unlocks at the required hours target.'}
    </p>
 
@@ -171,7 +173,7 @@ export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; p
 
   {role === 'STUDENT' && f && ['SUBMITTED','VERIFIED'].includes(text(f,'status')) && (
    <p className="small muted">
-    <LockKeyhole size={14}/> Attendance is locked. {f.status === 'VERIFIED' ? 'Request reopening below if a correction is needed.' : isExternal ? 'Your Class Coordinator is reviewing your submitted record and signed attachment.' : 'Your HTE is reviewing the submitted record.'}
+    <LockKeyhole size={14}/> Attendance is locked. {f.status === 'VERIFIED' ? 'Request reopening below if a correction is needed.' : isExternal ? 'Your Class Coordinator is reviewing your submitted record and signed attachment.' : 'Your Industry Partner is reviewing the submitted record.'}
    </p>
   )}
 
@@ -220,7 +222,7 @@ export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; p
   )}
 
   {role === 'STUDENT' && f?.status === 'VERIFIED' && (
-   <details><summary>Request a correction</summary>{reopening ? <p className="hte-review-note">Your reopening request is awaiting coordinator approval. Reason: {text(reopening,'reason')}</p> : <><label>What needs correcting?<textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/></label><p className="small muted">If approved, completion and evaluation review will reopen. Your {isExternal ? 'coordinator' : 'HTE'} must verify the corrected DTR again.</p><button className="secondary" disabled={busy} onClick={() => void act('finalDtrReopen',{ placementId:placement.id,version:num(f,'version'),reason:note })}>Request reopening</button>{lastReopening?.note && <p className="hte-review-note">Previous coordinator decision: {text(lastReopening,'note')}</p>}</>}</details>
+   <details><summary>Request a correction</summary>{reopening ? <p className="hte-review-note">Your reopening request is awaiting coordinator approval. Reason: {text(reopening,'reason')}</p> : <><label>What needs correcting?<textarea maxLength={2000} value={note} onChange={e => setNote(e.target.value)}/></label><p className="small muted">If approved, completion and evaluation review will reopen. Your {isExternal ? 'coordinator' : 'Industry Partner'} must verify the corrected DTR again.</p><button className="secondary" disabled={busy} onClick={() => void act('finalDtrReopen',{ placementId:placement.id,version:num(f,'version'),reason:note })}>Request reopening</button>{lastReopening?.note && <p className="hte-review-note">Previous coordinator decision: {text(lastReopening,'note')}</p>}</>}</details>
   )}
 
   {role === 'COORDINATOR' && reopening && (
@@ -230,7 +232,7 @@ export function FinalDtrCard({ data, placement, onRefresh }: { data: Snapshot; p
 }
 
 export function FinalDtrWorkspace({ data,onRefresh }: { data: Snapshot; onRefresh: () => Promise<void> }) {
- return <section className="hte-card"><h2>Final attendance review</h2><p className="muted">Daily logs count as reported attendance. One HTE verification covers the complete internship DTR.</p>{data.placements.length ? data.placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT' || Boolean(data.finalDtrReopens?.some(r=>r.placementId===p.id && r.status==='PENDING'))}><summary>{text(p,'studentName')} · {text(p,'companyName')} {num(p,'isExternal') === 1 ? '· (External HTE)' : ''} · {statusLabel(text(data.finalDtrs?.find(f => f.placementId === p.id),'status')) || 'Not submitted'}</summary><FinalDtrCard data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">An assigned placement is needed before a final DTR can be submitted.</p>}</section>;
+ return <section className="hte-card"><h2>Final attendance review</h2><p className="muted">Daily logs count as reported attendance. One Industry Partner verification covers the complete internship DTR.</p>{data.placements.length ? data.placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT' || Boolean(data.finalDtrReopens?.some(r=>r.placementId===p.id && r.status==='PENDING'))}><summary>{text(p,'studentName')} · {text(p,'companyName')} {num(p,'isExternal') === 1 ? '· (External Industry Partner)' : ''} · {statusLabel(text(data.finalDtrs?.find(f => f.placementId === p.id),'status')) || 'Not submitted'}</summary><FinalDtrCard data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">An assigned placement is needed before a final DTR can be submitted.</p>}</section>;
 }
 
 function TemplateEditor({ template,onRefresh }: { template: Row; onRefresh: () => Promise<void> }) {
@@ -467,7 +469,7 @@ function EvaluationAnswers({ data,placement,template,response,final,onRefresh }:
   )}
 
   {!canSupervisorAnswer && !canStudentUpload && !response && (
-   <p className="muted">{isExternal ? 'Download the official form above, have your supervisor complete and sign it, then upload the PDF here.' : 'The assigned HTE has not submitted this evaluation.'}</p>
+   <p className="muted">{isExternal ? 'Download the official form above, have your supervisor complete and sign it, then upload the PDF here.' : 'The assigned Industry Partner has not submitted this evaluation.'}</p>
   )}
 
   {isCoordinator && response?.status === 'SUBMITTED' && (
@@ -504,5 +506,5 @@ export function SchoolEvaluationReviews({ data,onRefresh }: { data: Snapshot; on
  const placements = data.user.role === 'STUDENT'
    ? (ownPlacement ? [ownPlacement] : [])
    : data.placements.filter(p => data.hteEvaluationResponses?.some(r => r.placementId === p.id));
- return <section className="hte-card"><h2>School evaluation responses</h2>{placements.length ? placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT'}><summary>{text(p,'studentName')} · {text(p,'companyName')} {num(p,'isExternal') === 1 ? '· (External HTE)' : ''}</summary><HteEvaluationForm data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">{data.user.role === 'STUDENT' ? 'Your school evaluation will appear here once ready.' : 'No school evaluations have been submitted yet.'}</p>}</section>;
+ return <section className="hte-card"><h2>School evaluation responses</h2>{placements.length ? placements.map(p => <details className="hte-placement" key={p.id} open={data.user.role === 'STUDENT'}><summary>{text(p,'studentName')} · {text(p,'companyName')} {num(p,'isExternal') === 1 ? '· (External Industry Partner)' : ''}</summary><HteEvaluationForm data={data} placement={p} onRefresh={onRefresh}/></details>) : <p className="hte-empty">{data.user.role === 'STUDENT' ? 'Your school evaluation will appear here once ready.' : 'No school evaluations have been submitted yet.'}</p>}</section>;
 }

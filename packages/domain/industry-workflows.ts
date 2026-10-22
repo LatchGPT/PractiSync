@@ -1,4 +1,6 @@
 import {runtimeTenantId} from '../auth/runtime';
+import {validateRecruitmentCourses} from './recruitment';
+import {recruitmentCourseIds} from '../validation/recruitment';
 import { z } from 'zod';
 import { auditStatement, database, insert, list, one, statement, type PreparedStatement } from '../db/demo';
 import { inputs, type Action, type Identity } from '../validation/contracts';
@@ -60,7 +62,7 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
     id = String(company.id);
     tx.push(statement('UPDATE companies SET status=?,can_post=? WHERE tenant_id=? AND id=? AND status=\'PENDING\'', approve ? 'APPROVED' : 'REJECTED', approve ? 1 : 0, user.tenantId, id));
     tx.push(statement('UPDATE users SET supervisor_verified=?,can_post=? WHERE tenant_id=? AND company_id=? AND role=\'SUPERVISOR\'', approve ? 1 : 0, approve ? 1 : 0, user.tenantId, id));
-    return save(user, action, id, tx, approve ? 'Company verified. Its HTE account may submit postings for university approval.' : 'Company profile declined. Its account cannot post.');
+    return save(user, action, id, tx, approve ? 'Company verified. Its Industry Partner account may submit postings for university approval.' : 'Company profile declined. Its account cannot post.');
   }
 
   if (action === 'job') {
@@ -68,9 +70,8 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
     if (user.role !== 'SUPERVISOR') requireRole(user, 'COORDINATOR', 'SUPER_ADMIN');
     const company = await one('SELECT id FROM companies WHERE tenant_id=? AND id=? AND status=\'APPROVED\' AND can_post=1', user.tenantId, companyId);
     if (!company) throw new DomainError('A university-verified company with posting access is required.', 403);
-    if (!await one('SELECT id FROM courses WHERE tenant_id=? AND id=?', user.tenantId, String(d.courseId))) throw new DomainError('Choose a valid target course.');
-    if (user.role === 'COORDINATOR' && !await one('SELECT id FROM classes WHERE tenant_id=? AND coordinator_id=? AND course_id=? LIMIT 1', user.tenantId, user.id, String(d.courseId))) throw new DomainError('You may post only for a course assigned to one of your classes.', 403);
-    tx.push(insert('jobs', { company_id: companyId, author_id: user.id, title: String(d.title), description: String(d.description), location: String(d.location), course_id: String(d.courseId), skills: String(d.skills), openings: Number(d.openings), status: 'DRAFT' }, id));
+    const requiredCoursesJson = await validateRecruitmentCourses(user, {courseId:String(d.courseId), courseIds:d.courseIds as string[] | undefined});
+    tx.push(insert('jobs', { company_id: companyId, author_id: user.id, title: String(d.title), description: String(d.description), location: String(d.location), course_id: String(d.courseId), required_courses_json:requiredCoursesJson, skills: String(d.skills), openings: Number(d.openings), status: 'DRAFT' }, id));
     return save(user, action, id, tx, 'Internship post submitted for university approval. Students will see it after approval.');
   }
 
@@ -95,36 +96,36 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
     id = String(app.id);
     const decision = String(d.decision);
     tx.push(statement('UPDATE applications SET status=? WHERE tenant_id=? AND id=? AND status=\'SUBMITTED\'', decision, user.tenantId, id));
-    tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), app.studentId, decision === 'SHORTLISTED' ? 'Selected for placement review' : 'Application update', decision === 'SHORTLISTED' ? `The HTE selected your application for ${app.title}. The university must confirm the placement.` : `The HTE will not proceed with your application for ${app.title}.`, 'JOB', 'application', id, 'jobs'));
+    tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), app.studentId, decision === 'SHORTLISTED' ? 'Selected for placement review' : 'Application update', decision === 'SHORTLISTED' ? `The Industry Partner selected your application for ${app.title}. The university must confirm the placement.` : `The Industry Partner will not proceed with your application for ${app.title}.`, 'JOB', 'application', id, 'jobs'));
     return save(user, action, id, tx, decision === 'SHORTLISTED' ? 'Applicant selected. A university coordinator must confirm the placement.' : 'Application declined.');
   }
 
   if (action === 'applicationStatus') {
     requireRole(user, 'COORDINATOR', 'SUPER_ADMIN');
-    if (d.status === 'ACCEPTED') throw new DomainError('Use placement confirmation to approve an HTE-selected applicant and create the placement record.');
-    throw new DomainError('Only the HTE can shortlist or decline applicants to its own post.');
+    if (d.status === 'ACCEPTED') throw new DomainError('Use placement confirmation to approve an Industry Partner-selected applicant and create the placement record.');
+    throw new DomainError('Only the Industry Partner can shortlist or decline applicants to its own post.');
   }
 
   if (action === 'confirmPlacement') {
     requireRole(user, 'COORDINATOR', 'SUPER_ADMIN');
     if (!isDate(String(d.startsAt)) || !isDate(String(d.endsAt)) || String(d.endsAt) < String(d.startsAt)) throw new DomainError('Enter valid placement dates, with the end date on or after the start date.');
-    const app = await one('SELECT a.*,j.company_id,j.course_id,j.title,j.status AS job_status,c.status AS company_status,c.can_post FROM applications a JOIN jobs j ON j.id=a.job_id AND j.tenant_id=a.tenant_id JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id WHERE a.tenant_id=? AND a.id=?', user.tenantId, String(d.applicationId));
-    if (!app || app.status !== 'SHORTLISTED') throw new DomainError('Only an HTE-selected applicant can be confirmed.', 409);
+    const app = await one('SELECT a.*,j.company_id,j.course_id,j.required_courses_json,j.title,j.status AS job_status,c.status AS company_status,c.can_post FROM applications a JOIN jobs j ON j.id=a.job_id AND j.tenant_id=a.tenant_id JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id WHERE a.tenant_id=? AND a.id=?', user.tenantId, String(d.applicationId));
+    if (!app || app.status !== 'SHORTLISTED') throw new DomainError('Only an Industry Partner-selected applicant can be confirmed.', 409);
     if (app.jobStatus !== 'PUBLISHED' || app.companyStatus !== 'APPROVED' || app.canPost !== 1) throw new DomainError('The internship post and company must still be approved before confirming a placement.', 409);
-    const cls = await one('SELECT * FROM classes WHERE tenant_id=? AND id=? AND course_id=?', user.tenantId, String(d.classId), app.courseId);
+    const student = await one("SELECT id,course_id FROM users WHERE tenant_id=? AND id=? AND role='STUDENT' AND status='ACTIVE'", user.tenantId, app.studentId);
+    if (!student || !recruitmentCourseIds(app).includes(String(student.courseId))) throw new DomainError('The selected applicant is not eligible for this course.', 403);
+    const cls = await one('SELECT * FROM classes WHERE tenant_id=? AND id=? AND course_id=?', user.tenantId, String(d.classId), student.courseId);
     if (!cls || (user.role === 'COORDINATOR' && cls.coordinatorId !== user.id)) throw new DomainError('Choose a class in your coordinator scope for this course.', 403);
-    const student = await one('SELECT id,course_id FROM users WHERE tenant_id=? AND id=? AND role=\'STUDENT\' AND status=\'ACTIVE\'', user.tenantId, app.studentId);
-    if (!student || student.courseId !== app.courseId) throw new DomainError('The selected applicant is not eligible for this course.', 403);
     if (await one('SELECT id FROM placements WHERE tenant_id=? AND student_id=? AND status IN (\'PLANNED\',\'ACTIVE\')', user.tenantId, app.studentId)) throw new DomainError('The student already has an active or planned placement.', 409);
-    const policy = await one('SELECT required_minutes,version,period FROM policies WHERE tenant_id=? AND course_id=? ORDER BY version DESC LIMIT 1', user.tenantId, app.courseId);
+    const policy = await one('SELECT required_minutes,version,period FROM policies WHERE tenant_id=? AND course_id=? ORDER BY version DESC LIMIT 1', user.tenantId, student.courseId);
     if (!policy) throw new DomainError('Set the course hour policy before confirming this placement.', 409);
     const placementId = crypto.randomUUID();
-    tx.push(insert('placements', { student_id: app.studentId, company_id: app.companyId, class_id: cls.id, course_id: app.courseId, period: policy.period, starts_at: String(d.startsAt), ends_at: String(d.endsAt), required_minutes: Number(policy.requiredMinutes), policy_version: Number(policy.version), status: 'PLANNED' }, placementId));
+    tx.push(insert('placements', { student_id: app.studentId, company_id: app.companyId, class_id: cls.id, course_id: student.courseId, period: policy.period, starts_at: String(d.startsAt), ends_at: String(d.endsAt), required_minutes: Number(policy.requiredMinutes), policy_version: Number(policy.version), status: 'PLANNED' }, placementId));
     tx.push(statement('INSERT INTO enrollments (id,tenant_id,created_at,class_id,student_id,active) VALUES (?,?,?,?,?,1) ON CONFLICT(tenant_id,class_id,student_id) DO UPDATE SET active=1', crypto.randomUUID(), user.tenantId, new Date().toISOString(), cls.id, app.studentId));
     tx.push(statement('UPDATE applications SET status=\'ACCEPTED\',placement_id=? WHERE tenant_id=? AND id=? AND status=\'SHORTLISTED\'', placementId, user.tenantId, app.id));
     tx.push(insert('completion', { placement_id: placementId, status: 'PENDING', reason: 'Awaiting the student forms and university review.' }));
     tx.push(statement('INSERT INTO assignments (id,tenant_id,created_at,placement_id,supervisor_id,active) SELECT ?,tenant_id,?, ?,id,1 FROM users WHERE tenant_id=? AND company_id=? AND role=\'SUPERVISOR\' AND supervisor_verified=1 AND can_post=1', crypto.randomUUID(), new Date().toISOString(), placementId, user.tenantId, app.companyId));
-    tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), app.studentId, 'Placement confirmed', 'Your university coordinator confirmed your HTE placement.', 'JOB', 'placement', placementId, 'overview'));
+    tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), app.studentId, 'Placement confirmed', 'Your university coordinator confirmed your Industry Partner placement.', 'JOB', 'placement', placementId, 'overview'));
     return save(user, action, placementId, tx, 'Placement confirmed. Its record and verified company-supervisor assignments are ready.');
   }
 
@@ -161,24 +162,24 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
       for (const [dimension, value] of dimensions) tx.push(insert('scores', { evaluation_id: evaluationId, dimension, score: value.score, evidence_note: value.evidence }));
     }
     const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, placement.classId);
-    if (cls) tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), cls.coordinatorId, 'HTE evaluation awaiting review', 'An assigned HTE supervisor submitted a final competency rubric.', 'ASSESSMENT', 'evaluation', evaluationId, 'competencies'));
-    return save(user, action, evaluationId, tx, current ? 'Revised HTE evaluation submitted for coordinator review.' : 'Final HTE evaluation submitted for coordinator review.');
+    if (cls) tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), cls.coordinatorId, 'Industry Partner evaluation awaiting review', 'An assigned Industry Partner supervisor submitted a final competency rubric.', 'ASSESSMENT', 'evaluation', evaluationId, 'competencies'));
+    return save(user, action, evaluationId, tx, current ? 'Revised Industry Partner evaluation submitted for coordinator review.' : 'Final Industry Partner evaluation submitted for coordinator review.');
   }
 
   if (action === 'evaluationReview') {
     const evaluation = await one('SELECT e.*,u.role AS evaluator_role,u.name AS evaluator_name FROM evaluations e LEFT JOIN users u ON u.id=e.evaluator_id AND u.tenant_id=e.tenant_id WHERE e.tenant_id=? AND e.id=? AND e.kind=\'FINAL\'', user.tenantId, String(d.evaluationId));
     if (!evaluation) return null;
     requireRole(user, 'COORDINATOR');
-    if (evaluation.evaluatorRole !== 'SUPERVISOR' && !String(evaluation.evaluatorId).startsWith('guest:')) throw new DomainError('Only an HTE final evaluation can be reviewed through this workflow.', 403);
-    if (d.decision === 'REVISION_REQUESTED' && !String(d.note ?? '').trim()) throw new DomainError('Explain what the HTE evaluator should revise.');
+    if (evaluation.evaluatorRole !== 'SUPERVISOR' && !String(evaluation.evaluatorId).startsWith('guest:')) throw new DomainError('Only an Industry Partner final evaluation can be reviewed through this workflow.', 403);
+    if (d.decision === 'REVISION_REQUESTED' && !String(d.note ?? '').trim()) throw new DomainError('Explain what the Industry Partner evaluator should revise.');
     const placement = await one('SELECT p.* FROM placements p WHERE p.tenant_id=? AND p.id=? AND p.class_id IN (SELECT id FROM classes WHERE tenant_id=? AND coordinator_id=?)', user.tenantId, evaluation.placementId, user.tenantId, user.id);
     if (!placement) throw new DomainError('Evaluation is outside your coordinator scope.', 403);
     if (evaluation.status !== 'SUBMITTED') throw new DomainError('This final evaluation is no longer awaiting review.', 409);
     id = String(evaluation.id);
     tx.push(statement('UPDATE evaluations SET status=?,review_note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=? AND status=\'SUBMITTED\'', String(d.decision), String(d.note ?? '').trim() || null, user.id, new Date().toISOString(), user.tenantId, id));
     const student = await one('SELECT student_id FROM placements WHERE tenant_id=? AND id=?', user.tenantId, placement.id);
-    if (student) tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), student.studentId, d.decision === 'APPROVED' ? 'HTE competency evaluation released' : 'HTE evaluation needs follow-up', d.decision === 'APPROVED' ? 'The coordinator reviewed the HTE final evaluation. It is now available in your competency records.' : String(d.note), 'ASSESSMENT', 'evaluation', id, 'competencies'));
-    return save(user, action, id, tx, d.decision === 'APPROVED' ? 'Final HTE evaluation approved and released to the student.' : 'Revision requested from the HTE evaluator.');
+    if (student) tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), student.studentId, d.decision === 'APPROVED' ? 'Industry Partner competency evaluation released' : 'Industry Partner evaluation needs follow-up', d.decision === 'APPROVED' ? 'The coordinator reviewed the Industry Partner final evaluation. It is now available in your competency records.' : String(d.note), 'ASSESSMENT', 'evaluation', id, 'competencies'));
+    return save(user, action, id, tx, d.decision === 'APPROVED' ? 'Final Industry Partner evaluation approved and released to the student.' : 'Revision requested from the Industry Partner evaluator.');
   }
 
   if (action === 'guestEvaluationLink') {
@@ -296,7 +297,7 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
 
     const companyId = crypto.randomUUID();
     const placementId = crypto.randomUUID();
-    tx.push(insert('companies', { name: String(d.companyName), industry: String(d.industry), location: String(d.location), description: 'External / self-sourced host training establishment.', status: 'EXTERNAL', can_post: 0 }, companyId));
+    tx.push(insert('companies', { name: String(d.companyName), industry: String(d.industry), location: String(d.location), description: 'External / self-sourced Industry Partner.', status: 'EXTERNAL', can_post: 0 }, companyId));
     tx.push(insert('placements', {
       student_id: user.id,
       company_id: companyId,

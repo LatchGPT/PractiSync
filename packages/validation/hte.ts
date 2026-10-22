@@ -1,9 +1,11 @@
 import { z } from 'zod';
 
 const text = (max: number) => z.string().trim().min(1).max(max);
-export const companyDetails = z.object({ name: text(160), industry: text(120), location: text(240), description: text(2000) });
-export const jobDetails = z.object({ title: text(160), description: text(8000), location: text(160), courseId: text(100), skills: text(400), openings: z.coerce.number().int().min(1).max(1000) });
-export const hteRegistration = companyDetails.extend({ contactName: text(120), username: z.string().trim().toLowerCase().regex(/^[a-z][a-z0-9._-]{3,40}$/), email: z.string().trim().email().max(254), password: z.string().min(12).max(128) }).strict();
+export const contactPhone = z.string().trim().min(7, 'Enter a contact phone number.').max(40).regex(/^\+?[\d\s().-]+$/, 'Use a valid phone number, including an area or country code.').refine(value => value.replace(/\D/g, '').length >= 7, 'Use a phone number with at least 7 digits.');
+const website = z.string().trim().max(500).url('Enter a full website URL, such as https://company.com.').refine(value => /^https?:\/\//i.test(value), 'Use an http or https website URL.').or(z.literal(''));
+export const companyDetails = z.object({ name: text(160), industry: text(120), location: text(240), description: text(2000), contactName: text(120).optional(), contactEmail: z.string().trim().email().max(254).optional(), contactPhone: contactPhone.optional(), contactPosition: text(120).optional(), website: website.optional() });
+export const jobDetails = z.object({ title: text(160), description: text(8000), location: text(160), courseId: text(100), courseIds: z.array(text(100)).min(1).max(100).optional(), skills: text(400), openings: z.coerce.number().int().min(1).max(1000) });
+export const hteRegistration = companyDetails.omit({ contactEmail: true }).extend({ contactName: text(120), contactPhone, contactPosition: text(120), username: z.string().trim().toLowerCase().regex(/^[a-z][a-z0-9._-]{3,40}$/), email: z.string().trim().email().max(254), password: z.string().min(12).max(128) }).strict();
 export const evaluationQuestion = z.object({
  key: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]{0,59}$/), label: text(500),
  type: z.enum(['text','rating','select']), required: z.boolean(),

@@ -40,9 +40,9 @@ beforeAll(async () => {
 });
 afterAll(() => {installTestDatabase(undefined);sql.close();vi.unstubAllEnvs();});
 
-describe('HTE registration and Super Admin business approvals', () => {
+describe('Industry Partner registration and Super Admin business approvals', () => {
  it('limits pending registrations, requires rejection notes, and supports corrected registration', async () => {
-  const r=await registerHte({name:'Test partner',industry:'IT',location:'Pasig',description:'Fictional integration test partner.',contactName:'Test supervisor',username:'test.partner',email:'partner@example.invalid',password:'IntegrationTest!2026'});
+  const r=await registerHte({name:'Test partner',industry:'IT',location:'Pasig',description:'Fictional integration test partner.',contactName:'Test supervisor',contactPhone:'+63 917 555 0148',contactPosition:'Training manager',username:'test.partner',email:'partner@example.invalid',password:'IntegrationTest!2026'});
   const pending=(await one('SELECT * FROM hte_requests WHERE id=?',r.id!))!;
   let hte=await fresh(String(pending.requesterId));
   expect((await snapshot(hte)).placements).toEqual([]);
@@ -167,7 +167,7 @@ describe('Whole internship DTR verification, school form and completion', () => 
  });
 });
 
-describe('Offline / Opt-out HTE external placement track', () => {
+describe('Offline / Opt-out Industry Partner external placement track', () => {
  it('enables student to register external company, submit signed timesheet, upload evaluation, and complete OJT', async () => {
   const extStudentId = 'student-ext-01';
   await insert('users', {

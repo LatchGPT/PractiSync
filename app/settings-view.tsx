@@ -94,7 +94,7 @@ const DEFAULT_SETTINGS: PractiSyncSettings = {
 const titleRole: Record<Role, string> = {
   STUDENT: 'Student',
   COORDINATOR: 'Coordinator',
-  SUPERVISOR: 'HTE Supervisor',
+  SUPERVISOR: 'Industry Partner Supervisor',
   SUPER_ADMIN: 'Super Admin'
 };
 
@@ -386,7 +386,7 @@ export default function SettingsView({
                   <div className="settings-item-row">
                     <div>
                       <strong>Assigned OJT Partner Company</strong>
-                      <p>Host training establishment endorsed for internship.</p>
+                      <p>Industry Partner endorsed for internship.</p>
                     </div>
                     <span className="settings-value-pill">
                       {String(ownPlacement.companyName || 'Acme Innovations')}
@@ -467,7 +467,7 @@ export default function SettingsView({
               <strong>Philippine Standard Time (PHT, UTC+8) Mandatory Anchor</strong>
               <p>
                 To adhere to Philippine higher education internship policies, all daily training
-                records, attendance time-in/out timestamps, and final HTE verifications are
+                records, attendance time-in/out timestamps, and final Industry Partner verifications are
                 calculated strictly in <strong>Asia/Manila (UTC+8)</strong>.
               </p>
             </div>
@@ -603,7 +603,7 @@ export default function SettingsView({
                 <Switch
                   checked={settings.showConfirmedBadge}
                   onCheckedChange={(c) => updateSetting('showConfirmedBadge', c, 'Confirmation badge setting saved.')}
-                  aria-label="Highlight final HTE verifications"
+                  aria-label="Highlight final Industry Partner verifications"
                 />
               </div>
             </div>
@@ -693,13 +693,13 @@ export default function SettingsView({
 
               <div className="settings-item-row">
                 <div>
-                  <strong>Internship Board & Job Matches</strong>
+                  <strong>OJT Recruitment & Job Matches</strong>
                   <p>Notifies of new verified company openings matching your course curriculum.</p>
                 </div>
                 <Switch
                   checked={settings.notifyJobs}
                   onCheckedChange={(c) => updateSetting('notifyJobs', c, 'Job board alerts updated.')}
-                  aria-label="Internship board & job matches alerts"
+                  aria-label="OJT Recruitment & job matches alerts"
                 />
               </div>
 

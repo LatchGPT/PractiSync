@@ -1,0 +1,76 @@
+.recruitment{min-width:0;color:var(--foreground);font-variant-numeric:tabular-nums}
+.recruitment-intro{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin:4px 0 24px}
+.recruitment-intro h2{font-size:22px;line-height:1.35;color:var(--rtu-navy);margin:0 0 6px;letter-spacing:-.025em}
+.recruitment-intro p{margin:0;color:var(--muted-foreground);font-size:14px}
+.recruitment-intro>span{display:flex;align-items:center;gap:7px;color:var(--primary);font-size:12px;font-weight:600;padding-top:5px}
+.recruitment-categories{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.recruitment-categories button{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 14px;border:1px solid var(--border);background:var(--card);color:var(--rtu-navy);border-radius:8px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.recruitment-categories button.active{background:var(--rtu-navy);color:#fff;border-color:var(--rtu-navy)}
+.recruitment-categories button span{font-size:12px;opacity:.85}
+.recruitment-filters{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(140px,1fr) minmax(140px,1fr) auto;gap:14px;align-items:end;margin-bottom:18px}
+.recruitment-filters label{display:grid;gap:6px;font-size:12px;font-weight:600;color:var(--rtu-navy);min-width:0}
+.recruitment-filters input,.recruitment-filters select{height:44px;width:100%;min-width:0;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--foreground);font:inherit;font-size:14px;padding:10px 12px;caret-color:var(--primary)}
+.recruitment-search>span{display:flex;position:relative;align-items:center}
+.recruitment-search svg{position:absolute;left:12px;color:var(--muted-foreground)}
+.recruitment-search input{padding-left:36px}
+.recruitment-filters .textbutton{min-height:44px;white-space:nowrap}
+.recruitment-count{font-size:13px;color:var(--muted-foreground);margin:0 0 14px}
+.recruitment-layout{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(0,1.4fr);gap:20px;align-items:start}
+.recruitment-results-column{min-width:0}
+.recruitment-pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;font-size:12px}
+.recruitment-pagination button{min-height:44px}
+.recruitment-results{display:grid;gap:10px;max-height:950px;overflow:auto;padding:3px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.recruitment-result{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%;min-width:0;padding:20px;text-align:left;color:var(--foreground);background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-sm);font:inherit;cursor:pointer;overflow-wrap:anywhere;scroll-margin-top:100px}
+.recruitment-result.selected{border-color:var(--primary);background:var(--rtu-ice);box-shadow:0 0 0 1px var(--primary)}
+.recruitment-result strong{font-size:17px;line-height:1.4;color:var(--rtu-navy);font-weight:650}
+.recruitment-result-company,.recruitment-result-location{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--muted-foreground)}
+.recruitment-result svg,.recruitment-facts svg,.recruitment-company svg{flex-shrink:0;margin-top:2px}
+.recruitment-result-programs{font-size:12px;font-weight:600;color:var(--primary)}
+.recruitment-result-bottom{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted-foreground)}
+.recruitment-result-bottom>span:last-child{display:inline-flex;gap:4px;align-items:center}
+.recruitment-details{padding:28px;min-width:0;border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:var(--shadow-sm);overflow-wrap:anywhere;scroll-margin-top:92px}
+.recruitment-company{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.recruitment-company-mark{display:grid;place-items:center;width:50px;height:50px;background:var(--rtu-ice);color:var(--primary);border-radius:10px;flex-shrink:0}
+.recruitment-company>div{display:grid;gap:3px;font-size:14px}
+.recruitment-company>div>span{font-size:12px;color:var(--muted-foreground)}
+.recruitment-details>h2{font-size:26px;line-height:1.3;letter-spacing:-.025em;color:var(--rtu-navy);margin:0 0 18px;text-wrap:balance}
+.recruitment-facts{display:grid;gap:10px;font-size:13px;color:var(--muted-foreground);margin-bottom:22px}
+.recruitment-facts>span{display:flex;align-items:flex-start;gap:8px}
+.recruitment-apply{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.recruitment-apply>.small{margin:0}
+.recruitment-apply button{min-height:44px}
+.recruitment-apply button:disabled{opacity:.65;cursor:not-allowed}
+.recruitment-details>section{margin-top:26px}
+.recruitment-details h3{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:650;color:var(--rtu-navy);margin:0 0 10px}
+.recruitment-details ul{padding-left:20px;list-style:disc;font-size:14px;line-height:1.7;margin:0}
+.recruitment-description{white-space:pre-wrap;line-height:1.75;font-size:14px;margin:0;max-width:70ch}
+.recruitment-skills{display:flex;flex-wrap:wrap;gap:8px}
+.recruitment-skills>span{padding:5px 10px;background:var(--muted);color:var(--foreground);border-radius:6px;font-size:12px}
+.recruitment-back{display:none!important}
+.recruitment-empty{padding:52px 24px;text-align:center;border:1px dashed var(--border);border-radius:12px;background:var(--card)}
+.recruitment-empty>svg{margin:0 auto 14px;color:var(--primary)}
+.recruitment-empty h3{font-size:18px;margin:0 0 8px;color:var(--rtu-navy)}
+.recruitment-empty p{font-size:14px;color:var(--muted-foreground);margin-bottom:18px}
+.recruitment-programs{border:1px solid var(--border);padding:14px;border-radius:8px;min-width:0}
+.recruitment-programs legend{font-weight:600;font-size:14px;color:var(--rtu-navy);padding:0 5px}
+.recruitment-programs>div{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;max-height:240px;overflow:auto}
+.recruitment-programs .hte-checkbox{font-size:13px;font-weight:400;align-items:flex-start!important;padding:9px 0;line-height:1.5}
+.recruitment-programs input[type=checkbox]{margin-top:2px;padding:0;flex-shrink:0;accent-color:var(--primary)}
+.applicant-contact{display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin:12px 0;font-size:13px;overflow-wrap:anywhere}
+.applicant-contact>span,.applicant-contact>a{display:flex;align-items:center;gap:7px;max-width:100%}
+.applicant-contact svg{flex-shrink:0}
+.applicant-contact>a{min-height:36px;text-decoration:underline;text-underline-offset:4px}
+.recruitment-university-workflows{margin-top:28px;min-width:0}
+.recruitment-university-workflows>summary{padding:14px 0;min-height:44px;cursor:pointer;color:var(--primary);font-weight:600;font-size:14px}
+.recruitment-university-workflows>summary:focus-visible{outline:2px solid var(--rtu-gold);outline-offset:3px}
+.recruitment-post-form :is(input,select,textarea){box-sizing:border-box;width:100%;min-width:0;padding:10px 12px;border:1px solid var(--border);background:var(--card);color:var(--foreground);font:inherit;caret-color:var(--primary)}
+.recruitment-post-form :is(input,select,textarea):focus-visible{outline:2px solid var(--rtu-gold);outline-offset:3px}
+.recruitment-post-form input[type=checkbox]{width:18px;padding:0}
+.recruitment-post-form label{min-width:0}
+.recruitment :is(button,a,input,select):focus-visible,.recruitment-details:focus,.recruitment-programs:focus,.applicant-contact a:focus-visible{outline:2px solid var(--rtu-gold);outline-offset:3px}
+.recruitment ::selection{background:#d7aa3e55;color:var(--rtu-navy)}
+@media(hover:hover) and (pointer:fine){.recruitment-result:hover{border-color:var(--primary)}.recruitment-categories button:hover{border-color:var(--primary)}}
+@media(max-width:1150px){.recruitment-intro{flex-direction:column;gap:10px}.recruitment-filters{grid-template-columns:1fr 1fr}.recruitment-search{grid-column:1/-1}}
+@media(max-width:1050px){.recruitment-layout{grid-template-columns:1fr}.recruitment-results{max-height:440px;grid-template-columns:1fr 1fr}.recruitment-back{display:inline-flex!important;margin-bottom:20px}.recruitment-details{padding:24px}}
+@media(max-width:620px){.recruitment-filters{grid-template-columns:1fr}.recruitment-search{grid-column:auto}.recruitment-filters input,.recruitment-filters select{font-size:16px}.recruitment-results{grid-template-columns:1fr;max-height:400px}.recruitment-details{padding:20px}.recruitment-details>h2{font-size:23px}.recruitment-intro h2{font-size:20px}.recruitment-programs>div{grid-template-columns:1fr}.recruitment-apply{align-items:stretch;flex-direction:column}.recruitment-result{padding:16px}.recruitment-categories button{padding-inline:10px}}
+@media(max-width:620px){.recruitment-tabs>[data-slot=tabs-list]{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;height:auto}.recruitment-tabs>[data-slot=tabs-list]>[data-slot=tabs-trigger]{min-height:44px;height:auto;white-space:normal;font-size:12px;line-height:1.4;padding:8px 6px}.recruitment-post-form :is(input,select,textarea){font-size:16px}.applicant-contact>a{min-height:44px}}

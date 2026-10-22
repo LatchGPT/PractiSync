@@ -288,7 +288,7 @@ export default function StudentMyClassView({
                   </span>
                   {Number(ownPlacement.isExternal || 0) === 1 && (
                     <span className="chip purple">
-                      <Building2 size={12} /> Offline / Opt-Out HTE Track
+                      <Building2 size={12} /> Offline / Opt-Out Industry Partner Track
                     </span>
                   )}
                 </div>
@@ -436,7 +436,7 @@ export default function StudentMyClassView({
                   Classmate Directory
                 </h2>
                 <p className="myclass-section-desc">
-                  Explore enrolled peers in your section and their host training establishment placements.
+                  Explore enrolled peers in your section and their Industry Partner placements.
                 </p>
               </div>
 
@@ -525,7 +525,7 @@ export default function StudentMyClassView({
                           {isPlaced ? (
                             <>
                               <Building2 size={13} className="text-blue-700" />
-                              <span className="myclass-placement-status-label">Host Training Company</span>
+                              <span className="myclass-placement-status-label">Industry Partner</span>
                             </>
                           ) : (
                             <>

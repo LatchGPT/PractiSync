@@ -1529,6 +1529,7 @@ model DemoAnnouncements {
 }
 
 model DemoApplications {
+  contactPhone String @default("") @map("contact_phone")
   id          String @id
   tenantId    String @map("tenant_id")
   createdAt   String @map("created_at")
@@ -1632,6 +1633,11 @@ model DemoCalendarEvents {
 }
 
 model DemoCompanies {
+  contactName String @default("") @map("contact_name")
+  contactEmail String @default("") @map("contact_email")
+  contactPhone String @default("") @map("contact_phone")
+  contactPosition String @default("") @map("contact_position")
+  website String @default("")
   version Int @default(1)
   id          String @id
   tenantId    String @map("tenant_id")
@@ -1786,6 +1792,7 @@ model DemoIntervals {
 }
 
 model DemoJobs {
+  requiredCoursesJson String @default("[]") @map("required_courses_json")
   version Int @default(1)
   id          String @id
   tenantId    String @map("tenant_id")

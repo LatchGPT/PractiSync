@@ -71,7 +71,7 @@ describe('PSS-39 calendar events',()=>{
 });
 
 describe('foundations and isolation',()=>{
- it('seeds four demo identities idempotently and promotes the password-based HTE fixture',async()=>{const before=await list('SELECT * FROM entries');sql.prepare('UPDATE users SET is_demo=0 WHERE id=?').run('demo-supervisor');await seed();expect((await list('SELECT * FROM users WHERE is_demo=1')).length).toBe(4);expect((await one('SELECT is_demo FROM users WHERE id=?','demo-supervisor'))?.isDemo).toBe(1);expect((await list('SELECT * FROM entries')).length).toBe(before.length);});
+ it('seeds four demo identities idempotently and promotes the password-based Industry Partner fixture',async()=>{const before=await list('SELECT * FROM entries');sql.prepare('UPDATE users SET is_demo=0 WHERE id=?').run('demo-supervisor');await seed();expect((await list('SELECT * FROM users WHERE is_demo=1')).length).toBe(4);expect((await one('SELECT is_demo FROM users WHERE id=?','demo-supervisor'))?.isDemo).toBe(1);expect((await list('SELECT * FROM entries')).length).toBe(before.length);});
  it('fails closed outside isolated demo',()=>{expect(demoAllowed('institutional','true')).toBe(false);expect(demoAllowed('demo','false')).toBe(false);});
  it('student cannot see another placement or private case',async()=>{const s=await snapshot(users.student);expect(s.placements.every(p=>p.studentId===users.student.id)).toBe(true);expect(s.incidents.map(i=>i.id)).toEqual(['case-1']);expect(s.classes.length).toBe(1);expect(s.classes[0]?.coordinatorName).toBe('Andrea Santos');await expect(mutate(users.student,'dtr',{placementId:'placement-2',date:'2026-10-01',startsAt:'2026-10-01T08:00',endsAt:'2026-10-01T17:00',breakMinutes:60,narrative:'Scope-negative test'})).rejects.toThrow('access denied');});
  it('coordinator sees assigned class placements and routed SOS cases',async()=>{const s=await snapshot(users.coordinator);expect(s.placements.length).toBeGreaterThan(0);expect(s.incidents.length).toBeGreaterThan(0);});
@@ -111,8 +111,8 @@ describe('foundations and isolation',()=>{
   expect((await snapshot(users.student)).assessmentSchedules.find(schedule=>schedule.courseId==='course-it')?.cadence).toBe('BOTH');
  });
  it('applications require eligible course and cannot duplicate',async()=>{await expect(mutate(users.student,'application',{jobId:'job-2',coverLetter:'Sample'})).rejects.toThrow('course');await expect(mutate(users.student,'application',{jobId:'job-1',coverLetter:'Duplicate'})).rejects.toThrow('already applied');});
-  it('HTE selects applicants while the coordinator controls placement confirmation',async()=>{await expect(mutate(users.coordinator,'applicationStatus',{applicationId:'app-1',status:'SHORTLISTED'})).rejects.toThrow('Only the HTE');await mutate(users.supervisor,'selectApplication',{applicationId:'app-1',decision:'SHORTLISTED'});expect((await one('SELECT status FROM applications WHERE id=?','app-1'))?.status).toBe('SHORTLISTED');await expect(mutate(users.coordinator,'confirmPlacement',{applicationId:'app-1',classId:'class-it',startsAt:'2026-08-01',endsAt:'2026-12-20'})).rejects.toThrow('already has an active or planned placement');});
-  it('company profile approval, post approval, HTE selection, and university placement confirmation form one chain',async()=>{
+  it('Industry Partner selects applicants while the coordinator controls placement confirmation',async()=>{await expect(mutate(users.coordinator,'applicationStatus',{applicationId:'app-1',status:'SHORTLISTED'})).rejects.toThrow('Only the Industry Partner');await mutate(users.supervisor,'selectApplication',{applicationId:'app-1',decision:'SHORTLISTED'});expect((await one('SELECT status FROM applications WHERE id=?','app-1'))?.status).toBe('SHORTLISTED');await expect(mutate(users.coordinator,'confirmPlacement',{applicationId:'app-1',classId:'class-it',startsAt:'2026-08-01',endsAt:'2026-12-20'})).rejects.toThrow('already has an active or planned placement');});
+  it('company profile approval, post approval, Industry Partner selection, and university placement confirmation form one chain',async()=>{
    sql.prepare('INSERT INTO users (id,tenant_id,created_at,name,username,email,role,status,password_hash,session_version,is_demo,course_id,company_id,supervisor_verified,can_post) VALUES (?,?,?,?,?,?,?,\'ACTIVE\',NULL,1,0,NULL,NULL,0,0)').run('supervisor-new','fictional-university','2026-10-11T00:00:00Z','Taylor Rivera','demo.supervisor.new','supervisor.new@example.invalid','SUPERVISOR');
    const supervisor=await one('SELECT * FROM users WHERE id=?','supervisor-new') as unknown as Identity;
    const profile=await mutate(supervisor,'companyProfile',{name:'Fictional Studio',industry:'Technology',location:'Pasig',description:'Fictional test company.'});
@@ -154,7 +154,7 @@ describe('foundations and isolation',()=>{
    const guest=await mutate(users.coordinator,'guestEvaluationLink',{placementId:planned!.id,expiresInDays:7});
    expect(await guestEvaluationContext(guest.url!.split('/').pop()!,guest.accessCode!)).toMatchObject({studentName:'Jordan Lee',companyName:'Private Fictional Host'});
   });
-  it('HTE snapshot contains only assigned placements and time-only DTR fields',async()=>{
+  it('Industry Partner snapshot contains only assigned placements and time-only DTR fields',async()=>{
    const s=await snapshot(users.supervisor);
    expect(s.placements.map(p=>p.id).sort()).toEqual(['placement-1','placement-3']);
    expect(s.entries.length).toBeGreaterThan(0);
@@ -165,7 +165,7 @@ describe('foundations and isolation',()=>{
    await expect(mutate(users.supervisor,'confirm',{entryId:'entry-placement-1-15',version:1})).rejects.toThrow('replaced');
    await expect(mutate(users.supervisor,'confirm',{entryId:'entry-placement-2-15',version:1})).rejects.toThrow('replaced');
   });
-  it('retires the sample HTE rubric and removes placement access when an assignment is revoked',async()=>{await expect(mutate(users.supervisor,'industryFinalEvaluation',{placementId:'placement-3'})).rejects.toThrow('school evaluation form');sql.prepare('UPDATE assignments SET active=0 WHERE placement_id=? AND supervisor_id=?').run('placement-3',users.supervisor.id);expect((await snapshot(users.supervisor)).placements.some(p=>p.id==='placement-3')).toBe(false);sql.prepare('UPDATE assignments SET active=1 WHERE placement_id=? AND supervisor_id=?').run('placement-3',users.supervisor.id);});
+  it('retires the sample Industry Partner rubric and removes placement access when an assignment is revoked',async()=>{await expect(mutate(users.supervisor,'industryFinalEvaluation',{placementId:'placement-3'})).rejects.toThrow('school evaluation form');sql.prepare('UPDATE assignments SET active=0 WHERE placement_id=? AND supervisor_id=?').run('placement-3',users.supervisor.id);expect((await snapshot(users.supervisor)).placements.some(p=>p.id==='placement-3')).toBe(false);sql.prepare('UPDATE assignments SET active=1 WHERE placement_id=? AND supervisor_id=?').run('placement-3',users.supervisor.id);});
   it('guest evaluation requires the separate code and remains hidden until coordinator approval',async()=>{
    const issue=await mutate(users.coordinator,'guestEvaluationLink',{placementId:'placement-1',expiresInDays:7});
    const token=issue.url!.split('/').pop()!;
@@ -208,7 +208,7 @@ describe('foundations and isolation',()=>{
    expect((await one('SELECT status FROM completion WHERE placement_id=?','placement-1'))?.status).toBe('PENDING');
    expect((await one('SELECT status FROM placements WHERE id=?','placement-1'))?.status).toBe('ACTIVE');
   });
-  it('HTE feedback is anonymous and withheld below the five-placement threshold',async()=>{
+  it('Industry Partner feedback is anonymous and withheld below the five-placement threshold',async()=>{
    expect((await snapshot(users.supervisor)).reviews).toEqual([]);
    for(const [id,studentId,placementId] of [['feedback-1','demo-student','placement-1'],['feedback-2','student-2','placement-2'],['feedback-3','student-3','placement-3'],['feedback-4','student-5','placement-5']]) sql.prepare('INSERT INTO reviews (id,tenant_id,created_at,company_id,student_id,placement_id,rating,body,status) VALUES (?,?,?,?,?,?,?,?,?)').run(id,'fictional-university','2026-10-11T00:00:00Z','company-northstar',studentId,placementId,4,'Fictional anonymized feedback.','APPROVED');
    const reviews=(await snapshot(users.supervisor)).reviews;
@@ -226,7 +226,7 @@ describe('foundations and isolation',()=>{
 });
 
 describe('PSS-26 to PSS-29 workflow regressions',()=>{
- it('unverified HTEs cannot view applicants, create posts, or select candidates',async()=>{
+ it('unverified Industry Partners cannot view applicants, create posts, or select candidates',async()=>{
   sql.prepare('INSERT INTO users (id,tenant_id,created_at,name,username,email,role,status,password_hash,session_version,is_demo,course_id,company_id,supervisor_verified,can_post) VALUES (?,?,?,?,?,?,?,\'ACTIVE\',NULL,1,0,NULL,NULL,0,0)').run('supervisor-pending-ticket','fictional-university','2026-10-12T00:00:00Z','Pending Supervisor','pending.ticket','pending.ticket@example.invalid','SUPERVISOR');
   const pending=await one('SELECT * FROM users WHERE id=?','supervisor-pending-ticket') as unknown as Identity;
   const profile=await mutate(pending,'companyProfile',{name:'Pending Fictional Partner',industry:'Technology',location:'Pasig',description:'Pending profile.'});
@@ -237,7 +237,7 @@ describe('PSS-26 to PSS-29 workflow regressions',()=>{
   await expect(mutate(refreshed,'selectApplication',{applicationId:'app-1',decision:'SHORTLISTED'})).rejects.toThrow('verified company profile');
   expect((await one('SELECT status FROM companies WHERE id=?',profile.id!))?.status).toBe('PENDING');
  });
- it('HTEs only see and select applicants on their own published posts',async()=>{
+ it('Industry Partners only see and select applicants on their own published posts',async()=>{
   const draft=await mutate(users.supervisor,'job',{title:'Hidden draft',description:'Not public yet.',location:'Pasig',courseId:'course-it',skills:'Testing',openings:1});
   sql.prepare('INSERT INTO applications (id,tenant_id,created_at,job_id,student_id,cover_letter,status) VALUES (?,?,?,?,?,?,\'SUBMITTED\')').run('app-draft-ticket','fictional-university','2026-10-12T00:00:00Z',draft.id!,'student-2','Fictional application.');
   expect((await snapshot(users.supervisor)).applications.some(application=>application.id==='app-draft-ticket')).toBe(false);
@@ -273,6 +273,6 @@ describe('Auth.js Request/Response smoke checks',()=>{
   return {result,request:new Request(origin+'/api/data',{headers:{Cookie:cookies(response).join('; ')}})};
  }
   it('four quick sign-ins use Auth.js cookies for their fixed demo identities',async()=>{for(const role of ['student','coordinator','admin','supervisor']){const {result,request}=await signIn({demoId:'demo-'+role});expect(result.url).not.toContain('error=');const user=await identity(request);expect(user.id).toBe('demo-'+role);expect(user.isDemo).toBe(1);expect(user).not.toHaveProperty('passwordHash');}const bad=await signIn({demoId:'demo-not-a-real-account'});expect(bad.result.url).toContain('error=');});
- it('username/password still works for the HTE account',async()=>{const good=await signIn({username:'demo.student',password:'Demo@2026!'});expect((await identity(good.request)).id).toBe('demo-student');const hte=await signIn({username:'demo.supervisor',password:'Demo@2026!'});expect((await identity(hte.request)).role).toBe('SUPERVISOR');const bad=await signIn({username:'demo.student',password:'incorrect-password'});expect(bad.result.url).toContain('error=');await expect(identity(bad.request)).rejects.toThrow('sign in');});
+ it('username/password still works for the Industry Partner account',async()=>{const good=await signIn({username:'demo.student',password:'Demo@2026!'});expect((await identity(good.request)).id).toBe('demo-student');const hte=await signIn({username:'demo.supervisor',password:'Demo@2026!'});expect((await identity(hte.request)).role).toBe('SUPERVISOR');const bad=await signIn({username:'demo.student',password:'incorrect-password'});expect(bad.result.url).toContain('error=');await expect(identity(bad.request)).rejects.toThrow('sign in');});
  it('stale signed session fails after version revocation',async()=>{const signed=await signIn({demoId:'demo-student'});sql.prepare('UPDATE users SET session_version=session_version+1 WHERE id=?').run('demo-student');await expect(identity(signed.request)).rejects.toThrow('sign in');});
 });
