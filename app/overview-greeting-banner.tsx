@@ -287,24 +287,18 @@ export default function OverviewGreetingBanner({
 
   // Super Admin view
   return (
-    <section className="overview-greeting-banner" aria-label="Personalized welcome and status">
+    <section className="overview-greeting-banner super-admin-overview-banner" aria-label="University administration overview">
       <div className="banner-content">
         <div className="banner-eyebrow">
-          <Sparkles size={13} className="banner-sparkle-icon" />
-          <span>UNIVERSITY OFFICE · RIZAL TECHNOLOGICAL UNIVERSITY</span>
+          <span>UNIVERSITY ADMINISTRATION</span>
         </div>
 
         <h1 className="banner-title">
-          {timeGreeting}, {firstName} 👋
+          {timeGreeting}, {firstName}
         </h1>
-
-        <div className="banner-pills">
-          <span className="banner-pill pill-green">
-            <span className="pulse-dot" />
-            Portal Active & Synced
-          </span>
-
-        </div>
+        <p className="super-admin-banner-description">
+          Manage university accounts, academic programs, and industry partnerships.
+        </p>
       </div>
 
       <div className="banner-actions">
@@ -322,7 +316,7 @@ export default function OverviewGreetingBanner({
           onClick={() => navigate('institution')}
         >
           <GraduationCap size={14} />
-          <span>University structure</span>
+          <span>Academic structure</span>
         </button>
       </div>
     </section>
