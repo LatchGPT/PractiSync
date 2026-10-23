@@ -8,6 +8,7 @@ import {
   Clock,
   FileText,
   GraduationCap,
+  LifeBuoy,
   Plus,
   ShieldCheck,
   Sparkles,
@@ -212,23 +213,20 @@ export default function OverviewGreetingBanner({
     const openCases = data.incidents.filter(i => i.status !== 'RESOLVED');
 
     return (
-      <section className="overview-greeting-banner" aria-label="Personalized welcome and status">
+      <section className="overview-greeting-banner coordinator-overview-banner" aria-label="Coordinator overview">
         <div className="banner-content">
           <div className="banner-eyebrow">
-            <Sparkles size={13} className="banner-sparkle-icon" />
-            <span>COORDINATOR DASHBOARD · AY 2026–2027</span>
+            <span>COORDINATOR OVERVIEW</span>
           </div>
 
           <h1 className="banner-title">
-            {timeGreeting}, {user.name} 👋
+            {timeGreeting}, {firstName}
           </h1>
+          <p className="coordinator-banner-description">
+            Manage your classes, review submissions, and support your students.
+          </p>
 
           <div className="banner-pills">
-            <span className="banner-pill pill-green">
-              <span className="pulse-dot" />
-              Active Academic Term
-            </span>
-
             {pendingDocuments.length > 0 ? (
               <button
                 type="button"
@@ -242,7 +240,7 @@ export default function OverviewGreetingBanner({
             ) : (
               <span className="banner-pill pill-glass">
                 <CheckCircle2 size={13} style={{color: '#4ade80'}} />
-                <span>Document queue clear</span>
+                <span>No documents need review</span>
               </span>
             )}
 
@@ -251,7 +249,7 @@ export default function OverviewGreetingBanner({
                 type="button"
                 className="banner-pill pill-red clickable"
                 onClick={() => navigate('incidents')}
-                title="Open student support incidents"
+                title="View open student support cases"
               >
                 <AlertCircle size={13} />
                 <span>{openCases.length} support case{openCases.length !== 1 ? 's' : ''} open</span>
@@ -259,7 +257,7 @@ export default function OverviewGreetingBanner({
             ) : (
               <span className="banner-pill pill-glass">
                 <CheckCircle2 size={13} style={{color: '#60a5fa'}} />
-                <span>No urgent alerts</span>
+                <span>No open support cases</span>
               </span>
             )}
           </div>

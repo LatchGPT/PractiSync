@@ -64,7 +64,8 @@ export default function OverallStudentsProgress({
     <section className="overall-students-card">
       <div className="overall-card-header">
         <div>
-          <h2>Overall Students Progress</h2>
+          <h2>Student progress</h2>
+          <p>Compare reported and confirmed hours across your classes.</p>
         </div>
         <button
           type="button"
@@ -84,13 +85,13 @@ export default function OverallStudentsProgress({
             </div>
             <div>
               <strong>
-                {pendingRequests.length} Student Join Request
-                {pendingRequests.length > 1 ? 's' : ''} Awaiting Approval
+                {pendingRequests.length} enrollment request
+                {pendingRequests.length > 1 ? 's' : ''} to review
               </strong>
               <p>
                 {pendingRequests.length === 1
-                  ? `${s(pendingRequests[0], 'studentName')} has requested to join ${s(pendingRequests[0], 'classSection')}.`
-                  : `${pendingRequests.length} students have submitted enrollment requests for your classes.`}
+                  ? `${s(pendingRequests[0], 'studentName')} requested to join ${s(pendingRequests[0], 'classSection')}.`
+                  : `${pendingRequests.length} students are waiting for enrollment review.`}
               </p>
             </div>
           </div>
@@ -100,7 +101,7 @@ export default function OverallStudentsProgress({
             style={{ padding: '7px 16px', fontSize: 13 }}
             onClick={() => navigate('classes')}
           >
-            Review Requests <ArrowRight size={14} />
+            Review requests <ArrowRight size={14} />
           </button>
         </div>
       )}
@@ -112,7 +113,7 @@ export default function OverallStudentsProgress({
           className={`section-pill ${selectedSection === 'ALL' ? 'active' : ''}`}
           onClick={() => setSelectedSection('ALL')}
         >
-          All Sections
+          All sections
           <span className="section-pill-count">{allPlacements.length}</span>
         </button>
         {sections.map(section => {
@@ -230,7 +231,7 @@ export default function OverallStudentsProgress({
           })
         ) : (
           <p className="role-empty" style={{ padding: '24px 0' }}>
-            No students found in {selectedSection === 'ALL' ? 'your classes' : selectedSection}.
+            {selectedSection === 'ALL' ? 'No students found in your classes.' : `No students found in section ${selectedSection}.`}
           </p>
         )}
       </div>

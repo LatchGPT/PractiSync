@@ -248,12 +248,16 @@ export default function PracticumMilestoneStepper({
       {
         id: 'coor-docs',
         phase: 'STAGE 01',
-        title: 'Internship Documents',
+        title: 'Document review',
         status: pendingDocuments.length ? 'attention' : data.documents.length ? 'clear' : 'empty',
         badgeLabel: pendingDocuments.length ? 'Needs review' : data.documents.length ? 'Queue clear' : 'No records',
         kpiValue: `${approvedDocs.length} / ${data.documents.length}`,
-        kpiSubLabel: 'Approved Submissions',
-        detail: `${pendingDocuments.length} pending review queue`,
+        kpiSubLabel: 'Approved submissions',
+        detail: pendingDocuments.length === 1
+          ? '1 submission needs review'
+          : pendingDocuments.length > 1
+          ? `${pendingDocuments.length} submissions need review`
+          : data.documents.length ? 'All submitted documents are reviewed' : 'No submissions yet',
         to: 'documents',
         icon: FileCheck2,
         metrics: [
@@ -265,21 +269,21 @@ export default function PracticumMilestoneStepper({
       {
         id: 'coor-classes',
         phase: 'STAGE 02',
-        title: 'Active Internships',
+        title: 'Active placements',
         status: activePlacements.length ? 'current' : 'empty',
         badgeLabel: activePlacements.length ? 'Active' : 'No placements',
-        kpiValue: `${activePlacements.length} Interns`,
-        kpiSubLabel: 'Across Verified Placements',
-        detail: `${classes.length} coordinator-led class spaces`,
+        kpiValue: `${activePlacements.length} students`,
+        kpiSubLabel: 'Currently placed',
+        detail: `${classes.length} active ${classes.length === 1 ? 'class' : 'classes'}`,
         to: 'classes',
         icon: Users,
         metrics: [
-          {label: 'Students in roster', value: String(data.placements.length)},
+          {label: 'Students in your classes', value: String(data.placements.length)},
           {label: 'Active placements', value: String(activePlacements.length)},
-          {label: 'Class spaces', value: String(classes.length)},
+          {label: 'Classes', value: String(classes.length)},
           {label: 'Average reported progress', value: `${averageProgress}%`},
-          {label: 'Reported hours · all records', value: hours(reportedMinutes)},
-          {label: 'Confirmed hours · all records', value: hours(confirmedMinutes)},
+          {label: 'Hours reported', value: hours(reportedMinutes)},
+          {label: 'Hours confirmed', value: hours(confirmedMinutes)},
           {label: 'DTR reopening requests', value: String(dtrsToConfirm)},
         ],
       },
@@ -289,9 +293,9 @@ export default function PracticumMilestoneStepper({
         title: 'Competency Reviews',
         status: submittedReviews.length ? 'attention' : periodReviews.length ? 'clear' : 'empty',
         badgeLabel: submittedReviews.length ? 'Needs review' : periodReviews.length ? 'Queue clear' : 'No appraisals',
-        kpiValue: `${periodReviews.length} Assessments`,
-        kpiSubLabel: 'Weekly / Monthly Rubrics',
-        detail: 'Student self-assessments for coordinator review',
+        kpiValue: `${periodReviews.length} assessments`,
+        kpiSubLabel: 'Weekly and monthly reviews',
+        detail: 'Weekly and monthly reviews submitted by students',
         to: 'competencies',
         icon: Award,
         metrics: [
@@ -303,19 +307,19 @@ export default function PracticumMilestoneStepper({
       {
         id: 'coor-support',
         phase: 'STAGE 04',
-        title: 'Student Support & Exit',
+        title: 'Student support',
         status: openCases.length ? 'attention' : 'clear',
         badgeLabel: openCases.length ? 'Needs attention' : 'Queue clear',
-        kpiValue: `${openCases.length} Cases`,
-        kpiSubLabel: 'Private SOS / Support Reports',
-        detail: openCases.length === 0 ? 'No student support cases are currently open' : 'Requires coordinator response',
+        kpiValue: `${openCases.length} cases`,
+        kpiSubLabel: 'Open cases',
+        detail: openCases.length === 0 ? 'No open support cases' : 'Respond to student support requests',
         to: 'incidents',
         icon: LifeBuoy,
         metrics: [{label: 'Open support cases', value: String(openCases.length)}],
       },
     ];
 
-    currentPhaseLabel = 'Cohort Monitoring Matrix';
+    currentPhaseLabel = 'Coordinator activity';
   } else {
     // Super Admin view
     const studentAccounts = data.studentAccountSummary ?? [];
@@ -434,14 +438,14 @@ export default function PracticumMilestoneStepper({
   };
 
   return (
-    <section className="practicum-stepper-card" aria-label="Practicum lifecycle and key metrics">
+    <section className="practicum-stepper-card" aria-label={role === 'COORDINATOR' ? 'Coordinator workload' : 'Practicum lifecycle and key metrics'}>
       <div className="stepper-header">
         <div className="stepper-header-left">
           <div className="stepper-eyebrow">
             <Compass size={13} className="stepper-eyebrow-icon" />
-            <span>PRACTICUM LIFECYCLE &amp; KEY METRICS</span>
+            <span>{role === 'COORDINATOR' ? 'COORDINATOR WORKLOAD' : 'PRACTICUM LIFECYCLE &amp; KEY METRICS'}</span>
           </div>
-          <h2 className="stepper-title">{isStudent ? 'Your practicum phases' : 'Areas in your practicum workspace'}</h2>
+          <h2 className="stepper-title">{isStudent ? 'Your practicum phases' : role === 'COORDINATOR' ? 'Workload at a glance' : 'Areas in your practicum workspace'}</h2>
         </div>
         <div className="stepper-badge">
           <Sparkles size={12} className="stepper-badge-icon" />
@@ -449,7 +453,7 @@ export default function PracticumMilestoneStepper({
         </div>
       </div>
 
-      <div className="phase-track" role="list" aria-label={isStudent ? 'Student practicum phases' : 'Practicum operations areas'}>
+      <div className="phase-track" role="list" aria-label={isStudent ? 'Student practicum phases' : role === 'COORDINATOR' ? 'Coordinator work areas' : 'Practicum operations areas'}>
         {steps.map((step, index) => {
           const Icon = step.icon;
           const isOpen = active?.id === step.id;

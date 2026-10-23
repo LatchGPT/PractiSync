@@ -69,9 +69,6 @@ function AdminMiniCalendar({events}:{events:Row[]}){
 
 export default function RoleDashboard({data,navigate,onLogAttendance,onViewStudent}:{data:Snapshot;navigate:(page:string)=>void;onLogAttendance:()=>void;onViewStudent?:(studentId:string)=>void}){
  const {user}=data;
- const reported=(placementId?:string)=>data.entries.filter(entry=>!placementId||entry.placementId===placementId).reduce((sum,entry)=>sum+number(entry,'minutes'),0);
- const confirmed=(placementId?:string)=>data.entries.filter(entry=>(!placementId||entry.placementId===placementId)&&entry.confirmedVersion===entry.version).reduce((sum,entry)=>sum+number(entry,'minutes'),0);
- const active=data.placements.filter(placement=>placement.status==='ACTIVE');
  const pendingDocuments=data.documents.filter(document=>document.status==='PENDING');
 
  if(user.role==='STUDENT'){
@@ -90,11 +87,39 @@ export default function RoleDashboard({data,navigate,onLogAttendance,onViewStude
  if(user.role==='COORDINATOR'){
   const classes=data.classes.filter(row=>!number(row,'revoked'));
   const cases=data.incidents.filter(row=>row.status!=='RESOLVED');
-
   const pendingJoinRequests=(data.joinRequests??[]).filter(row=>row.status==='PENDING');
   const pendingApplications=data.applications.filter(row=>row.status==='SUBMITTED');
   const totalReviewItems=pendingDocuments.length+pendingJoinRequests.length+cases.length;
-  return <div className="role-dashboard coordinator-dashboard"><OverallStudentsProgress data={data} navigate={navigate} onViewStudent={onViewStudent}/><AttendanceVisuals entries={data.entries}/><div className="role-columns"><div className="role-stack"><Card title="My classes" action={<Link to="classes" navigate={navigate}>Manage classes</Link>}>{classes.length?<div className="role-list">{classes.map(cls=>{const placements=data.placements.filter(row=>row.classId===cls.id);return <button className="role-list-row interactive" key={cls.id} onClick={()=>navigate('classes')}><span className="role-symbol"><BookOpen size={17}/></span><div><strong>{value(cls,'section')}</strong><span>{value(cls,'name')} · {data.courses.find(row=>row.id===cls.courseId)?.name??'Course'}</span></div><span className="role-list-end"><strong>{placements.length}</strong><small>placements in view</small></span></button>;})}</div>:<Empty>No classes yet. Create a class to invite eligible students.</Empty>}</Card><Card title="Student progress">{active.length?<div className="role-list">{active.slice(0,5).map(row=>{const unconf=data.finalDtrs?.some(f=>f.placementId===row.id&&f.status==='SUBMITTED')?1:0;return <div className="role-list-row" key={row.id}><span className="role-symbol soft"><GraduationCap size={17}/></span><div><strong>{value(row,'studentName')}</strong><span>{value(row,'section')} · {value(row,'companyName')}</span></div><span className="role-list-end"><strong>{hours(reported(row.id))}</strong><small>{hours(confirmed(row.id))} confirmed{unconf>0?` · ${unconf} pending`:''}</small></span></div>;})}</div>:<Empty>No active placements in your classes.</Empty>}</Card></div><div className="role-stack"><Card title="Review queue" action={<span className="chip orange">{totalReviewItems} pending</span>}><div className="role-actions"><button onClick={()=>navigate('documents')}><FileText size={18}/><span><strong>{pendingDocuments.length} internship documents pending review</strong></span><ArrowRight size={16}/></button>{pendingJoinRequests.length>0&&<button onClick={()=>navigate('classes')}><Users size={18}/><span><strong>{pendingJoinRequests.length} class enrollment join requests</strong></span><ArrowRight size={16}/></button>}{pendingApplications.length>0&&<button onClick={()=>navigate('jobs')}><BriefcaseBusiness size={18}/><span><strong>{pendingApplications.length} student job applications</strong></span><ArrowRight size={16}/></button>}<button onClick={()=>navigate('incidents')}><LifeBuoy size={18}/><span><strong>{cases.length} open student support cases</strong></span><ArrowRight size={16}/></button><button onClick={()=>navigate('announcements')}><Megaphone size={18}/><span><strong>Class announcement</strong></span><ArrowRight size={16}/></button></div></Card><Announcements data={data} navigate={navigate}/></div></div></div>;
+  return <div className="role-dashboard coordinator-dashboard">
+   <OverallStudentsProgress data={data} navigate={navigate} onViewStudent={onViewStudent}/>
+   <AttendanceVisuals entries={data.entries}/>
+   <div className="role-columns">
+    <div className="role-stack">
+     <Card title="My classes" action={<Link to="classes" navigate={navigate}>Manage classes</Link>}>
+      {classes.length?<div className="role-list">{classes.map(cls=>{
+       const placements=data.placements.filter(row=>row.classId===cls.id);
+       return <button className="role-list-row interactive" key={cls.id} onClick={()=>navigate('classes')}>
+        <span className="role-symbol"><BookOpen size={17}/></span>
+        <div><strong>{value(cls,'section')}</strong><span>{value(cls,'name')} · {data.courses.find(row=>row.id===cls.courseId)?.name??'Course'}</span></div>
+        <span className="role-list-end"><strong>{placements.length}</strong><small>students</small></span>
+       </button>;
+      })}</div>:<Empty>No classes yet. Create a class to add students to a section.</Empty>}
+     </Card>
+    </div>
+    <div className="role-stack">
+     <Card title="Review queue" action={<span className={`chip ${totalReviewItems?'orange':'green'}`}>{totalReviewItems} pending</span>}>
+      <div className="role-actions">
+       <button onClick={()=>navigate('documents')}><FileText size={18}/><span><strong>Review student documents</strong><small>{pendingDocuments.length} awaiting review</small></span><ArrowRight size={16}/></button>
+       {pendingJoinRequests.length>0&&<button onClick={()=>navigate('classes')}><Users size={18}/><span><strong>Review enrollment requests</strong><small>{pendingJoinRequests.length} awaiting review</small></span><ArrowRight size={16}/></button>}
+       {pendingApplications.length>0&&<button onClick={()=>navigate('jobs')}><BriefcaseBusiness size={18}/><span><strong>Review student applications</strong><small>{pendingApplications.length} awaiting review</small></span><ArrowRight size={16}/></button>}
+       <button onClick={()=>navigate('incidents')}><LifeBuoy size={18}/><span><strong>Student support cases</strong><small>{cases.length} open</small></span><ArrowRight size={16}/></button>
+       <button onClick={()=>navigate('announcements')}><Megaphone size={18}/><span><strong>Class announcement</strong><small>Share an update with your students</small></span><ArrowRight size={16}/></button>
+      </div>
+     </Card>
+     <Announcements data={data} navigate={navigate}/>
+    </div>
+   </div>
+  </div>;
  }
 
  const departments=data.departments;
@@ -102,5 +127,5 @@ export default function RoleDashboard({data,navigate,onLogAttendance,onViewStude
 }
 
 function Announcements({data,navigate}:{data:Snapshot;navigate:(page:string)=>void}){
- return <Card title="Latest announcements" action={<Link to="announcements" navigate={navigate}>View all</Link>}>{data.announcements.length?<div className="role-list">{data.announcements.slice(0,2).map(item=><div className="role-announcement" key={item.id}><div><span className="role-status positive">{value(item,'audience').toLowerCase()} update</span><time>{date(value(item,'createdAt'))}</time></div><strong>{value(item,'title')}</strong><p>{value(item,'body')}</p></div>)}</div>:<Empty>No announcements for your current access scope.</Empty>}</Card>;
+ return <Card title="Latest announcements" action={<Link to="announcements" navigate={navigate}>View all</Link>}>{data.announcements.length?<div className="role-list">{data.announcements.slice(0,2).map(item=><div className="role-announcement" key={item.id}><div><span className="role-status positive">{value(item,'audience').toLowerCase()} update</span><time>{date(value(item,'createdAt'))}</time></div><strong>{value(item,'title')}</strong><p>{value(item,'body')}</p></div>)}</div>:<Empty>{data.user.role==='COORDINATOR'?'No announcements yet.':'No announcements for your current access scope.'}</Empty>}</Card>;
 }
