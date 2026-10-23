@@ -10,6 +10,8 @@ Student registration is an Operate surface using the existing Inter and RTU blue
 
 ## 1. Design direction
 
+The COE Office queue is an Operate surface with separate student reservation, office management, and student-facing display views. Students choose a weekday and exact five-minute time; slots use RTU navy and blue, gold keyboard focus, 4px spacing, an 8px control radius and 12px grouped surfaces. Show the selected session's 08:00–11:00 and 13:00–17:00 options as compact, clearly reserved or available buttons. Keep the date and active reservation prominent, with one primary Reserve action and a secondary Forfeit action behind a consequence-specific confirmation. Admins see full names, the active consultation, the next reservation and free walk-in gaps. The separate monitor shows only queue number, first name and last initial. Reuse Inter, Lucide icons, and the shared dialog focus management. Preserve the last loaded state during refresh errors; show pending, stale, offline, closed, empty, and permission states inline. The monitor runs in a separate window and refreshes every five seconds. Scoped styles live in `app/queue-workspace.module.css`; the contract is in `docs/student-queue-design.md`.
+
 The visual identity is inspired by Rizal Technological University's blue and gold. The product is a fictional demonstration, and the visual inspiration does not imply institutional endorsement. Demo content currently uses Rizal Technological University and fictional people, companies, policies, and records.
 
 The interface should feel orderly, reassuring, and focused on practical work:

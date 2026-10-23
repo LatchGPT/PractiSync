@@ -16,7 +16,7 @@ import {activeClassByCode,digestClassCode} from './class-codes';
 import {isRtuStudentEmail,studentEmailAllowed} from '../auth/student-email';
 import {feedbackAction} from './feedback';
 import {recruitmentCourseIds} from '../validation/recruitment';
-import {mailConfigured,queuedMail} from '../auth/mail';
+import {mutateQueue} from './queue';
 export async function placementFor(user:Identity,id:string){const s=scope(user);const p=await one(`SELECT p.* FROM placements p WHERE ${s.sql} AND p.id=?`,...s.args,id);if(!p)throw new DomainError('Training placement not found or access denied.',403);return p;}
 async function mutateScoped(user:Identity,action:Action,payload:unknown):Promise<{message:string;id?:string;url?:string;accessCode?:string;expiresAt?:string}>{
  await assertStudentVerified(user);
@@ -25,53 +25,11 @@ async function mutateScoped(user:Identity,action:Action,payload:unknown):Promise
  const feedbackResult=await feedbackAction(user,action,payload);if(feedbackResult)return feedbackResult;
  const hteResult=await mutateHte(user,action,payload);if(hteResult)return hteResult;
  const industryResult=await mutateIndustry(user,action,payload);if(industryResult)return industryResult;
+ if((['queueJoin','queueAddStudent','queueReserve','queueForfeit','queueStatus'] as string[]).includes(action))return mutateQueue(user,action,payload);
  const parse=<A extends Action>(a:A)=>(inputs[a].parse(payload)) as z.infer<(typeof inputs)[A]>;
-  if(action==='queueJoin'&&user.role==='COORDINATOR')throw new DomainError('Coordinators are not assigned to the COE office queue.',403);
-  if(action==='queueAddStudent'||action==='queueStatus')requireRole(user,'SUPER_ADMIN');
-  if(action==='queueStatus'){
-   const d=inputs.queueStatus.parse(payload);
-   const entry=await one('SELECT coordinator_id FROM queue_entries WHERE tenant_id=? AND id=?',user.tenantId,d.queueId);
-   if(!entry||entry.coordinatorId!==user.id)throw new DomainError('Only the COE office queue can manage this booking.',403);
-  }
   const tx:PreparedStatement[]=[];let resourceId=crypto.randomUUID();let message='Saved successfully.';
   const notify=(userId:string,title:string,msg:string,type:string,resType='',resId='',linkPage='')=>{
    tx.push(insert('notifications',{user_id:userId,title,message:msg,type,resource_type:resType,resource_id:resId,link_page:linkPage,read_at:null}));
-  };
-  const queueEmail=(email:string,subject:string,text:string)=>{if(mailConfigured()&&email.trim())tx.push(queuedMail(user.tenantId,{to:email.trim(),subject,text}));};
-  const manilaClock=()=>new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Manila',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
-  const minutesFromClock=(value:string)=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
-  const clockFromMinutes=(value:number)=>`${String(Math.floor(value/60)).padStart(2,'0')}:${String(value%60).padStart(2,'0')}`;
-  const createQueueEntry=async(studentId:string,coordinatorId:string)=>{
-    if(user.role==='STUDENT'){
-      const officeOwner=await one("SELECT id FROM users WHERE tenant_id=? AND role='SUPER_ADMIN' AND status='ACTIVE' ORDER BY created_at ASC LIMIT 1",user.tenantId);
-      coordinatorId=String(officeOwner?.id??'');
-      if(!coordinatorId)throw new DomainError('The COE Office queue is not available right now.',503);
-    }
-    const today=manilaToday();
-    const clock=manilaClock();
-    const nowMinutes=minutesFromClock(clock);
-    const session=nowMinutes>=480&&nowMinutes<660?'MORNING':nowMinutes>=780&&nowMinutes<1020?'AFTERNOON':null;
-    if(!session)throw new DomainError('The queue is open from 8:00–11:00 AM and 1:00–5:00 PM Manila time.');
-    const sessionStart=session==='MORNING'?480:780;
-    const sessionEnd=session==='MORNING'?660:1020;
-    const student=await one("SELECT id,name,email FROM users WHERE tenant_id=? AND id=? AND role='STUDENT' AND status='ACTIVE'",user.tenantId,studentId);
-    const officeOwner=await one("SELECT id,name,email FROM users WHERE tenant_id=? AND id=? AND role='SUPER_ADMIN' AND status='ACTIVE'",user.tenantId,coordinatorId);
-    if(!student||!officeOwner)throw new DomainError('Choose an active student and the COE Office queue owner.',403);
-    if(user.role==='COORDINATOR')throw new DomainError('Coordinators are not assigned to the COE office queue.',403);
-    const duplicate=await one("SELECT id FROM queue_entries WHERE tenant_id=? AND student_id=? AND service_date=? AND status IN ('WAITING','SERVING') LIMIT 1",user.tenantId,studentId,today);
-    if(duplicate)throw new DomainError('This student already has an active queue entry today.',409);
-    const latest=await one("SELECT scheduled_end FROM queue_entries WHERE tenant_id=? AND coordinator_id=? AND service_date=? AND session=? AND status NOT IN ('CANCELLED','ABSENT') ORDER BY scheduled_end DESC LIMIT 1",user.tenantId,coordinatorId,today,session);
-    const firstSlot=Math.ceil(nowMinutes/5)*5;
-    const slotStart=Math.max(sessionStart,firstSlot,latest?minutesFromClock(String(latest.scheduledEnd)):sessionStart);
-    if(slotStart+5>sessionEnd)throw new DomainError('No five-minute service slots remain in this session.',409);
-    const nextNumber=await one('SELECT COALESCE(MAX(queue_number),0)+1 AS next_number FROM queue_entries WHERE tenant_id=? AND coordinator_id=? AND service_date=? AND session=?',user.tenantId,coordinatorId,today,session);
-    const id=crypto.randomUUID();
-    tx.push(insert('queue_entries',{student_id:studentId,coordinator_id:coordinatorId,service_date:today,session,queue_number:Number(nextNumber?.nextNumber??1),joined_at:new Date().toISOString(),scheduled_start:clockFromMinutes(slotStart),scheduled_end:clockFromMinutes(slotStart+5),status:'WAITING',started_at:null,completed_at:null,updated_at:new Date().toISOString()},id));
-    notify(studentId,'Queue entry confirmed',`Your queue number is ${Number(nextNumber?.nextNumber??1)}. Estimated service time: ${clockFromMinutes(slotStart)}.`, 'QUEUE','queue_entry',id,'queue');
-    queueEmail(String(student.email??''),'COE Office consultation booked',`Your COE Office consultation is booked for ${today} at ${clockFromMinutes(slotStart)}. Queue number: ${Number(nextNumber?.nextNumber??1)}. Please arrive near your scheduled time.`);
-    if(user.role==='STUDENT')notify(coordinatorId,'Student joined the queue',`${user.name} joined the queue for ${clockFromMinutes(slotStart)}.`, 'QUEUE','queue_entry',id,'queue');
-    if(user.role==='STUDENT')queueEmail(String(officeOwner.email??''),'New COE Office queue booking',`${String(student.name??'A student')} booked a consultation for ${today} at ${clockFromMinutes(slotStart)}. Queue number: ${Number(nextNumber?.nextNumber??1)}.`);
-    resourceId=id;message=`Queue entry created for ${clockFromMinutes(slotStart)}.`;
   };
   switch(action){
   case 'dtr':{
@@ -135,9 +93,6 @@ async function mutateScoped(user:Identity,action:Action,payload:unknown):Promise
     message='Account created. The student can complete registration on first sign-in.';break;
    }
    case 'role':{requireRole(user,'SUPER_ADMIN');const d=parse('role');const account=await one('SELECT * FROM users WHERE tenant_id=? AND id=?',user.tenantId,d.userId);if(process.env.DEPLOYMENT_MODE==='institutional'&&account&&['COORDINATOR','SUPER_ADMIN'].includes(d.role)&&!isRtuStudentEmail(String(account.email)))throw new DomainError('University staff use RTU Google. Provision an RTU staff identity through the OJT office.');if(!account||account.isDemo===1)throw new DomainError('The demo identities are preserved. Choose a provisioned sample account.');if(d.role==='STUDENT'&&d.status==='ACTIVE'&&!studentEmailAllowed({...account,role:'STUDENT'}))throw new DomainError('This student needs an RTU email or an authorized manual account.');if(d.role==='STUDENT'&&account.role!=='STUDENT')tx.push(statement("INSERT INTO student_verifications (id,tenant_id,created_at,requester_id,status,updated_at) VALUES (?,?,?,?,'DRAFT',?) ON CONFLICT(tenant_id,requester_id) DO NOTHING",crypto.randomUUID(),user.tenantId,new Date().toISOString(),account.id,new Date().toISOString()));resourceId=account.id;tx.push(statement(`UPDATE users SET role=?,status=?,session_version=session_version+1,company_id=CASE WHEN role<>? AND (role='SUPERVISOR' OR ?='SUPERVISOR') THEN NULL ELSE company_id END,supervisor_verified=CASE WHEN role<>? AND (role='SUPERVISOR' OR ?='SUPERVISOR') THEN 0 ELSE supervisor_verified END,can_post=CASE WHEN role<>? AND (role='SUPERVISOR' OR ?='SUPERVISOR') THEN 0 ELSE can_post END WHERE tenant_id=? AND id=?`,d.role,d.status,d.role,d.role,d.role,d.role,d.role,d.role,user.tenantId,account.id));tx.push(statement('UPDATE users SET session_version=session_version+1 WHERE tenant_id=? AND id IN (SELECT requester_id FROM student_verifications WHERE tenant_id=? AND approved_student_id=? AND requester_id<>?)',user.tenantId,user.tenantId,account.id,account.id));message='Account updated. Existing sessions have been revoked.';break;}
-  case 'queueJoin':{requireRole(user,'STUDENT');parse('queueJoin');await createQueueEntry(user.id,'');break;}
-  case 'queueAddStudent':{requireRole(user,'SUPER_ADMIN');throw new DomainError('Students must book their own COE Office consultation.',403);}
-  case 'queueStatus':{requireRole(user,'COORDINATOR','SUPER_ADMIN');const d=parse('queueStatus');const entry=await one('SELECT * FROM queue_entries WHERE tenant_id=? AND id=?',user.tenantId,d.queueId);if(!entry)throw new DomainError('Queue entry not found.',404);if(user.role==='COORDINATOR'&&entry.coordinatorId!==user.id)throw new DomainError('You can only manage your own queue entries.',403);if(!['WAITING','SERVING'].includes(String(entry.status)))throw new DomainError('This queue entry is already closed.',409);if(entry.status==='WAITING'&&!['SERVING','ABSENT','CANCELLED'].includes(d.status))throw new DomainError('A waiting entry must be called, marked absent, or cancelled first.',409);if(entry.status==='SERVING'&&!['SERVED','CANCELLED'].includes(d.status))throw new DomainError('A student being served can only be marked served or cancelled.',409);if(d.status==='SERVING'){if(entry.status!=='WAITING')throw new DomainError('Only waiting students can be called.');const earlier=await one("SELECT id FROM queue_entries WHERE tenant_id=? AND coordinator_id=? AND service_date=? AND session=? AND status='WAITING' AND (scheduled_start<? OR (scheduled_start=? AND joined_at<?)) LIMIT 1",user.tenantId,entry.coordinatorId,entry.serviceDate,entry.session,entry.scheduledStart,entry.scheduledStart,entry.joinedAt);if(earlier)throw new DomainError('Serve students in first-come, first-served order.',409);const serving=await one("SELECT id FROM queue_entries WHERE tenant_id=? AND coordinator_id=? AND service_date=? AND session=? AND status='SERVING' AND id<>? LIMIT 1",user.tenantId,entry.coordinatorId,entry.serviceDate,entry.session,entry.id);if(serving)throw new DomainError('Finish the current service before calling another student.',409);}resourceId=entry.id;const now=new Date().toISOString();tx.push(statement("UPDATE queue_entries SET status=?,started_at=CASE WHEN ?='SERVING' THEN ? ELSE started_at END,completed_at=CASE WHEN ? IN ('SERVED','ABSENT','CANCELLED') THEN ? ELSE completed_at END,updated_at=? WHERE tenant_id=? AND id=?",d.status,d.status,now,d.status,now,now,user.tenantId,entry.id));tx.push(insert('notifications',{user_id:entry.studentId,title:'Queue status updated',message:d.status==='SERVING'?'It is your turn. Please proceed to your coordinator.':d.status==='SERVED'?'Your queue service is complete.':d.status==='ABSENT'?'Your queue entry was marked absent.':'Your queue entry was cancelled.',type:'QUEUE',resource_type:'queue_entry',resource_id:entry.id,link_page:'queue',read_at:null}));message=`Queue status updated to ${d.status.toLowerCase()}.`;break;}
   case 'profile':{const d=parse('profile');resourceId=user.id;tx.push(statement('UPDATE users SET name=? WHERE tenant_id=? AND id=?',d.name,user.tenantId,user.id));break;}
   case 'structure':{
    requireRole(user,'SUPER_ADMIN');const d=parse('structure');const updating=d.operation==='UPDATE';const department=d.kind==='DEPARTMENT';const table=department?'departments':'courses';
@@ -187,16 +142,6 @@ async function mutateScoped(user:Identity,action:Action,payload:unknown):Promise
   case 'markNotificationRead':{const d=parse('markNotificationRead');resourceId=d.notificationId;tx.push(statement('UPDATE notifications SET read_at=? WHERE tenant_id=? AND id=? AND user_id=? AND read_at IS NULL',new Date().toISOString(),user.tenantId,d.notificationId,user.id));message='Notification marked as read.';break;}
   case 'markAllNotificationsRead':{parse('markAllNotificationsRead');tx.push(statement('UPDATE notifications SET read_at=? WHERE tenant_id=? AND user_id=? AND read_at IS NULL',new Date().toISOString(),user.tenantId,user.id));message='All notifications marked as read.';break;}
  default:throw new DomainError('Unknown action.');
- }
- if(action==='queueStatus'){
-  const d=inputs.queueStatus.parse(payload);
-  const entry=await one('SELECT q.*,u.name AS student_name,u.email AS student_email FROM queue_entries q JOIN users u ON u.id=q.student_id AND u.tenant_id=q.tenant_id WHERE q.tenant_id=? AND q.id=?',user.tenantId,resourceId);
-  if(entry){
-   const statusMessage=d.status==='SERVING'?`The COE Office is ready to see you at ${entry.scheduledStart}. Please wait nearby.`:d.status==='SERVED'?'Your COE Office consultation is complete.':d.status==='ABSENT'?'Your COE Office booking was marked absent.':'Your COE Office booking was cancelled.';
-   const title=d.status==='SERVING'?'Your COE Office consultation is starting':`COE Office booking ${d.status.toLowerCase()}`;
-   notify(String(entry.studentId),title,statusMessage,'QUEUE','queue_entry',resourceId,'queue');
-   queueEmail(String(entry.studentEmail??''),title,statusMessage);
-  }
  }
  tx.push(auditStatement(user.id,action==='studentSelfAssessment'?'STUDENT_SELF_ASSESSMENT_SUBMITTED':action==='reachOutAudit'?'STUDENT_REACH_OUT_INITIATED':action==='incident'?'CASE_CREATE':action==='resolveCase'?'CASE_STATUS':action==='industryFeedback'?'INDUSTRY_FEEDBACK_SUBMITTED':action==='outcomeDecision'?'OUTCOME_DECISION_RECORDED':action==='calendarEvent'?'CALENDAR_EVENT_RECORDED':action==='cancelCalendarEvent'?'CALENDAR_EVENT_CANCELLED':action==='deleteCalendarEvent'?'CALENDAR_EVENT_DELETED':action.toUpperCase(),resourceId));
  try{await database().batch(tx);}catch(error){console.error('Mutation failed',action,error instanceof Error?error.name:'DatabaseError');throw new DomainError('The record changed or conflicts with existing data. Refresh and try again.',409);}

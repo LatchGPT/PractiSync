@@ -2581,11 +2581,40 @@ model QueueEntry {
   scheduledStart String   @map("scheduled_start")
   scheduledEnd   String   @map("scheduled_end")
   status         String   @default("WAITING")
+  closureReason  String?  @map("closure_reason")
   startedAt      DateTime? @map("started_at")
   completedAt    DateTime? @map("completed_at")
 
   @@unique([tenantId, id], map: "queue_entries_tenant_id_id_key")
-  @@index([tenantId, coordinatorId, serviceDate, session, status, scheduledStart], map: "queue_entries_coordinator_day")
-  @@index([tenantId, studentId, serviceDate, status], map: "queue_entries_student_day")
+  @@index([tenantId, serviceDate, status, scheduledStart], map: "queue_entries_office_day")
+  @@index([tenantId, studentId, status], map: "queue_entries_student_active")
   @@map("queue_entries")
+}
+
+model QueuePublicHoliday {
+  id          String   @id
+  tenantId    String   @map("tenant_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  holidayYear Int      @map("holiday_year")
+  holidayDate String   @map("holiday_date")
+  name        String
+  countryCode String   @map("country_code")
+  syncedAt    DateTime @map("synced_at")
+
+  @@unique([tenantId, holidayYear, holidayDate, name], map: "queue_public_holidays_unique")
+  @@index([tenantId, holidayDate], map: "queue_public_holidays_date")
+  @@map("queue_public_holidays")
+}
+
+model QueueHolidaySync {
+  id            String    @id
+  tenantId      String    @map("tenant_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  holidayYear   Int       @map("holiday_year")
+  lastAttemptAt DateTime  @map("last_attempt_at")
+  lastSyncedAt  DateTime? @map("last_synced_at")
+  lastError     String?   @map("last_error")
+
+  @@unique([tenantId, holidayYear], map: "queue_holiday_sync_tenant_year_key")
+  @@map("queue_holiday_sync")
 }

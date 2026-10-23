@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {seed,one,list,installTestDatabase,type DemoDatabase,type PreparedStatement} from '../packages/db/demo';
 import {snapshot} from '../packages/domain/read';
 import {mutate} from '../packages/domain/actions';
+import {getQueueView} from '../packages/domain/queue';
 import {capturedTestMail,decryptMail,deliverAccountMail} from '../packages/auth/mail';
 import {authHandler,identity,limit} from '../packages/auth/auth';
 import {demoAllowed,calculateMinutes} from '../packages/domain/policies';
@@ -29,7 +30,7 @@ CREATE INDEX completion_response_placement ON completion_responses (tenant_id,pl
 CREATE INDEX completion_response_review_queue ON completion_responses (tenant_id,status,updated_at);`);}
 function installCustomDocumentSchema(){sql.exec(`CREATE TABLE custom_document_templates (id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,created_at TEXT NOT NULL,created_by TEXT NOT NULL,title TEXT NOT NULL,instructions TEXT NOT NULL,category TEXT NOT NULL,fields_json TEXT NOT NULL,status TEXT NOT NULL,version INTEGER NOT NULL,original_filename TEXT NOT NULL DEFAULT '',pdf_base64 TEXT NOT NULL DEFAULT '');CREATE TABLE custom_document_responses (id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,created_at TEXT NOT NULL,placement_id TEXT NOT NULL,template_id TEXT NOT NULL,template_version INTEGER NOT NULL,template_json TEXT NOT NULL DEFAULT '{}',response_json TEXT NOT NULL,submitted_at TEXT,updated_at TEXT NOT NULL,status TEXT NOT NULL,review_note TEXT,reviewer_id TEXT,reviewed_at TEXT,version INTEGER NOT NULL,UNIQUE(tenant_id,placement_id,template_id));`);}
 const users={} as Record<string,Identity>;
-beforeAll(async()=>{vi.stubEnv('DEPLOYMENT_MODE','demo');vi.stubEnv('DEMO_ENABLED','true');vi.stubEnv('AUTH_SECRET','test-secret-that-is-not-a-production-secret');sql=new DatabaseSync(':memory:');const migration=readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql','utf8').split('INSERT INTO "assessment_schedules"')[0]!;sql.exec(migration);sql.exec(readFileSync('packages/db/prisma/migrations/202610230001_student_queuing/migration.sql','utf8'));
+beforeAll(async()=>{vi.stubEnv('DEPLOYMENT_MODE','demo');vi.stubEnv('DEMO_ENABLED','true');vi.stubEnv('AUTH_SECRET','test-secret-that-is-not-a-production-secret');sql=new DatabaseSync(':memory:');const migration=readFileSync('packages/db/prisma/migrations/202610110001_demo_runtime/migration.sql','utf8').split('INSERT INTO "assessment_schedules"')[0]!;sql.exec(migration);sql.exec(readFileSync('packages/db/prisma/migrations/202610230001_student_queuing/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610230002_queue_reservations/migration.sql','utf8'));
   sql.exec(readFileSync('packages/db/prisma/migrations/202610150001_calendar_events/migration.sql','utf8'));
   sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql','utf8'));
   sql.exec(readFileSync('packages/db/prisma/migrations/202610190001_hte_approvals_final_dtr/migration.sql','utf8'));installInteractiveFormSchema();sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql','utf8').replace(/--> statement-breakpoint/g,''));sql.exec(readFileSync('drizzle/0008_industry_feedback.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210001_feedback_provenance/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210002_account_lifecycle/migration.sql','utf8'));sql.exec(readFileSync('packages/db/prisma/migrations/202610210003_deadline_reminders/migration.sql','utf8'));installCustomDocumentSchema();sql.exec(`CREATE TRIGGER test_scoped_entry BEFORE INSERT ON entries BEGIN SELECT RAISE(ABORT, 'Invalid scoped relationship') WHERE NOT EXISTS (SELECT 1 FROM placements WHERE id=NEW.placement_id AND tenant_id=NEW.tenant_id); END; CREATE TRIGGER test_final_application BEFORE UPDATE OF status ON applications WHEN OLD.status IN ('ACCEPTED','REJECTED') AND NEW.status<>OLD.status BEGIN SELECT RAISE(ABORT, 'Application final decision is immutable'); END;`);const database:DemoDatabase={prepare:(query)=>prepared(query),batch:async(statements)=>{sql.exec('BEGIN');try{const values=[];for(const statement of statements)values.push(await statement.run());sql.exec('COMMIT');return values;}catch(e){sql.exec('ROLLBACK');throw e;}}};installTestDatabase(database);sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));workflowTargetFixtures(sql);await seed();for(const role of ['student','coordinator','admin'])users[role]=await one('SELECT * FROM users WHERE id=?','demo-'+role) as unknown as Identity;users.supervisor=await one('SELECT * FROM users WHERE id=?','demo-supervisor') as unknown as Identity;});
@@ -81,30 +82,81 @@ describe('foundations and isolation',()=>{
  it('super admin has no blanket SOS access',async()=>{expect((await snapshot(users.admin)).incidents).toEqual([]);await expect(mutate(users.admin,'resolveCase',{caseId:'case-1',status:'RESOLVED',resolution:'Denied'})).rejects.toThrow('permission');});
  it('COE office queue is admin-owned and hidden from coordinators',async()=>{
   vi.useFakeTimers();
-  vi.setSystemTime(new Date('2026-10-23T02:00:00.000Z'));
+   vi.setSystemTime(new Date('2026-10-23T02:05:00.000Z'));
+   let publicHolidays: {countryCode:string;date:string;name:string;holidayTypes:string[]}[]=[];
+   vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,status:200,json:async()=>publicHolidays})));
   try{
-  sql.prepare('INSERT INTO queue_entries (id,tenant_id,created_at,student_id,coordinator_id,service_date,session,queue_number,joined_at,scheduled_start,scheduled_end,status,started_at,completed_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-    .run('office-queue-scope-check','fictional-university','2026-10-23T08:00:00.000Z','student-5',users.admin.id,'2026-10-23','MORNING',1,'2026-10-23T08:02:00.000Z','08:00','08:05','WAITING',null,null,'2026-10-23T08:02:00.000Z');
+   sql.prepare('INSERT INTO queue_entries (id,tenant_id,created_at,student_id,coordinator_id,service_date,session,queue_number,joined_at,scheduled_start,scheduled_end,status,started_at,completed_at,closure_reason,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+     .run('office-queue-scope-check','fictional-university','2026-10-23T02:04:00.000Z','student-5',users.admin.id,'2026-10-23','MORNING',26,'2026-10-23T02:04:00.000Z','10:05','10:10','WAITING',null,null,null,'2026-10-23T02:04:00.000Z');
   expect((await snapshot(users.coordinator)).queueEntries).toEqual([]);
   expect((await snapshot(users.admin)).queueEntries?.map(entry=>entry.id)).toContain('office-queue-scope-check');
-  await expect(mutate(users.coordinator,'queueJoin',{coordinatorId:users.admin.id})).rejects.toThrow('COE office queue');
+   await expect(mutate(users.coordinator,'queueJoin',{coordinatorId:users.admin.id})).rejects.toThrow('date and time reservations');
   const previousMailTransport=process.env.MAIL_TRANSPORT;
   vi.stubEnv('MAIL_TRANSPORT','test');
   try{
+   const beforeQueueNotifications=(await list("SELECT * FROM notifications WHERE tenant_id=? AND user_id=? AND type='QUEUE' AND resource_id=?",users.admin.tenantId,'student-5','office-queue-scope-check')).length;
    await mutate(users.admin,'queueStatus',{queueId:'office-queue-scope-check',status:'SERVING'});
    const queued=await list('SELECT * FROM email_outbox WHERE tenant_id=?',users.admin.tenantId);
    expect(queued.map(row=>decryptMail(String(row.encryptedPayload)))).toEqual(expect.arrayContaining([expect.objectContaining({to:expect.any(String),subject:'Your COE Office consultation is starting'})]));
    expect((await list('SELECT * FROM notifications WHERE tenant_id=? AND user_id=?',users.admin.tenantId,'student-5')).some(notification=>notification.type==='QUEUE')).toBe(true);
+   const queueNotifications=await list("SELECT * FROM notifications WHERE tenant_id=? AND user_id=? AND type='QUEUE' AND resource_id=?",users.admin.tenantId,'student-5','office-queue-scope-check');
+   expect(queueNotifications).toHaveLength(beforeQueueNotifications+1);
+   expect(queueNotifications.at(-1)?.message).toBe('It’s your turn. Please proceed to the COE Office for your consultation.');
   expect(await deliverAccountMail(new Date(),users.admin.tenantId)).toBe(1);
   expect(capturedTestMail.some(mail=>mail.subject==='Your COE Office consultation is starting')).toBe(true);
   }finally{
    if(previousMailTransport===undefined)delete process.env.MAIL_TRANSPORT;
    else process.env.MAIL_TRANSPORT=previousMailTransport;
   }
-  const booking=await mutate(users.student,'queueJoin',{coordinatorId:users.coordinator.id});
+   const date='2026-10-23';
+   const studentName=String((await one('SELECT name FROM users WHERE id=?','student-5'))?.name);
+   const displayName=(name:string)=>{const parts=name.trim().split(/\s+/);return parts.length>1?`${parts[0]} ${parts.at(-1)?.slice(0,1)}.`:parts[0]??'Student name unavailable';};
+   const adminView=await getQueueView(users.admin,date) as {entries:{id:string}[]};
+   expect(adminView.entries.map(entry=>entry.id)).toContain('office-queue-scope-check');
+   const booking=await mutate(users.student,'queueReserve',{serviceDate:date,scheduledStart:'10:10'});
    expect(await one('SELECT coordinator_id FROM queue_entries WHERE id=?',booking.id!)).toMatchObject({coordinatorId:users.admin.id});
-   await expect(mutate(users.admin,'queueAddStudent',{studentId:'student-5'})).rejects.toThrow('book their own COE Office consultation');
-  }finally{vi.useRealTimers();}
+   await expect(mutate(users.student,'queueReserve',{serviceDate:'2026-10-26',scheduledStart:'10:00'})).rejects.toThrow('already have an active reservation');
+
+   const monitorView=await getQueueView(users.admin,date,true) as {entries?:unknown;current:{studentName:string;studentId?:string}|null;next:{studentName:string;studentId?:string}|null};
+   expect(monitorView.entries).toBeUndefined();
+   expect(monitorView.current?.studentName).toBe(displayName(studentName));
+   expect(monitorView.current?.studentId).toBeUndefined();
+   const ownName=String((await one('SELECT name FROM users WHERE id=?',users.student.id))?.name);
+   expect(monitorView.next?.studentName).toBe(displayName(ownName));
+   expect(monitorView.next?.studentId).toBeUndefined();
+   const studentView=await getQueueView(users.student,date) as {ownReservation:{id:string}|null;slots:{start:string;state:string;booking?:string}[]};
+   expect(studentView.ownReservation?.id).toBe(booking.id);
+   const otherStudentSlot=studentView.slots.find(slot=>slot.start==='10:05');
+   expect(otherStudentSlot).toMatchObject({state:'RESERVED'});
+   expect(otherStudentSlot).not.toHaveProperty('booking');
+   expect(JSON.stringify(studentView)).not.toContain('student-5');
+   expect(JSON.stringify(studentView)).not.toContain(studentName);
+   await expect(mutate(users.admin,'queueAddStudent',{studentId:'student-5'})).rejects.toThrow('Students reserve their own COE Office slot');
+
+   await mutate(users.admin,'queueStatus',{queueId:'office-queue-scope-check',status:'SERVED'});
+   const gapView=await getQueueView(users.admin,date) as {current:unknown;next:{scheduledStart:string}|null;walkInAvailable:boolean};
+   expect(gapView.current).toBeNull();
+   expect(gapView.next?.scheduledStart).toBe('10:10');
+   expect(gapView.walkInAvailable).toBe(true);
+
+   await mutate(users.student,'queueForfeit',{queueId:booking.id!});
+   const released=await getQueueView(users.student,date) as {slots:{start:string;state:string}[];ownReservation:{id:string}|null};
+   expect(released.ownReservation).toBeNull();
+   expect(released.slots.find(slot=>slot.start==='10:10')?.state).toBe('AVAILABLE');
+
+   const publicHolidayBooking=await mutate(users.student,'queueReserve',{serviceDate:'2026-10-26',scheduledStart:'10:00'});
+   vi.setSystemTime(new Date('2026-10-24T02:06:00.000Z'));
+   publicHolidays=[{countryCode:'PH',date:'2026-10-26',name:'Test Public Holiday',holidayTypes:['Public']}];
+   await getQueueView(users.student,'2026-10-26');
+   expect(await one('SELECT status,closure_reason FROM queue_entries WHERE id=?',publicHolidayBooking.id!)).toMatchObject({status:'CANCELLED',closureReason:'HOLIDAY'});
+   expect((await list("SELECT * FROM notifications WHERE tenant_id=? AND user_id=? AND type='QUEUE' AND resource_id=?",users.student.tenantId,users.student.id,publicHolidayBooking.id!)).at(-1)?.message).toContain('public holiday');
+
+   const universityHolidayBooking=await mutate(users.student,'queueReserve',{serviceDate:'2026-10-29',scheduledStart:'10:00'});
+   await mutate(users.admin,'calendarEvent',{eventType:'HOLIDAY',title:'Test University Holiday',startDate:'2026-10-29',endDate:'2026-10-29',audience:'UNIVERSITY'});
+   await getQueueView(users.student,'2026-10-29');
+   expect(await one('SELECT status,closure_reason FROM queue_entries WHERE id=?',universityHolidayBooking.id!)).toMatchObject({status:'CANCELLED',closureReason:'HOLIDAY'});
+   expect((await list("SELECT * FROM notifications WHERE tenant_id=? AND user_id=? AND type='QUEUE' AND resource_id=?",users.student.tenantId,users.student.id,universityHolidayBooking.id!)).at(-1)?.message).toContain('university calendar');
+   }finally{vi.unstubAllGlobals();vi.useRealTimers();}
  });
  it('join codes are eligible, idempotent, expire and revoke',async()=>{await expect(mutate(users.student,'join',{code:'SYNC4A'})).resolves.toMatchObject({message:'You are already enrolled in this class.'});for(const code of ['BIZ4A','EXPIRED','REVOKED','FAKE99'])await expect(mutate(users.student,'join',{code})).rejects.toThrow();expect((await one('SELECT role FROM users WHERE id=?',users.student.id))?.role).toBe('STUDENT');});
  it('policies can be managed by coordinator and preserve placement snapshots',async()=>{await expect(mutate(users.student,'policy',{courseId:'course-it',hours:500,version:1})).rejects.toThrow('permission');const before=await one('SELECT required_minutes FROM placements WHERE id=\'placement-1\'');await mutate(users.coordinator,'policy',{courseId:'course-it',hours:500,version:1});expect((await one('SELECT required_minutes FROM placements WHERE id=\'placement-1\''))?.requiredMinutes).toBe(before?.requiredMinutes);await expect(mutate(users.coordinator,'policy',{courseId:'course-it',hours:510,version:1})).rejects.toThrow('changed');});
