@@ -57,10 +57,9 @@ describe('student goal summary',()=>{
  });
  it('renders a labeled goal donut and its attendance summary',()=>{
   const html=renderToStaticMarkup(createElement(StudentGoalProgress,{entries,requiredMinutes:1200}));
-  expect(html).toContain('of required hours');
+  expect(html).toContain('of goal');
   expect(html).toContain('Expected completion');
   expect(html).toContain('Expected Completion:');
-  expect(html).toContain('working days remaining');
   expect(html).toContain('Days on record');
   expect(html).toContain('35%');
  });

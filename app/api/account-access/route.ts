@@ -18,9 +18,9 @@ export async function POST(request:Request){
   const d=input.parse(await readJsonObject(request,4096)),ip=request.headers.get('x-real-ip')??request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()??'local';
   if(d.mode==='RECOVER')return Response.json(await requestRecovery(d.email,ip),{headers});
   if(d.mode==='PASSWORD')return Response.json(await consumePasswordToken(d.token,d.password,ip),{headers});
-  if(!googleConfigured())throw new DomainError('Institutional Google sign-in is not configured. Contact the OJT office.',503);
+  if(!googleConfigured())throw new DomainError('Institutional Google sign-in is not configured. Contact the Internship Office.',503);
   const token=await one("SELECT id FROM account_tokens WHERE tenant_id=? AND token_hash=? AND purpose='GOOGLE_INVITE' AND used_at IS NULL AND expires_at>?",runtimeTenantId(),tokenDigest(d.token),new Date().toISOString());
   if(!token)throw new DomainError('The invitation is invalid, expired or already used. Request a new invitation.');
   return Response.json({message:'Continue with the RTU Google account named in your invitation.'},{headers:{...headers,'Set-Cookie':`ps_invite=${d.token}; HttpOnly; SameSite=Lax; Secure; Path=/api/auth; Max-Age=600`}});
- }catch(error){return Response.json({error:error instanceof DomainError?error.message:error instanceof z.ZodError?'Enter a valid email or a password of 12–128 characters.':'Account access is unavailable. Your input is safe; try again or contact the OJT office.'},{status:error instanceof DomainError?error.status:400,headers});}
+ }catch(error){return Response.json({error:error instanceof DomainError?error.message:error instanceof z.ZodError?'Enter a valid email or a password of 12–128 characters.':'Account access is unavailable. Your input is safe; try again or contact the Internship Office.'},{status:error instanceof DomainError?error.status:400,headers});}
 }

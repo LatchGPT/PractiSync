@@ -24,7 +24,7 @@ The four-dimension sample final-rubric account action is retired. Historical com
 ## Running and rollout
 
 - Apply `pnpm db:migrate` to the intended fictional PostgreSQL database before starting this version. Do not reset or reseed institutional data. The local demo applies the additive SQLite migration automatically.
-- No school document is seeded. Super Admin finds the upload in **Required OJT documents**; HTEs see its status in their portal, students/coordinators in **Competencies**.
+- No school document is seeded. Super Admin finds the upload in **Required internship documents**; HTEs see its status in their portal, students/coordinators in **Competencies**.
 - Super Admin uses **HTE requests** for approvals. Students/coordinators use **Attendance → Final attendance review**. Coordinators review school evaluation responses in Competencies or their internship workflow panel.
 - Pending school documents intentionally block final evaluation and formal completion. A private host using only a guest link must obtain an approved account and matching supervisor assignment for final DTR verification.
 - Verify desktop, intermediate and phone layouts, keyboard focus, long request content and submission/error recovery before deployment. Run lint, typecheck, tests, schema validation and build.

@@ -409,7 +409,7 @@ export default function AssessmentWorkspace({
               <div>
                 <strong>Decision Support Only:</strong> Calculated outcome results are derived using
                 deterministic rubric dimensions and published thresholds. They assist academic evaluation,
-                but <em>never</em> automatically certify OJT completion, approve a grade, or replace a
+                but <em>never</em> automatically certify internship completion, approve a grade, or replace a
                 coordinator’s formal academic decision.
               </div>
             </div>

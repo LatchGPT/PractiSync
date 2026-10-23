@@ -95,7 +95,7 @@ describe('Industry Partner registration and recruitment', () => {
   expect(recruitmentCourseIds(legacy)).toEqual(['course-it']);
   const href = emailApplicantHref('applicant@rtu.edu.ph','QA & testing');
   expect(href).toContain('mailto:applicant%40rtu.edu.ph?subject=');
-  expect(decodeURIComponent(href!)).toContain('OJT application: QA & testing');
+  expect(decodeURIComponent(href!)).toContain('Internship application: QA & testing');
   expect(emailApplicantHref('x@example.com?bcc=outsider@example.com','QA')).toBeUndefined();
   expect(emailApplicantHref('x@example.com\r\nbcc:outsider@example.com','QA')).toBeUndefined();
   expect(recruitmentCourseIds({...legacy,requiredCoursesJson:'broken'} as Row)).toEqual(['course-it']);

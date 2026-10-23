@@ -47,17 +47,17 @@ export const documentFormCatalog: Record<DocumentFormType, {
   FINAL_SELF_ASSESSMENT: {
     title: 'Final competency self-assessment',
     group: 'OJT',
-    description: 'Reflect on the competencies in your OJT framework.',
+    description: 'Reflect on the competencies in your internship program.',
     fields: [
       { key: 'technicalSkills', label: 'Technical skills', kind: 'rating' },
       { key: 'communication', label: 'Communication', kind: 'rating' },
       { key: 'professionalism', label: 'Professionalism', kind: 'rating' },
       { key: 'problemSolving', label: 'Problem solving', kind: 'rating' },
-      { key: 'reflection', label: 'What competency or skill improved most during your OJT?', kind: 'textarea', maxLength: 2000 },
+      { key: 'reflection', label: 'What competency or skill improved most during your internship?', kind: 'textarea', maxLength: 2000 },
     ],
   },
   OJT_EXIT_SURVEY: {
-    title: 'OJT learning and program exit survey',
+    title: 'Internship learning and exit survey',
     group: 'OJT',
     description: 'Share feedback on learning, curriculum relevance, and university support.',
     fields: [
@@ -65,7 +65,7 @@ export const documentFormCatalog: Record<DocumentFormType, {
       { key: 'universitySupport', label: 'University support', kind: 'rating' },
       { key: 'workplaceAlignment', label: 'Workplace alignment', kind: 'rating' },
       { key: 'trainingPlanClarity', label: 'Training plan clarity', kind: 'rating' },
-      { key: 'feedback', label: 'What should the university improve in the OJT program?', kind: 'textarea', maxLength: 2000 },
+      { key: 'feedback', label: 'What should the university improve in the internship program?', kind: 'textarea', maxLength: 2000 },
     ],
   },
 };

@@ -176,7 +176,7 @@ export function calculateCurriculumAnalytics(
         },
         {
           key: 'curriculumAlignment',
-          label: 'OJT Curriculum & Tech Stack Alignment',
+          label: 'Internship Curriculum & Tech Stack Alignment',
           averageScore: null,
           sampleCount: feedbackCount,
           isGap: false,
@@ -223,7 +223,7 @@ export function calculateCurriculumAnalytics(
     },
     {
       key: 'curriculumAlignment',
-      label: 'OJT Curriculum & Tech Stack Alignment',
+      label: 'Internship Curriculum & Tech Stack Alignment',
       averageScore: alignmentAvg,
       sampleCount: feedbackCount,
       isGap: alignmentAvg < CURRICULUM_GAP_THRESHOLD,

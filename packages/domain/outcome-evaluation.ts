@@ -82,7 +82,7 @@ export function calculateOutcomeEvaluation(
   config: RubricFrameworkConfig = DEFAULT_RUBRIC_CONFIG
 ): OutcomeEvaluationResult {
   const disclaimer =
-    'Decision Support Only: This calculated result does not automatically certify OJT completion, approve a grade, or replace a coordinator’s formal academic decision.';
+    'Decision Support Only: This calculated result does not automatically certify internship completion, approve a grade, or replace a coordinator’s formal academic decision.';
 
   // Formula description
   const dimensionParts = config.dimensions.map(

@@ -246,7 +246,7 @@ export default function StudentMyClassView({
               {/* Coordinator Consultation & Office Details */}
               <div className="myclass-coordinator-column">
                 <div className="myclass-meta-header">
-                  <span className="eyebrow">Assigned OJT Coordinator</span>
+                  <span className="eyebrow">Assigned coordinator</span>
                 </div>
                 <div className="myclass-coordinator-card">
                   <div className="myclass-coordinator-top">

@@ -124,6 +124,9 @@ describe('Student registration and RTU access', () => {
   expect(await list("SELECT id FROM audit WHERE action='STUDENT_REGISTRATION_COMPLETED' AND resource_id=?",(await request()).id)).toHaveLength(1);
   expect((await retiredReview()).status).toBe(410);
   expect(canAccessWorkspaceView('COORDINATOR','student-verifications')).toBe(false);
+  expect(canAccessWorkspaceView('STUDENT','queue')).toBe(true);
+  expect(canAccessWorkspaceView('COORDINATOR','queue')).toBe(false);
+  expect(canAccessWorkspaceView('SUPER_ADMIN','queue')).toBe(true);
   await expect(mutate(actors.coordinator,'joinRequestDecision',{requestId:'req-1',decision:'APPROVE'})).rejects.toThrow('no longer requires approval');
  });
  it('enforces the exact domain on sign-in sessions and rejects client-forged exceptions', async () => {

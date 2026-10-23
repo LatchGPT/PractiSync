@@ -5,7 +5,7 @@ export function sampleFor(action:string,context:Record<string,string>):FormValue
  const common={placementId:context.placementId??'',courseId:context.courseId??'course-it',classId:context.classId??'',jobId:context.jobId??'',companyId:context.companyId??'company-northstar'};
  const fixtures:Record<string,FormValues>={
  dtr:{...common,date,startsAt:'08:00',endsAt:'17:00',breakMinutes:'60',narrative:'Sample: Implemented form validation for the intern dashboard, wrote test cases, and reviewed feedback with my coordinator.'},
- class:{name:'OJT Practicum',section:'BSIT 4-C',courseId:common.courseId},
+ class:{name:'Internship Practicum',section:'BSIT 4-C',courseId:common.courseId},
  incident:{...common,subject:'Sample: Request for coordinator guidance',narrative:'Fictional scenario: My assigned tasks have shifted away from my training plan. I would like help discussing this with my class coordinator.'},
  job:{companyId:common.companyId,title:'Frontend Development Intern',description:'Sample: Work with our product team on accessible interfaces, component testing, and design implementation. Mentorship and a structured training plan are included.',location:'Mandaluyong · Hybrid',courseId:common.courseId,skills:'React, TypeScript, CSS',openings:'3'},
  application:{jobId:common.jobId,coverLetter:'Sample: I am an IT student interested in accessible frontend development. My coursework includes React, database design, and collaborative projects. I would welcome the opportunity to learn with your team.'},

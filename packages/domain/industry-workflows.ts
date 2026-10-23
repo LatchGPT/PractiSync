@@ -138,7 +138,7 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
     if (String(placement.endsAt) < manilaToday()) throw new DomainError('This placement has already passed its end date and cannot be activated.', 409);
     id = String(placement.id);
     tx.push(statement("UPDATE placements SET status='ACTIVE' WHERE tenant_id=? AND id=? AND status='PLANNED'", user.tenantId, id));
-    tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), placement.studentId, 'OJT placement activated', 'Your university coordinator activated your placement. You can now submit DTR entries.', 'JOB', 'placement', id, 'attendance'));
+    tx.push(statement('INSERT INTO notifications (id,tenant_id,created_at,user_id,title,message,type,resource_type,resource_id,link_page) VALUES (?,?,?,?,?,?,?,?,?,?)', crypto.randomUUID(), user.tenantId, new Date().toISOString(), placement.studentId, 'Internship placement activated', 'Your university coordinator activated your placement. You can now submit DTR entries.', 'JOB', 'placement', id, 'attendance'));
     return save(user, action, id, tx, 'Placement activated. The student can now submit DTR entries.');
   }
 
@@ -218,9 +218,9 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
     if (!definition || !answerSchema) throw new DomainError('Choose a supported form.');
 
     if (definition.group === 'OJT') {
-      if (!Number(placement.requiredMinutes)) throw new DomainError('A configured placement hour target is required before end-of-OJT forms open.', 403);
+      if (!Number(placement.requiredMinutes)) throw new DomainError('A configured placement hour target is required before internship completion forms open.', 403);
       const totals = await one('SELECT COALESCE(SUM(i.minutes),0) AS reported_minutes FROM entries e JOIN intervals i ON i.tenant_id=e.tenant_id AND i.entry_id=e.id WHERE e.tenant_id=? AND e.placement_id=?', user.tenantId, placement.id);
-      if (Number(totals?.reportedMinutes ?? 0) < Number(placement.requiredMinutes)) throw new DomainError('End-of-OJT forms open after your reported DTR reaches the placement target.', 403);
+      if (Number(totals?.reportedMinutes ?? 0) < Number(placement.requiredMinutes)) throw new DomainError('Internship completion forms open after your reported DTR reaches the placement target.', 403);
     }
 
     const parsed = mode === 'SUBMIT' ? answerSchema.safeParse(answers) : answerSchema.partial().safeParse(answers);
@@ -253,7 +253,7 @@ export async function mutateIndustry(user: Identity, action: Action, payload: un
       tx.push(attendanceGuard(user, placement), statement('UPDATE final_dtrs SET attendance_revision=? WHERE tenant_id=? AND id=?', Number(placement.dtrRevision) + 1, user.tenantId, final.id));
     }
     const forms = await one('SELECT COUNT(*) AS count FROM completion_responses WHERE tenant_id=? AND placement_id=? AND form_type IN (\'FINAL_SELF_ASSESSMENT\',\'OJT_EXIT_SURVEY\') AND status IN (\'SUBMITTED\',\'APPROVED\')', user.tenantId, placement.id);
-    if (d.decision === 'APPROVE' && Number(forms?.count ?? 0) !== 2) throw new DomainError('Both the final competency self-assessment and OJT exit survey are required before approval.', 409);
+    if (d.decision === 'APPROVE' && Number(forms?.count ?? 0) !== 2) throw new DomainError('Both the final competency self-assessment and Internship exit survey are required before approval.', 409);
     id = String(placement.id);
     if (d.decision === 'APPROVE') {
       tx.push(statement('UPDATE completion SET status=\'APPROVED\',reason=?,decided_at=?,decided_by=? WHERE tenant_id=? AND placement_id=?', String(d.note ?? '').trim() || 'Both required forms received and reviewed.', new Date().toISOString(), user.id, user.tenantId, placement.id));

@@ -381,7 +381,7 @@ export default function SettingsView({
                   </div>
                   <div className="settings-item-row">
                     <div>
-                      <strong>Assigned OJT Partner Company</strong>
+                      <strong>Assigned internship partner</strong>
 
                     </div>
                     <span className="settings-value-pill">

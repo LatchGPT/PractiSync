@@ -19,7 +19,7 @@ async function tokenStatements(user:Identity,row:Record<string,string|number|nul
  return {token,statements:[
   statement('UPDATE account_tokens SET used_at=? WHERE tenant_id=? AND user_id=? AND purpose=? AND used_at IS NULL',time.toISOString(),user.tenantId,String(row.id),purpose),
   insert('account_tokens',{tenant_id:user.tenantId,user_id:String(row.id),token_hash:tokenDigest(token),purpose,email:String(row.email).toLowerCase(),session_version:Number(row.sessionVersion),expires_at:expires},id),
-  queuedMail(user.tenantId,{to:String(row.email),subject:purpose==='RECOVER'?'Reset your PractiSync password':'Your PractiSync account invitation',text:`${purpose==='RECOVER'?'Reset your local account password':'Accept your invitation'}: ${link}\nThis link expires ${expires}. If you did not request it, contact the OJT office. Google account recovery is managed by Google.`},id),
+  queuedMail(user.tenantId,{to:String(row.email),subject:purpose==='RECOVER'?'Reset your PractiSync password':'Your PractiSync account invitation',text:`${purpose==='RECOVER'?'Reset your local account password':'Accept your invitation'}: ${link}\nThis link expires ${expires}. If you did not request it, contact the Internship Office. Google account recovery is managed by Google.`},id),
  ]};
 }
 export async function hteActivationStatements(tenantId:string,userId:string,email:string){return (await tokenStatements({tenantId} as Identity,{id:userId,email,sessionVersion:1},'ACTIVATE')).statements;}
@@ -30,7 +30,7 @@ export async function bootstrapInstitutionAdmin(name:string,email:string){
  const tenantId=await assertConfiguredTenant();email=email.trim().toLowerCase();name=name.trim();
  if(!name||name.length>120||!/^[-a-z0-9._+]+@rtu\.edu\.ph$/.test(email))throw new DomainError('Provide a name and an exact RTU staff email.');
  if(await one("SELECT id FROM users WHERE tenant_id=? AND role='SUPER_ADMIN'",tenantId))throw new DomainError('This university already has a Super Admin. Use its account/invitation process.');
- if(await one('SELECT id FROM users WHERE lower(email)=?',email))throw new DomainError('This address already belongs to an account. Resolve the identity conflict through the OJT office.');
+ if(await one('SELECT id FROM users WHERE lower(email)=?',email))throw new DomainError('This address already belongs to an account. Resolve the identity conflict through the Internship Office.');
  const id=crypto.randomUUID(),row={id,email,sessionVersion:1};
  const issued=await tokenStatements({tenantId} as Identity,row,'GOOGLE_INVITE');
  await database().batch([insert('users',{tenant_id:tenantId,name,email,username:'staff.'+id.slice(0,24),role:'SUPER_ADMIN',status:'INVITED',password_hash:null,session_version:1,is_demo:0},id),...issued.statements,auditStatement(id,'INSTITUTION_ADMIN_BOOTSTRAP',id,'Authorized command-line bootstrap; Google identity must accept the invitation.',tenantId)]);
@@ -39,7 +39,7 @@ export async function bootstrapInstitutionAdmin(name:string,email:string){
 
 export async function requestRecovery(email:string,ip:string){
  const tenantId=await assertConfiguredTenant();await limit(`recovery-ip:${tenantId}:${tokenDigest(ip)}`,10);await limit(`recovery-account:${tenantId}:${tokenDigest(email.toLowerCase())}`,3);
- if(!mailConfigured())throw new DomainError('Account email is not configured. Contact the OJT office for access assistance.',503);
+ if(!mailConfigured())throw new DomainError('Account email is not configured. Contact the Internship Office for access assistance.',503);
  const row=await one('SELECT * FROM users WHERE tenant_id=? AND lower(email)=? AND status=\'ACTIVE\'',tenantId,email.toLowerCase());
  if(row&&localEligible(row)&&!await one('SELECT id FROM auth_identities WHERE tenant_id=? AND user_id=?',tenantId,row.id)){
   const issued=await tokenStatements({tenantId} as Identity,row,'RECOVER');
@@ -95,7 +95,7 @@ export async function authorizeGoogle(profile:TrustedGoogleProfile,invitation?:s
  const tenantId=await assertConfiguredTenant(),email=profile.email?.trim().toLowerCase();
  if(!profile.sub||!email||profile.email_verified!==true||profile.hd!=='rtu.edu.ph'||!email.endsWith('@rtu.edu.ph')||!['https://accounts.google.com','accounts.google.com'].includes(profile.iss??''))throw new DomainError('Use a verified RTU Google Workspace account.',403);
  const linked=await one('SELECT u.* FROM auth_identities a JOIN users u ON u.id=a.user_id AND u.tenant_id=a.tenant_id WHERE a.provider=\'google\' AND a.issuer=? AND a.subject=?',issuer,profile.sub);
- if(linked){if(linked.tenantId!==tenantId||linked.status!=='ACTIVE')throw new DomainError('This account is unavailable. Contact the OJT office.',403);return linked;}
+ if(linked){if(linked.tenantId!==tenantId||linked.status!=='ACTIVE')throw new DomainError('This account is unavailable. Contact the Internship Office.',403);return linked;}
  const now=new Date().toISOString(),id=crypto.randomUUID();
  if(invitation){
   const invite=await one("SELECT t.*,u.status,u.session_version AS current_version FROM account_tokens t JOIN users u ON u.id=t.user_id AND u.tenant_id=t.tenant_id WHERE t.tenant_id=? AND t.token_hash=? AND t.purpose='GOOGLE_INVITE'",tenantId,tokenDigest(invitation));
@@ -106,11 +106,11 @@ export async function authorizeGoogle(profile:TrustedGoogleProfile,invitation?:s
    statement("INSERT INTO auth_identities (id,tenant_id,created_at,user_id,provider,issuer,subject) SELECT ?,tenant_id,?,user_id,'google',?,? FROM account_tokens WHERE tenant_id=? AND id=? AND claimed_by=?",id,now,issuer,profile.sub,tenantId,invite.id,claim),
    statement("UPDATE users SET status='ACTIVE',password_hash=NULL,session_version=CASE WHEN session_version=? AND EXISTS(SELECT 1 FROM auth_identities WHERE id=? AND tenant_id=?) THEN session_version+1 ELSE NULL END WHERE tenant_id=? AND id=?",Number(invite.sessionVersion),id,tenantId,tenantId,String(invite.userId)),
    auditStatement(String(invite.userId),'GOOGLE_IDENTITY_LINKED',String(invite.userId),null,tenantId),
-  ]).catch(()=>{throw new DomainError('The invitation was used or the account changed. Contact the OJT office.',409);});
+  ]).catch(()=>{throw new DomainError('The invitation was used or the account changed. Contact the Internship Office.',409);});
   return (await one('SELECT * FROM users WHERE tenant_id=? AND id=?',tenantId,String(invite.userId)))!;
  }
  // Existing identities require an explicit invitation; matching an email never transfers records.
- if(await one('SELECT id FROM users WHERE lower(email)=?',email))throw new DomainError('This account requires an OJT office invitation before Google can be linked.',403);
+ if(await one('SELECT id FROM users WHERE lower(email)=?',email))throw new DomainError('This account requires an Internship Office invitation before Google can be linked.',403);
  await database().batch([
   insert('users',{tenant_id:tenantId,name:profile.name?.slice(0,120)||email,username:'g.'+id,email,role:'STUDENT',status:'ACTIVE',is_demo:0,password_hash:null,session_version:1,email_domain_exception:0},id),
   insert('auth_identities',{tenant_id:tenantId,user_id:id,provider:'google',issuer,subject:profile.sub}),

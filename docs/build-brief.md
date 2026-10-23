@@ -4,7 +4,7 @@ Copy everything below into your coding agent. This is an implementation brief, n
 
 ---
 
-You are the senior full-stack engineer and security architect responsible for implementing PractiSync, a Cooperative Education / OJT monitoring platform for one university with multiple departments and 30,000+ students.
+You are the senior full-stack engineer and security architect responsible for implementing PractiSync, a Cooperative Education / internship monitoring platform for one university with multiple departments and 30,000+ students.
 
 Build working, reviewable software in the repository. Follow the confirmed requirements below, distinguish assumptions from facts, and verify each implementation phase. Do not call software production-ready merely because it compiles.
 
@@ -16,7 +16,7 @@ Build working, reviewable software in the repository. Follow the confirmed requi
 - Super Admin assigns roles and manages institutional structure and account provisioning. Public registration must never grant privileged roles.
 - Coordinators act as teachers. A coordinator can manage multiple blocks/sections through class spaces.
 - Students join a class by entering an enrollment code, similar to Google Classroom.
-- Supervisors control required OJT hours per course. This is not a coordinator responsibility.
+- Supervisors control required internship hours per course. This is not a coordinator responsibility.
 - Supervisors can oversee assigned students across different departments. Cross-department access does not mean access to every student.
 - Verified supervisors with company posting permission manage internship openings for their company. Do not introduce a fifth company role.
 - Students manually enter time-in/time-out and daily narratives. Their DTR is their own record; the company maintains its separate attendance record.
@@ -25,7 +25,7 @@ Build working, reviewable software in the repository. Follow the confirmed requi
 - Login uses username/password plus Google sign-in for university educational email accounts. Google sign-in alone does not establish institutional authorization.
 - Demo sign-in uses an isolated environment with fictional data and one quick-sign-in account per role.
 - Demo forms offer distinct “Generate samples” and “Autofill form” actions.
-- No OJT handbook, official competency rubric, document checklist, or institutional DTR template is available yet.
+- No internship handbook, official competency rubric, document checklist, or institutional DTR template is available yet.
 - No database provider or infrastructure budget has been selected.
 - Backend foundations must precede dashboard development: complete schema, schema validation, authentication/authorization, and realistic seed data.
 
@@ -38,7 +38,7 @@ Record these in docs/assumptions.md. They are changeable design defaults, not un
 3. Required-hours policies are versioned per course and academic period. Snapshot the policy and required minutes onto each training placement. Changes do not silently rewrite existing student targets; explicit authorized migration is audited.
 4. Each class space represents a coordinator-led block/section in an academic period. Every class has its own join code; a coordinator account has an identity distinct from its classes. Do not use a coordinator identifier as a universal enrollment secret.
 5. Joining by valid code is immediate for an authenticated, eligible STUDENT. Enforce course/department/academic-period eligibility and model configurable enrollment restrictions. No client-selected role or teacher impersonation is possible.
-6. One active placement and one primary OJT class per student per academic period are initial defaults. Preserve enrollment and placement history, and keep this rule configurable rather than erasing historical records.
+6. One active placement and one primary internship class per student per academic period are initial defaults. Preserve enrollment and placement history, and keep this rule configurable rather than erasing historical records.
 7. Submitted valid DTR minutes contribute to reported progress immediately. Supervisor-confirmed minutes are a separate metric. Do not label reported time as verified, and do not block progress on optional confirmation.
 8. Formal completion/clearance is separate from an hours progress bar. Define a configurable completion checklist; do not automatically confer academic completion from self-reported hours alone.
 9. SOS access goes to the student's class coordinator. Institutional escalation requires explicitly designated personnel and an audited access reason. Supervisor access is always denied; Super Admin role alone is not blanket access to case narratives.

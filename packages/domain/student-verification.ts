@@ -72,7 +72,7 @@ export async function submitStudentVerification(user: Identity, payload: unknown
  if (Number(request.version) !== d.version) throw conflict();
  const section = await activeClassByCode(user.tenantId, d.classCode);
  if (!section) throw new DomainError('That class code is invalid or no longer active. Check it with your coordinator.');
- if (await one('SELECT id FROM student_profiles WHERE tenant_id=? AND student_number=?', user.tenantId, d.studentNumber)) throw new DomainError('That student number is already in use. Check your number or contact the OJT office. Existing records have not been linked to your account.', 409);
+ if (await one('SELECT id FROM student_profiles WHERE tenant_id=? AND student_number=?', user.tenantId, d.studentNumber)) throw new DomainError('That student number is already in use. Check your number or contact the Internship Office. Existing records have not been linked to your account.', 409);
  const accountId = requesterId(user);
  const now = new Date().toISOString();
  await commit([

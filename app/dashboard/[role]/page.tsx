@@ -27,6 +27,8 @@ export default async function DashboardPage({params,searchParams}:{params:Promis
  const expectedRole=roleForDashboardSegment(segment);
  if(!expectedRole)notFound();
  const search=await searchParams;
+ const display=Array.isArray(search.display)?search.display[0]:search.display;
+ if(display==='monitor'&&expectedRole!=='SUPER_ADMIN')forbidden();
  let user:Identity|undefined;
  try{
   user=await pageIdentity();
@@ -54,5 +56,5 @@ export default async function DashboardPage({params,searchParams}:{params:Promis
   console.error('Workspace data load failed',error instanceof Error?error.message:'Unknown data error');
   initialError=error instanceof Error?error.message:'PractiSync could not load your workspace.';
  }
- return <PractiSync initial={initial} initialError={initialError} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} authConfigured={!!cfg.AUTH_SECRET}/>;
+ return <PractiSync initial={initial} initialError={initialError} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} authConfigured={!!cfg.AUTH_SECRET} monitorMode={display==='monitor'}/>;
 }

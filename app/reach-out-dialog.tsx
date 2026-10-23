@@ -81,7 +81,7 @@ export default function ReachOutDialog({
     const lines = [
       `Dear ${isFallbackOffice ? 'COE Practicum Coordinator / Office' : `Prof. ${coordinatorName}`},`,
       '',
-      `I am reaching out regarding my OJT practicum placement with ${companyName}.`,
+      `I am reaching out regarding my internship placement with ${companyName}.`,
       '',
       customNote.trim()
         ? `Inquiry / Summary:\n${customNote.trim()}\n`

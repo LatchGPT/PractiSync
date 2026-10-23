@@ -1,0 +1,347 @@
+.workspace,
+.confirmation {
+  --queue-ink: var(--rtu-navy, #17365c);
+  --queue-blue: var(--primary, #1c528f);
+  --queue-blue-soft: var(--rtu-ice, #edf4fb);
+  --queue-rule: var(--border, #dce4ed);
+  --queue-muted: var(--muted-foreground, #53677f);
+  --queue-surface: var(--card, #fff);
+  --queue-space-1: 4px;
+  --queue-space-2: 8px;
+  --queue-space-3: 12px;
+  --queue-space-4: 16px;
+  --queue-space-6: 24px;
+  --queue-space-8: 32px;
+  color: var(--foreground, #1d2d40);
+  font-size: 14px;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+
+.workspace ::selection,
+.monitor ::selection { background: #f2d786; color: #17365c; }
+.workspace h1,
+.workspace h2,
+.workspace h3,
+.workspace p,
+.monitor h1,
+.monitor p { margin: 0; }
+.workspace h1,
+.workspace h2,
+.workspace h3 { color: var(--queue-ink); text-wrap: balance; }
+.workspace h1 { font-size: 29px; line-height: 1.25; letter-spacing: -.025em; font-weight: 700; }
+.workspace h2 { font-size: 20px; line-height: 1.35; letter-spacing: -.015em; font-weight: 680; }
+.workspace h3 { font-size: 16px; line-height: 1.4; font-weight: 650; }
+.workspace svg,
+.monitor svg { flex-shrink: 0; }
+.workspace button,
+.monitor button { touch-action: manipulation; -webkit-tap-highlight-color: rgba(215, 170, 62, .2); user-select: none; cursor: pointer; }
+.workspace button:focus-visible,
+.workspace input:focus-visible,
+.workspace a:focus-visible { outline: 2px solid #d7aa3e; outline-offset: 3px; }
+.workspace button:disabled { cursor: not-allowed; opacity: .55; }
+.workspace button:not(:disabled):active { transform: translateY(1px); }
+.workspace input { caret-color: var(--queue-blue); accent-color: var(--queue-blue); }
+.workspace input[type="date"] { color: var(--queue-ink); font: inherit; font-size: 16px; }
+.workspace ::-webkit-scrollbar,
+.monitor ::-webkit-scrollbar { width: 10px; height: 10px; }
+.workspace ::-webkit-scrollbar-thumb,
+.monitor ::-webkit-scrollbar-thumb { background: #9aadc1; border: 3px solid #f2f6fa; border-radius: 8px; }
+
+.header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.header > div:first-child { min-width: 0; }
+.header h1 { margin-bottom: 6px; }
+.date,
+.helper { color: var(--queue-muted); }
+.date { font-size: 13px; }
+.topDate { display: grid; flex: 0 0 210px; gap: 5px; color: var(--queue-muted); font-size: 12px; font-weight: 600; }
+.topDate strong { display: flex; align-items: center; min-height: 42px; color: var(--queue-ink); font-size: 14px; }
+.topDate input { width: 100%; min-height: 42px; padding: 6px 9px; border: 1px solid #b9c8d8; border-radius: 8px; background: #fff; }
+.topDate input:disabled { cursor: not-allowed; opacity: .7; }
+.headerActions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+.refreshButton,
+.monitorButton,
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: var(--radius-btn, 8px);
+  padding: 9px 14px;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+.refreshButton { background: var(--queue-surface); border: 1px solid var(--queue-rule); color: var(--foreground); }
+.monitorButton { background: var(--queue-blue-soft); border: 1px solid #c6d8eb; color: var(--queue-blue); }
+.primaryButton { background: var(--queue-blue); border: 1px solid var(--queue-blue); color: #fff; }
+.secondaryButton { background: #fff; border: 1px solid var(--queue-rule); color: var(--queue-ink); }
+.inlineNotice { margin: 0 0 20px; padding: 12px 16px; border-radius: 8px; background: #fff8e8; color: #614715; }
+.inlineNotice a { display: inline-flex; align-items: center; gap: 5px; color: #174f88; font-weight: 600; text-underline-offset: 3px; }
+.notice,
+.error,
+.closedNotice { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; margin: 0 0 22px; border: 1px solid #dfc993; border-radius: 8px; background: #fff8e8; color: #614715; font-size: 14px; overflow-wrap: anywhere; }
+.notice svg,
+.error svg,
+.closedNotice svg { margin-top: 2px; }
+.error { border-color: #e3b7b4; background: #fff1f0; color: #8b2521; }
+.closedNotice { margin: 12px 0 0; border-color: #d7e0e9; background: #f4f7fa; color: #40566f; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 285px; gap: 24px; align-items: start; }
+.main { display: grid; gap: 22px; min-width: 0; }
+.bookingPanel,
+.officePanel,
+.historyPanel { min-width: 0; overflow: hidden; background: var(--queue-surface); border: 1px solid var(--queue-rule); border-radius: var(--radius-card, 12px); box-shadow: var(--shadow-sm, 0 2px 7px rgba(28, 58, 92, .07)); }
+.bookingHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 26px 20px; border-bottom: 1px solid var(--queue-rule); }
+.bookingHeader > div { min-width: 0; }
+.bookingHeader h2 { margin-bottom: 5px; }
+.bookingHeader p,
+.timezone { color: var(--queue-muted); font-size: 13px; }
+.timezone { white-space: nowrap; }
+.bookingControls { padding: 18px 26px 12px; }
+.bookingControls > p { max-width: 52ch; padding-bottom: 8px; color: var(--queue-muted); font-size: 13px; }
+.slotGroups { padding: 0 26px 24px; }
+.sessionPicker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 20px; }
+.sessionPicker button { display: grid; justify-items: start; gap: 2px; min-height: 68px; padding: 10px 14px; border: 1px solid var(--queue-rule); border-radius: 8px; background: #fff; color: var(--queue-ink); text-align: left; font: inherit; }
+.sessionPicker button[data-active="true"] { border-color: #8eafd1; background: var(--queue-blue-soft); box-shadow: inset 0 0 0 1px #8eafd1; }
+.sessionPicker button strong { font-size: 14px; }
+.sessionPicker button span,
+.sessionPicker button small { color: var(--queue-muted); font-size: 12px; }
+.sessionPicker button small { color: var(--queue-blue); font-weight: 600; }
+.slotGroupHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.slotGroupHeader h3 { font-size: 15px; }
+.slotGroupHeader span { color: var(--queue-muted); font-size: 12px; }
+.slotGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.slot { display: grid; align-content: center; justify-items: start; gap: 1px; min-width: 0; min-height: 60px; padding: 7px 9px; border: 1px solid #b9cadd; border-radius: 7px; background: #fff; color: var(--queue-ink); text-align: left; font: inherit; }
+.slotTime { font-weight: 650; font-size: 13px; white-space: nowrap; }
+.slotState { color: var(--queue-blue); font-size: 11px; line-height: 1.35; }
+.slot[data-state="reserved"],
+.slot[data-state="past"],
+.slot[data-state="closed"] { border-color: #dfe5eb; background: #f4f6f8; color: #53677f; cursor: not-allowed; }
+.slot[data-state="reserved"] .slotState { color: #596b7f; }
+.slot[data-selected="true"] { border-color: var(--queue-blue); background: #e4eef9; box-shadow: inset 0 0 0 1px var(--queue-blue); }
+.selectedSlot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 26px 24px; padding: 16px 0 0; border-top: 1px solid var(--queue-rule); }
+.selectedSlot > div { min-width: 0; }
+.selectedSlot span,
+.selectedSlot strong { display: block; }
+.selectedSlot span { color: var(--queue-muted); font-size: 12px; }
+.selectedSlot strong { margin-top: 3px; color: var(--queue-ink); }
+.bookingLock { padding: 0 26px 22px; color: var(--queue-muted); font-size: 13px; }
+.ticketBody { display: grid; grid-template-columns: 190px minmax(0, 1fr); }
+.ticketNumber { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; padding: 24px; background: var(--queue-blue-soft); color: var(--queue-blue); border-right: 1px dashed #b9cce3; }
+.ticketNumber > svg { margin-bottom: 4px; }
+.ticketNumber > span { font-size: 12px; }
+.ticketNumber > strong { font-size: 44px; line-height: 1.15; letter-spacing: -.035em; font-weight: 700; }
+.ticketDetails { display: grid; align-content: center; justify-items: start; gap: 16px; padding: 26px; min-width: 0; }
+.ticketDetails > div:first-child h3 { margin-bottom: 3px; }
+.ticketDetails > div:first-child p { color: var(--queue-muted); }
+.ticketDetails .helper { max-width: 60ch; }
+.helper { color: var(--queue-muted); font-size: 13px; }
+.status { display: inline-flex; align-items: center; white-space: nowrap; font-size: 12px; font-weight: 650; border-radius: 999px; padding: 4px 9px; color: #43576d; background: #edf1f5; }
+.status[data-status="WAITING"] { background: #fff2d6; color: #754b00; }
+.status[data-status="SERVING"] { background: #e6eff9; color: #174f88; }
+.status[data-status="SERVED"] { background: #e6f3e8; color: #24603a; }
+.status[data-status="ABSENT"] { background: #fff0dc; color: #805000; }
+.status[data-closure="FORFEITED"] { background: #f0eef5; color: #574e70; }
+.historyPanel .sectionHeader,
+.officePanel .sectionHeader { padding: 18px 22px; border-bottom: 1px solid var(--queue-rule); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.sectionHeader h2 { font-size: 16px; letter-spacing: 0; }
+.sectionHeader > span,
+.queueMeta { color: var(--queue-muted); font-size: 12px; }
+.historyList,
+.reservationList { list-style: none; margin: 0; padding: 0; }
+.historyRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 22px; }
+.historyRow + .historyRow,
+.reservationRow + .reservationRow { border-top: 1px solid var(--queue-rule); }
+.historyRow > div { min-width: 0; }
+.historyRow > div > strong,
+.historyRow > div > span { display: block; }
+.historyRow > div > strong { color: var(--queue-ink); font-weight: 600; }
+.historyRow > div > span { color: var(--queue-muted); font-size: 12px; }
+.officePanel .sectionHeader > div:first-child { display: grid; gap: 4px; }
+.officeCurrent { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 22px; }
+.officeIdentity { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.officeIdentity > strong { color: var(--queue-blue); font-size: 28px; line-height: 1.2; }
+.officeIdentity > div { min-width: 0; overflow-wrap: anywhere; }
+.officeIdentity > div h3 { font-size: 19px; }
+.officeIdentity > div p { color: var(--queue-muted); font-size: 13px; margin-top: 4px; }
+.callAction { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.callAction p { color: var(--queue-muted); font-size: 12px; text-align: right; }
+.walkinState { display: flex; align-items: center; gap: 14px; padding: 24px 22px; }
+.walkinState > div:last-child { min-width: 0; }
+.walkinState h3 { margin-bottom: 3px; }
+.walkinState p { color: var(--queue-muted); }
+.walkinIcon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #e6f3e8; color: #24603a; }
+.nextRow { display: grid; grid-template-columns: 1fr 1.2fr auto; align-items: center; gap: 14px; padding: 13px 22px; border-top: 1px solid var(--queue-rule); background: #f7f9fb; }
+.nextRow > span:first-child { color: var(--queue-muted); font-size: 12px; }
+.nextRow strong { min-width: 0; color: var(--queue-ink); overflow-wrap: anywhere; }
+.nextRow > span:last-child { color: var(--queue-muted); white-space: nowrap; }
+.reservationRow { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto minmax(140px, auto); align-items: center; gap: 12px; padding: 14px 22px; }
+.listNumber { color: var(--queue-blue); }
+.listPerson { min-width: 0; overflow-wrap: anywhere; }
+.listPerson strong,
+.listPerson span { display: block; }
+.listPerson strong { color: var(--queue-ink); font-weight: 600; }
+.listPerson span { color: var(--queue-muted); font-size: 12px; }
+.rowActions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.rowActions button,
+.dangerLink,
+.showMore { min-height: 36px; padding: 5px 3px; border: 0; background: transparent; color: var(--queue-blue); font: inherit; font-size: 12px; font-weight: 600; text-align: left; }
+.rowActions .dangerLink,
+.dangerLink { color: #a22d29; }
+.showMore { display: block; width: 100%; min-height: 44px; padding: 12px 22px; border-top: 1px solid var(--queue-rule); font-size: 13px; }
+.empty { display: grid; justify-items: start; gap: 8px; padding: 26px 22px; color: var(--queue-muted); }
+.empty > svg { color: var(--queue-blue); }
+.empty h3 { color: var(--queue-ink); }
+.empty .refreshButton { margin-top: 8px; }
+.hours { padding: 22px; border-radius: var(--radius-card, 12px); background: #eff4f8; }
+.hours .officeIdentity { gap: 8px; color: var(--queue-blue); font-size: 13px; margin-bottom: 15px; }
+.hours h2 { margin-bottom: 12px; font-size: 17px; }
+.hours dl { margin: 15px 0 10px; }
+.hours dl > div { padding: 10px 0; border-top: 1px solid #d0deee; }
+.hours dt { color: var(--queue-muted); font-size: 12px; }
+.hours dd { margin: 2px 0 0; font-weight: 650; color: var(--queue-ink); }
+.howItWorks { border-top: 1px solid #d0deee; padding-top: 18px; margin-top: 18px; }
+.howItWorks h3 { margin-bottom: 7px; font-size: 14px; }
+.howItWorks p { color: #485e75; font-size: 13px; }
+.howItWorks p + p { margin-top: 10px; }
+.providerNotice { margin-top: 16px; padding-top: 14px; border-top: 1px solid #d0deee; color: #674c17; font-size: 12px; }
+.permission { padding: 30px; background: var(--queue-surface); border: 1px solid var(--queue-rule); border-radius: 12px; }
+.permission h2 { margin: 12px 0 8px; font-size: 20px; }
+.permission p { color: var(--queue-muted); }
+.confirmation { background: var(--queue-surface); color: var(--foreground); max-height: calc(100dvh - 48px); overflow: auto; overscroll-behavior: contain; }
+.confirmation :global(button) { min-height: 44px; }
+.confirmation .error,
+.confirmation .notice { margin: 0; }
+.loading { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; min-height: 220px; padding: 8px 0; }
+.loading span { min-height: 150px; border: 1px solid var(--queue-rule); border-radius: 12px; background: linear-gradient(100deg, #f3f6f9 25%, #e9eff5 38%, #f3f6f9 63%); background-size: 400% 100%; animation: queue-loading 1.1s ease infinite; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+.monitor { --monitor-ink: #f7f9fc; --monitor-muted: #c8d5e4; min-height: 100dvh; display: flex; flex-direction: column; color: var(--monitor-ink); background: #102844; font-size: 16px; font-variant-numeric: tabular-nums; }
+.monitorHeader { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px clamp(20px, 4vw, 52px); border-bottom: 1px solid rgba(220, 233, 246, .18); }
+.monitorBrand { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+.monitorLogo { width: 48px; height: 48px; border: 1px solid rgba(220, 233, 246, .6); border-radius: 50%; background: #fff; object-fit: contain; }
+.monitorBrand small { display: block; margin-top: 1px; color: var(--monitor-muted); font-size: 12px; font-weight: 500; }
+.monitorHeaderRight { display: grid; justify-items: end; gap: 2px; color: var(--monitor-muted); font-size: 13px; }
+.monitorContent { display: grid; place-content: center; flex: 1; width: min(100%, 1080px); margin: 0 auto; padding: 42px 28px; }
+.monitorCurrent { text-align: center; }
+.monitorTitle { color: #f0cf71; font-size: 18px; font-weight: 700; }
+.monitorNumber { display: block; margin: 14px 0 3px; color: #f0cf71; font-size: clamp(50px, 8vw, 92px); line-height: 1; letter-spacing: -.04em; }
+.monitorCurrent h1 { max-width: 24ch; margin: 10px auto 0; color: var(--monitor-ink); font-size: clamp(34px, 5.5vw, 62px); line-height: 1.1; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.monitorTime { margin-top: 12px !important; color: var(--monitor-muted); font-size: clamp(16px, 2vw, 21px); }
+.monitorNext { display: flex; align-items: center; justify-content: space-between; gap: 22px; max-width: 700px; margin: 48px auto 0; padding: 17px 22px; border-top: 1px solid rgba(220, 233, 246, .3); border-bottom: 1px solid rgba(220, 233, 246, .3); }
+.monitorNext > div:first-child span,
+.monitorNext > div:first-child strong,
+.monitorNextMeta strong,
+.monitorNextMeta span { display: block; }
+.monitorNext > div:first-child span { color: #f0cf71; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.monitorNext > div:first-child strong { margin-top: 3px; font-size: clamp(18px, 2.3vw, 23px); overflow-wrap: anywhere; }
+.monitorNextMeta { text-align: right; white-space: nowrap; }
+.monitorNextMeta strong { color: #f0cf71; font-size: 18px; }
+.monitorNextMeta span { color: var(--monitor-muted); font-size: 13px; }
+.monitorNoNext { margin: 24px auto 0 !important; color: var(--monitor-muted); text-align: center; }
+.monitorFooter { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px clamp(20px, 4vw, 52px); border-top: 1px solid rgba(220, 233, 246, .18); color: var(--monitor-muted); font-size: 12px; }
+.monitorAlert { display: flex; align-items: center; gap: 10px; padding: 12px 22px; background: #4c3a17; color: #ffedc3; font-size: 14px; }
+.monitorSkeleton { display: grid; justify-items: center; gap: 18px; }
+.monitorSkeleton span { display: block; width: min(62vw, 440px); height: 24px; border-radius: 5px; background: rgba(230, 239, 248, .13); }
+.monitorSkeleton span:first-child { width: 190px; height: 17px; background: rgba(240, 207, 113, .3); }
+
+@media (hover: hover) and (pointer: fine) {
+  .refreshButton:hover:not(:disabled),
+  .secondaryButton:hover:not(:disabled) { border-color: #91acc8; background: var(--queue-blue-soft); }
+  .monitorButton:hover:not(:disabled) { border-color: #a2bfdc; background: #e3edf7; }
+  .primaryButton:hover:not(:disabled) { background: #164579; border-color: #164579; }
+  .slot:hover:not(:disabled) { border-color: var(--queue-blue); background: #f0f6fc; }
+  .rowActions button:hover:not(:disabled),
+  .dangerLink:hover:not(:disabled),
+  .showMore:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+@media (max-width: 1120px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .hours { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; }
+  .hours > .officeIdentity,
+  .hours > h2,
+  .hours > .helper { grid-column: 1; }
+  .hours dl { grid-column: 1; margin-top: 12px; }
+  .howItWorks { grid-column: 2; grid-row: 1 / span 5; align-self: start; border-top: 0; border-left: 1px solid #d0deee; padding: 0 0 0 22px; margin: 0; }
+  .providerNotice { grid-column: 1 / -1; }
+  .slotGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .header { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .topDate { flex-basis: auto; width: 100%; max-width: 250px; }
+  .headerActions { justify-content: flex-start; }
+  .bookingHeader { align-items: flex-start; flex-direction: column; padding: 20px; }
+  .bookingControls { padding: 14px 20px 12px; }
+  .bookingControls > p { padding-bottom: 0; }
+  .slotGroups { padding: 0 20px 20px; }
+  .slotGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .selectedSlot { align-items: flex-start; flex-direction: column; margin: 0 20px 20px; }
+  .selectedSlot .primaryButton { width: 100%; }
+  .ticketBody { grid-template-columns: 145px minmax(0, 1fr); }
+  .ticketNumber { padding: 18px; }
+  .ticketNumber > strong { font-size: 38px; }
+  .ticketDetails { padding: 20px; }
+  .officeCurrent { align-items: flex-start; flex-direction: column; }
+  .officeCurrent > .primaryButton,
+  .callAction,
+  .callAction .primaryButton { width: 100%; }
+  .callAction { align-items: stretch; }
+  .callAction p { text-align: left; }
+  .reservationRow { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .reservationRow > .rowActions { grid-column: 2 / -1; justify-content: flex-start; }
+  .hours { display: block; }
+  .howItWorks { border-left: 0; border-top: 1px solid #d0deee; padding: 18px 0 0; margin-top: 18px; }
+  .monitorHeader { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .monitorHeaderRight { justify-items: start; }
+  .monitorContent { padding: 36px 22px; }
+}
+@media (max-width: 480px) {
+  .workspace h1 { font-size: 25px; }
+  .headerActions { width: 100%; justify-content: space-between; }
+  .headerActions > button { flex: 1 1 auto; }
+  .sessionPicker { gap: 7px; }
+  .sessionPicker button { padding: 9px 10px; }
+  .slotGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .slot { min-height: 57px; padding: 6px 7px; }
+  .slotTime { font-size: 12px; }
+  .slotState { font-size: 10px; }
+  .ticketBody { grid-template-columns: minmax(0, 1fr); }
+  .ticketNumber { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: 16px 20px; border-right: 0; border-bottom: 1px dashed #b9cce3; }
+  .ticketNumber > svg { display: none; }
+  .ticketNumber > strong { grid-column: 2; grid-row: 1 / span 2; font-size: 38px; }
+  .ticketDetails { padding: 20px; }
+  .ticketDetails .secondaryButton { width: 100%; }
+  .historyPanel .sectionHeader,
+  .officePanel .sectionHeader { padding: 16px; }
+  .historyRow { padding: 14px 16px; }
+  .nextRow { grid-template-columns: 1fr auto; gap: 5px 10px; padding: 12px 16px; }
+  .nextRow > span:first-child { grid-column: 1 / -1; }
+  .nextRow > span:last-child { grid-column: 2; grid-row: 2; }
+  .reservationRow { grid-template-columns: 36px minmax(0, 1fr); gap: 7px 10px; padding: 13px 16px; }
+  .reservationRow > .status { grid-column: 2; justify-self: start; }
+  .reservationRow > .rowActions { grid-column: 2; }
+  .rowActions button,
+  .dangerLink { min-height: 44px; }
+  .officeIdentity > strong { font-size: 25px; }
+  .walkinState { align-items: flex-start; padding: 20px 16px; }
+  .monitorHeader { padding: 16px 18px; }
+  .monitorContent { padding: 32px 18px; }
+  .monitorTitle { font-size: 16px; }
+  .monitorCurrent h1 { font-size: clamp(30px, 9vw, 46px); }
+  .monitorNext { align-items: flex-start; margin-top: 34px; padding: 14px 0; }
+  .monitorNextMeta { padding-top: 1px; }
+  .monitorFooter { align-items: flex-start; flex-direction: column; gap: 4px; padding: 12px 18px; }
+  .confirmation { max-width: calc(100% - 28px); padding: 22px; }
+}
+@keyframes queue-loading { to { background-position-x: -135%; } }
+@media (prefers-reduced-motion: reduce) {
+  .workspace button,
+  .workspace .loading span { transition: none; animation: none; }
+  .workspace button:not(:disabled):active { transform: none; }
+  .confirmation { animation: none; transition: none; }
+}

@@ -26,7 +26,7 @@ Keep the existing registration approval, posting approval, applicant selection, 
 | 1. Rename HTE to Industry Partners throughout the system | Use **Industry Partners** for directories/groups, **Industry Partner** for an individual company, and **Industry Partner Supervisor** for the role. Update current labels, help, forms, notifications, validation messages, and generated application content. | Users encounter consistent terminology across roles. Preserve internal action keys, stored role values, historical audit records, and old route aliases for compatibility. |
 | 2. Develop registration and required company information | Extend the existing registration and company-profile request workflow. Proposed required fields: company name, industry, office address, company description, contact person, designation, contact email, and contact phone. Website is optional. Preserve credential requirements. | Required information is validated by the server, saved, available to the approval reviewer, retained on errors, and editable through the existing correction/approval workflow. New required fields do not invalidate existing approved accounts. |
 | 3. Number of interns and required programs/courses | Reuse `openings`, label it **Number of interns needed**, and allow selection of multiple institutional programs on a posting. | A positive whole-number count and at least one valid program are required. All selected programs appear in the post, application eligibility follows them, and placement confirmation uses the applicant's actual program and policy. Existing posts keep their original course. |
-| 4. Revise the Internship Board | Use **OJT Recruitment** as the navigation/page name and **Intern recruitment** for partner posting tools. Update related headings and links. | The recruitment screen is recognizable and reachable from each relevant role; existing bookmarks continue working. |
+| 4. Revise the Internship Board | Use **Internship Recruitment** as the navigation/page name and **Intern recruitment** for partner posting tools. Update related headings and links. | The recruitment screen is recognizable and reachable from each relevant role; existing bookmarks continue working. |
 | 5. JobStreet-style application interface | Build a focused listing/detail layout with a compact opportunity list, selected post details, employer information, requirements, intern count, and one primary Apply action. Stack the layout on phones. | Students can inspect a full post, apply, and see submission status. Long content, empty results, pending operations, errors, and already-applied/ineligible states remain usable. Retain RTU's current blue, gold, typography, and components. |
 | 6. Categorized browsing | Make program and industry categories the main entry points; add useful location filtering and a reset action. Search is supplementary. Use actual institutional programs and existing industry data. | Students can find opportunities without typing a search. Filters combine correctly, distinguish no postings from no matching results, and persist in the URL. Remove the generic academic-period toolbar from recruitment. |
 | 7. Integrate approved company posts into the RTU board | Keep the existing source of truth and approval workflow. Verify pending posts stay hidden, approval publishes, approved edits replace prior content, and approved closure removes the opening. | Students see only published posts from approved companies. Rejected/pending edits never replace approved content. Company and university boundaries remain enforced. |
@@ -34,7 +34,7 @@ Keep the existing registration approval, posting approval, applicant selection, 
 
 ## Design contract
 
-- Product and users: RTU students finding OJT opportunities, partners recruiting interns, and university staff reviewing postings and placements.
+- Product and users: RTU students finding internship opportunities, partners recruiting interns, and university staff reviewing postings and placements.
 - Surface: Operate; reuse `DESIGN.md` and current components/tokens.
 - Primary action: students submit an application; partners submit a post for approval; reviewers approve or return a request with a reason.
 - Content: real scoped company details, position, industry, location, selected programs, skills, description, intern count, publication/approval status, and application status.
@@ -61,7 +61,7 @@ Keep the existing registration approval, posting approval, applicant selection, 
 
 ## Proposed defaults
 
-- Board name: **OJT Recruitment**.
+- Board name: **Internship Recruitment**.
 - Multiple required programs belong to each post; company identity belongs to registration/profile.
 - Categories use program and industry data, avoiding a separate unmaintained taxonomy.
 - Applicant phone is optional and supplied during application; it does not require redesigning the student profile.

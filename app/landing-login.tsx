@@ -21,18 +21,24 @@ import {
   ArrowRight,
   HelpCircle,
   X,
+  GraduationCap,
+  BriefcaseBusiness,
+  Sparkles,
 } from 'lucide-react';
+import { demoAccounts } from '@/packages/test-utils/fixtures';
 
 interface LoginViewProps {
   initialAuthError?: string;
   google?: boolean;
+  demo?: boolean;
   configured: boolean;
   redirectTo?: string;
   onAuthSubmit: (provider: string, values: Record<string, string>) => Promise<unknown>;
 }
 
-export default function LandingLoginView({ configured, google=false, initialAuthError='', redirectTo = '/', onAuthSubmit }: LoginViewProps) {
+export default function LandingLoginView({ configured, demo=false, google=false, initialAuthError='', redirectTo = '/', onAuthSubmit }: LoginViewProps) {
   const router=useRouter();
+  const [activeTab, setActiveTab] = useState<'credentials' | 'demo'>('credentials');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -96,6 +102,18 @@ export default function LandingLoginView({ configured, google=false, initialAuth
     }
   };
 
+  const handleDemoSignIn = async (accountId: string) => {
+    setBusyKey(accountId);
+    setGeneralError('');
+    try {
+      await onAuthSubmit('callback/credentials', { demoId: accountId });
+      router.push('/login/complete?redirect='+encodeURIComponent(redirectTo));
+    } catch (err) {
+      setGeneralError(err instanceof Error ? err.message : 'Demo sign-in failed.');
+      setBusyKey('');
+    }
+  };
+
   return (
     <div className="ps-landing-wrapper">
       {/* Top Navigation Bar */}
@@ -132,7 +150,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
           <section className="ps-hero-col">
             <div className="ps-hero-eyebrow">
               <ShieldCheck size={14} className="ps-eyebrow-icon" />
-              <span>RTU COOPERATIVE EDUCATION &amp; OJT WORKSPACE</span>
+              <span>RTU COOPERATIVE EDUCATION &amp; INTERNSHIP WORKSPACE</span>
             </div>
 
             <h1 className="ps-hero-title">
@@ -169,6 +187,38 @@ export default function LandingLoginView({ configured, google=false, initialAuth
                 <h2 className="ps-login-title">Welcome to PractiSync</h2>
               </div>
 
+              {/* Segmented Mode Selector: Credentials vs Demo */}
+              {demo && (
+                <div className="ps-login-tabs" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'credentials'}
+                    className={`ps-login-tab ${activeTab === 'credentials' ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveTab('credentials');
+                      setGeneralError('');
+                    }}
+                  >
+                    <UserRound size={15} />
+                    <span>University Account</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'demo'}
+                    className={`ps-login-tab ${activeTab === 'demo' ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveTab('demo');
+                      setGeneralError('');
+                    }}
+                  >
+                    <Sparkles size={15} />
+                    <span>Quick Demo Access</span>
+                  </button>
+                </div>
+              )}
+
               {/* General / Server Error Alert */}
               {generalError && (
                 <div className="ps-alert ps-alert-error" role="alert">
@@ -198,144 +248,197 @@ export default function LandingLoginView({ configured, google=false, initialAuth
                 </div>
               )}
 
-              <form className="ps-form" onSubmit={handleCredentialsSubmit} noValidate>
-                  {/* Username / Institutional Email */}
-                  <div className={`ps-field-group ${formErrors.username ? 'has-error' : ''}`}>
-                    <label htmlFor="ps-username" className="ps-field-label">
-                      <span>Username or Institutional Email</span>
-                      <span className="ps-required-star" aria-hidden="true">*</span>
-                    </label>
-                    <div className="ps-input-wrap">
-                      <span className="ps-input-icon">
-                        <UserRound size={16} />
-                      </span>
-                      <input
-                        ref={usernameInputRef}
-                        id="ps-username"
-                        name="username"
-                        type="text"
-                        autoComplete="username"
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                        spellCheck={false}
-                        placeholder="e.g. jreyes or jreyes@rtu.edu.ph"
-                        value={username}
-                        onChange={(e) => {
-                          setUsername(e.target.value);
-                          if (formErrors.username) {
-                            setFormErrors((prev) => ({ ...prev, username: undefined }));
-                          }
-                        }}
-                        className="ps-input"
-                        aria-invalid={!!formErrors.username}
-                        aria-describedby={formErrors.username ? 'username-error' : undefined}
-                      />
-                    </div>
-                    {formErrors.username ? (
-                      <p id="username-error" className="ps-field-error" role="alert">
-                        <AlertCircle size={13} />
-                        <span>{formErrors.username}</span>
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {/* Password Field */}
-                  <div className={`ps-field-group ${formErrors.password ? 'has-error' : ''}`}>
-                    <div className="ps-label-row">
-                      <label htmlFor="ps-password" className="ps-field-label">
-                        <span>Password</span>
+              {(!demo || activeTab === 'credentials') ? (
+                <>
+                  <form className="ps-form" onSubmit={handleCredentialsSubmit} noValidate>
+                    {/* Username / Institutional Email */}
+                    <div className={`ps-field-group ${formErrors.username ? 'has-error' : ''}`}>
+                      <label htmlFor="ps-username" className="ps-field-label">
+                        <span>Username or Institutional Email</span>
                         <span className="ps-required-star" aria-hidden="true">*</span>
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => setHelpOpen(true)}
-                        className="ps-forgot-link"
-                      >
-                        Need assistance?
-                      </button>
+                      <div className="ps-input-wrap">
+                        <span className="ps-input-icon">
+                          <UserRound size={16} />
+                        </span>
+                        <input
+                          ref={usernameInputRef}
+                          id="ps-username"
+                          name="username"
+                          type="text"
+                          autoComplete="username"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          placeholder="e.g. jreyes or jreyes@rtu.edu.ph"
+                          value={username}
+                          onChange={(e) => {
+                            setUsername(e.target.value);
+                            if (formErrors.username) {
+                              setFormErrors((prev) => ({ ...prev, username: undefined }));
+                            }
+                          }}
+                          className="ps-input"
+                          aria-invalid={!!formErrors.username}
+                          aria-describedby={formErrors.username ? 'username-error' : undefined}
+                        />
+                      </div>
+                      {formErrors.username ? (
+                        <p id="username-error" className="ps-field-error" role="alert">
+                          <AlertCircle size={13} />
+                          <span>{formErrors.username}</span>
+                        </p>
+                      ) : null}
                     </div>
-                    <div className="ps-input-wrap">
-                      <span className="ps-input-icon">
-                        <LockKeyhole size={16} />
-                      </span>
-                      <input
-                        ref={passwordInputRef}
-                        id="ps-password"
-                        name="password"
-                        type={showPassword ? 'text' : 'password'}
-                        autoComplete="current-password"
-                        placeholder="••••••••••••"
-                        value={password}
-                        onChange={(e) => {
-                          setPassword(e.target.value);
-                          if (formErrors.password) {
-                            setFormErrors((prev) => ({ ...prev, password: undefined }));
-                          }
-                        }}
-                        className="ps-input"
-                        aria-invalid={!!formErrors.password}
-                        aria-describedby={formErrors.password ? 'password-error' : undefined}
-                      />
-                      <button
-                        type="button"
-                        className="ps-toggle-password-btn"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        title={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
+
+                    {/* Password Field */}
+                    <div className={`ps-field-group ${formErrors.password ? 'has-error' : ''}`}>
+                      <div className="ps-label-row">
+                        <label htmlFor="ps-password" className="ps-field-label">
+                          <span>Password</span>
+                          <span className="ps-required-star" aria-hidden="true">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setHelpOpen(true)}
+                          className="ps-forgot-link"
+                        >
+                          Need assistance?
+                        </button>
+                      </div>
+                      <div className="ps-input-wrap">
+                        <span className="ps-input-icon">
+                          <LockKeyhole size={16} />
+                        </span>
+                        <input
+                          ref={passwordInputRef}
+                          id="ps-password"
+                          name="password"
+                          type={showPassword ? 'text' : 'password'}
+                          autoComplete="current-password"
+                          placeholder="••••••••••••"
+                          value={password}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            if (formErrors.password) {
+                              setFormErrors((prev) => ({ ...prev, password: undefined }));
+                            }
+                          }}
+                          className="ps-input"
+                          aria-invalid={!!formErrors.password}
+                          aria-describedby={formErrors.password ? 'password-error' : undefined}
+                        />
+                        <button
+                          type="button"
+                          className="ps-toggle-password-btn"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          title={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      {formErrors.password && (
+                        <p id="password-error" className="ps-field-error" role="alert">
+                          <AlertCircle size={13} />
+                          <span>{formErrors.password}</span>
+                        </p>
+                      )}
                     </div>
-                    {formErrors.password && (
-                      <p id="password-error" className="ps-field-error" role="alert">
-                        <AlertCircle size={13} />
-                        <span>{formErrors.password}</span>
-                      </p>
-                    )}
+
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      className="ps-submit-btn"
+                      disabled={!!busyKey || !configured}
+                    >
+                      {busyKey === 'credentials' ? (
+                        <>
+                          <LoaderCircle size={16} className="spin" />
+                          <span>Signing in...</span>
+                        </>
+                      ) : (
+                        <>
+                          <LockKeyhole size={16} />
+                          <span>Sign In to PractiSync</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  <Link className="ps-forgot-link" href="/account-access">Forgot your local account password?</Link>
+                  {/* Divider & Secondary Sign-In */}
+                  <div className="ps-divider">
+                    <span>or use university single sign-on</span>
                   </div>
 
-                  {/* Submit Button */}
+                  <div className="ps-sso-wrap">
+                    <button
+                      type="button"
+                      disabled={!google||!!busyKey}
+                      onClick={async()=>{setBusyKey('google');setGeneralError('');try{const result=await onAuthSubmit('signin/google',{}) as {url?:string};if(result.url)window.location.assign(result.url);}catch(e){setGeneralError(e instanceof Error?e.message:'Google sign-in is unavailable. Try again.');setBusyKey('');}}}
+                      className="ps-google-btn"
+                      title="Google Workspace OAuth integration for RTU faculty & students"
+                    >
+                      <span className="ps-google-icon">G</span>
+                      <span>Continue with @rtu.edu.ph Google Account</span>
+                      <span className="ps-sso-badge">{google?'RTU Workspace':'Not configured'}</span>
+                    </button>
+                    <p className="ps-sso-note">
+                      {google?'Students complete registration after sign-in. Staff need an invitation from the Cooperative Education Office.':'Google Workspace sign-in is unavailable in this fictional demo.'}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="ps-demo-section">
+                  <div className="ps-demo-notice">
+                    <Sparkles size={15} />
+                    <span>Instant QA &amp; Evaluation Access (No password needed)</span>
+                  </div>
+                  <div className="ps-demo-grid">
+                    {demoAccounts.map((account, i) => {
+                      const icons = [GraduationCap, BookOpen, ShieldCheck, BriefcaseBusiness];
+                      const Icon = icons[i] ?? UserRound;
+                      const roleColors = ['student', 'coordinator', 'admin', 'supervisor'];
+                      const colorClass = roleColors[i] ?? 'default';
+
+                      return (
+                        <button
+                          key={account.id}
+                          type="button"
+                          className={`ps-demo-card ps-demo-${colorClass}`}
+                          disabled={!!busyKey || !configured}
+                          onClick={() => handleDemoSignIn(account.id)}
+                        >
+                          <div className="ps-demo-card-head">
+                            <span className="ps-demo-icon">
+                              {busyKey === account.id ? (
+                                <LoaderCircle size={16} className="spin" />
+                              ) : (
+                                <Icon size={16} />
+                              )}
+                            </span>
+                            <span className="ps-demo-role-badge">{account.title}</span>
+                          </div>
+                          <strong className="ps-demo-name">{account.name}</strong>
+                          <p className="ps-demo-desc">{account.description}</p>
+                          <span className="ps-demo-click-hint">Click to launch &rarr;</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                   <button
-                    type="submit"
-                    className="ps-submit-btn"
+                    type="button"
+                    className="ps-first-login-demo"
                     disabled={!!busyKey || !configured}
+                    onClick={() => handleDemoSignIn('demo-new-student')}
                   >
-                    {busyKey === 'credentials' ? (
-                      <>
-                        <LoaderCircle size={16} className="spin" />
-                        <span>Signing in...</span>
-                      </>
-                    ) : (
-                      <>
-                        <LockKeyhole size={16} />
-                        <span>Sign In to PractiSync</span>
-                      </>
-                    )}
+                    {busyKey === 'demo-new-student' ? <LoaderCircle size={17} className="spin"/> : <UserPlus size={17}/>}
+                    <span><strong>Try first-time student setup</strong><small>Fictional identity · join with a class code</small></span>
+                    <ArrowRight size={16}/>
                   </button>
-              </form>
-
-              <Link className="ps-forgot-link" href="/account-access">Forgot your local account password?</Link>
-              {/* Divider & Secondary Sign-In */}
-              <div className="ps-divider">
-                <span>or use university single sign-on</span>
-              </div>
-
-              <div className="ps-sso-wrap">
-                <button
-                  type="button"
-                  disabled={!google||!!busyKey}
-                  onClick={async()=>{setBusyKey('google');setGeneralError('');try{const result=await onAuthSubmit('signin/google',{}) as {url?:string};if(result.url)window.location.assign(result.url);}catch(e){setGeneralError(e instanceof Error?e.message:'Google sign-in is unavailable. Try again.');setBusyKey('');}}}
-                  className="ps-google-btn"
-                  title="Google Workspace OAuth integration for RTU faculty & students"
-                >
-                  <span className="ps-google-icon">G</span>
-                  <span>Continue with @rtu.edu.ph Google Account</span>
-                  <span className="ps-sso-badge">{google?'RTU Workspace':'Not configured'}</span>
-                </button>
-                <p className="ps-sso-note">
-                  {google?'Students complete registration after sign-in. Staff require an OJT office invitation.':'Google Workspace sign-in is unavailable in this fictional demo.'}
-                </p>
-              </div>
+                </div>
+              )}
 
               <div className="ps-login-footer-notes">
                 <p>
@@ -349,7 +452,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
         {/* Platform Pillars Section */}
         <section className="ps-features-section" ref={featuresSectionRef}>
           <div className="ps-features-header">
-            <span className="ps-features-eyebrow">RTU COE ORIENTATION · OJT KICKSTART</span>
+            <span className="ps-features-eyebrow">RTU COE ORIENTATION · INTERNSHIP KICKSTART</span>
             <h2 className="ps-features-title">From internship orientation to industry practice</h2>
           </div>
 
@@ -380,10 +483,10 @@ export default function LandingLoginView({ configured, google=false, initialAuth
               <div className="ps-feature-icon-wrap ps-icon-gold">
                 <BookOpen size={22} />
               </div>
-              <h3 className="ps-feature-card-title">OJT Kickstart: Internship Orientation</h3>
+              <h3 className="ps-feature-card-title">Internship orientation</h3>
               <p className="ps-feature-card-copy">Review internship policies, required forms, and professional expectations before placement.</p>
               <div className="ps-feature-card-footer">
-                <span className="ps-feature-tag">OJT readiness</span>
+                <span className="ps-feature-tag">Internship readiness</span>
                 <a
                   className="ps-feature-source"
                   href="https://www.rtu.edu.ph/ojt-kickstart-rtu-coe-office-launches-internship-orientation-for-the-new-semester/"
@@ -457,7 +560,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
                 <li>
                   <strong>Students:</strong> Your account is provisioned upon enrollment in your
                   practicum section. Use your RTU Student Number / institutional email and default
-                  security PIN provided by your department OJT coordinator.
+                  security PIN provided by your department coordinator.
                 </li>
                 <li>
                   <strong>Faculty Coordinators:</strong> Access is managed by the College of
@@ -469,6 +572,15 @@ export default function LandingLoginView({ configured, google=false, initialAuth
                   the university.
                 </li>
               </ul>
+              {demo && (
+                <div className="ps-help-demo-tip">
+                  <Sparkles size={14} />
+                  <span>
+                    For this evaluation demo, you can instantly test any role by selecting the{' '}
+                    <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab on the sign-in card.
+                  </span>
+                </div>
+              )}
             </div>
             <div className="ps-help-modal-footer">
               <button
@@ -517,13 +629,37 @@ export default function LandingLoginView({ configured, google=false, initialAuth
                   <strong>Industry Partners:</strong> <a href="/register/industry-partner">Register your Industry Partner</a>. Industry supervisors can submit company and account details for Super Admin approval.
                 </li>
               </ul>
+              {demo && (
+                <div className="ps-help-demo-tip">
+                  <Sparkles size={14} />
+                  <span>
+                    Testing the system? You can jump straight in using the{' '}
+                    <strong>&ldquo;Quick Demo Access&rdquo;</strong> tab to explore student, coordinator, or supervisor workflows immediately.
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="ps-help-modal-footer">
+            <div className="ps-help-modal-footer" style={{ gap: '10px' }}>
+              {demo && (
+                <button
+                  type="button"
+                  className="ps-hero-secondary-btn"
+                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                  onClick={() => {
+                    setRegisterModalOpen(false);
+                    setActiveTab('demo');
+                    scrollToLogin();
+                  }}
+                >
+                  Explore Demo
+                </button>
+              )}
               <button
                 type="button"
                 className="ps-modal-primary-btn"
                 onClick={() => {
                   setRegisterModalOpen(false);
+                  setActiveTab('credentials');
                   scrollToLogin();
                 }}
               >

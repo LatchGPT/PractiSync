@@ -79,6 +79,8 @@ export const inputs={
  reachOutAudit:z.object({placementId:z.string().optional(),coordinatorEmail:z.string().email(),channel:z.enum(['MAILTO','COPY_EMAIL','COPY_TEMPLATE']).default('MAILTO')}),
  queueJoin:z.object({coordinatorId:z.string().optional()}),
  queueAddStudent:z.object({studentId:str(),coordinatorId:z.string().optional()}),
+ queueReserve:z.object({serviceDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),scheduledStart:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)}),
+ queueForfeit:z.object({queueId:str()}),
  queueStatus:z.object({queueId:str(),status:z.enum(['SERVING','SERVED','ABSENT','CANCELLED'])}),
  markNotificationRead:z.object({notificationId:str()}),
  markAllNotificationsRead:z.object({}),

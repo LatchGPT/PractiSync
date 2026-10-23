@@ -1,6 +1,6 @@
 # Native recommendation letters
 
-Student: **Document clearance → Document generator → Recommendation letter**. Superadmin: **Required OJT documents → Document generator**. Students can discard saved drafts; generated document history is retained.
+Student: **Document clearance → Document generator → Recommendation letter**. Superadmin: **Required internship documents → Document generator**. Students can discard saved drafts; generated document history is retained.
 
 This replaces the HTML prototype. The uploaded DOCX is stored unchanged with its SHA-256 hash. A separate tokenized copy records single-run tokens and field locations. Every preview/download starts from the immutable original and replaces only marked text in Word XML. It never reconstructs the document or converts it to HTML. Logos, relationships, styles, page setup, tables and other ZIP entries are retained byte-for-byte after decompression. Splits within an affected run clone its properties; mixed character styles such as superscript ordinals are preserved across replacement text. XML values are escaped and never interpreted as template syntax.
 

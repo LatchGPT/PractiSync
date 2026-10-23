@@ -9,5 +9,5 @@ export function recruitmentCourseIds(job: Row): string[] {
 
 export function emailApplicantHref(email: string, position: string): string | undefined {
  if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email) || /[\r\n?&#]/.test(email)) return undefined;
- return `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`OJT application: ${position}`)}`;
+ return `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`Internship application: ${position}`)}`;
 }

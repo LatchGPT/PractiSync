@@ -27,7 +27,7 @@ export async function feedbackAction(user: Identity, action: string, payload: un
  if (!assignment) throw new DomainError('Your supervisor assignment is no longer available.',403);
  const old = await one("SELECT * FROM industry_feedback WHERE tenant_id=? AND placement_id=? AND evaluator_id=? AND authorship_method='DIRECT'",user.tenantId,p.id,user.id);
  if (Number(old?.version ?? 0) !== d.version) throw new DomainError('Feedback changed. Refresh before submitting another revision.',409);
- if (old?.verificationState === 'INVALIDATED') throw new DomainError('This response was invalidated. Contact the OJT office before resubmitting.',409);
+ if (old?.verificationState === 'INVALIDATED') throw new DomainError('This response was invalidated. Contact the Internship Office before resubmitting.',409);
  const id = old?.id ?? crypto.randomUUID(), time = new Date().toISOString();
  const values = {tenant_id:user.tenantId,placement_id:p.id,company_id:String(p.companyId),supervisor_id:user.id,evaluator_id:user.id,entered_by:user.id,assignment_id:assignment.id,authorship_method:'DIRECT',verification_state:'VERIFIED',verified_at:time,submitted_at:time,course_id:String(p.courseId),academic_period:String(p.period),framework_version:1,workplace_readiness:d.workplaceReadiness,competency_relevance:d.competencyRelevance,supervision_support:d.supervisionSupport,curriculum_alignment:d.curriculumAlignment,technical_gaps:d.technicalGaps??null,soft_skill_gaps:d.softSkillGaps??null,recommendations:d.recommendations,status:'SUBMITTED'};
  const tx = [];

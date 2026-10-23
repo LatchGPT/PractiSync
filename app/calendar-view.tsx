@@ -256,7 +256,7 @@ export default function CalendarView({
 
   const selectedKey = selectedDate || today;
 
-  // Hybrid OJT Milestones (Dynamic Placement Commencements & Completion Deadlines)
+  // Hybrid Internship Milestones (Dynamic Placement Commencements & Completion Deadlines)
   const combinedEvents = useMemo(() => {
     const list: Row[] = [...events];
     const existingIds = new Set(list.map((e) => String(e.id)));
@@ -274,7 +274,7 @@ export default function CalendarView({
           tenantId: user.tenantId,
           createdAt: value(placement, 'createdAt'),
           eventType: 'ACADEMIC',
-          title: `${studentPrefix}OJT Commences · ${value(placement, 'companyName')}`,
+          title: `${studentPrefix}Internship begins · ${value(placement, 'companyName')}`,
           description: `Official training commencement for ${value(placement, 'studentName') || 'your'} practicum placement with ${value(placement, 'companyName')}.`,
           startDate: startKey,
           endDate: startKey,
@@ -292,7 +292,7 @@ export default function CalendarView({
           tenantId: user.tenantId,
           createdAt: value(placement, 'createdAt'),
           eventType: 'DEADLINE',
-          title: `${studentPrefix}OJT Target Completion Deadline`,
+          title: `${studentPrefix}Internship target completion deadline`,
           description: `Target practicum completion date. Verify all DTR shifts are signed and clearance documents submitted.`,
           startDate: endKey,
           endDate: endKey,
@@ -1599,7 +1599,7 @@ export default function CalendarView({
             </span>
             {isMilestone && (
               <span className="chip gold" style={{ fontSize: 10, padding: '1px 6px' }}>
-                OJT Milestone
+                Internship milestone
               </span>
             )}
           </div>
@@ -2136,7 +2136,7 @@ export default function CalendarView({
     </div>
   );
 
-  // Top 3-Card Deck for Super Admin (COE Office staff managing OJT, internships, & finalized clearance)
+  // Top 3-Card Deck for Super Admin (COE Office staff managing internships and finalized clearance)
   const coeDeadlines = useMemo(() => {
     return combinedEvents
       .filter((ev) => value(ev, 'eventType') === 'DEADLINE' && value(ev, 'status') !== 'CANCELLED')
@@ -2160,7 +2160,7 @@ export default function CalendarView({
   }, [combinedEvents]);
 
   const CoeAdminTopCardsDeck = (
-    <div className={styles.topCardsGrid} role="region" aria-label="COE Office OJT schedule overview">
+    <div className={styles.topCardsGrid} role="region" aria-label="COE Office internship schedule overview">
       {/* 1. Internship Document Submission Cutoffs */}
       <div className={styles.legendCard}>
         <div className={styles.legendCardHeader}>
@@ -2409,7 +2409,7 @@ export default function CalendarView({
                 <div className={styles.coordinatorFilterHeader}>
                   <Filter size={13} className={styles.coordinatorFilterIcon} />
                   <span className={styles.coordinatorFilterLabel}>
-                    {user.role === 'SUPER_ADMIN' ? 'COE OJT Categories:' : 'Schedule categories:'}
+                    {user.role === 'SUPER_ADMIN' ? 'COE Internship categories:' : 'Schedule categories:'}
                   </span>
                 </div>
                 <div className={styles.coordinatorPills}>
@@ -2434,7 +2434,7 @@ export default function CalendarView({
                     onClick={() => setCategoryFilter(categoryFilter === 'ACADEMIC' ? 'ALL' : 'ACADEMIC')}
                   >
                     <span className={`${styles.filterDot} ${styles.filterDotAcademic}`} />
-                    {user.role === 'SUPER_ADMIN' ? 'OJT & Academic Milestones' : 'Academic milestones'}
+                    {user.role === 'SUPER_ADMIN' ? 'Internship & Academic Milestones' : 'Academic milestones'}
                   </button>
                   <button
                     type="button"
@@ -2511,7 +2511,7 @@ export default function CalendarView({
                       <CalendarRange size={18} color="var(--rtu-blue)" />
                       {user.role === 'COORDINATOR'
                         ? 'Document Submission & Class Schedule Directory'
-                        : 'College of Engineering OJT & Schedules Directory'}
+                        : 'College of Engineering internship and schedules directory'}
                     </h3>
                     <span className={styles.directoryCountBadge}>
                       {managedEvents.length} {managedEvents.length === 1 ? 'schedule' : 'schedules'}
@@ -2520,7 +2520,7 @@ export default function CalendarView({
                   <p className={styles.directorySubtitle}>
                     {user.role === 'COORDINATOR'
                       ? 'Search, filter, review, and manage scheduled document passing requirements for your assigned classes.'
-                      : 'Comprehensive registry of college-wide OJT requirements, finalized document deadlines, partner consultations, and academic schedules.'}
+                      : 'Overview of college internship requirements, document deadlines, partner consultations, and academic schedules.'}
                   </p>
                 </div>
               </div>
