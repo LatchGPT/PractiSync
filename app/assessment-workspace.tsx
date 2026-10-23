@@ -21,9 +21,10 @@ import {
   Sparkles,
   GraduationCap,
   Lock,
-  PlusCircle,
-  X,
+  Eye,
 } from 'lucide-react';
+import { EmployerFeedbackLedger } from './employer-feedback';
+import SelfAssessmentModal from './self-assessment-modal';
 import type { Action, Row, Snapshot } from '@/packages/validation/contracts';
 import {
   assessmentPeriod,
@@ -81,10 +82,7 @@ function PeriodDtr({ entries, start, end }: { entries: Row[]; start: string; end
   return (
     <section className="assessment-context" aria-label="Daily attendance context">
       <h3>Daily training context</h3>
-      <p className="small muted">
-        Read-only DTR records for {dateLabel(start)} – {dateLabel(end)}. These do not set competency
-        scores.
-      </p>
+
       <div className="assessment-context-totals">
         <strong>{periodEntries.length} entries</strong>
         <span>{(reported / 60).toFixed(1)} reported hours</span>
@@ -178,7 +176,7 @@ export default function AssessmentWorkspace({
   onAction,
 }: {
   data: Snapshot;
-  onAction: (action: Action, values: Record<string, string | number>) => Promise<void>;
+  onAction?: (action: Action, values: Record<string, unknown>) => Promise<unknown>;
 }) {
   const { user } = data;
   const ownedClasses = data.classes.filter((item) => item.coordinatorId === user.id);
@@ -209,17 +207,7 @@ export default function AssessmentWorkspace({
   const [analyticsCompany, setAnalyticsCompany] = useState<string>('ALL');
   const [analyticsPrivacyThreshold, setAnalyticsPrivacyThreshold] = useState<number>(DEFAULT_PRIVACY_THRESHOLD);
 
-  // Supervisor Feedback Submission Form State
-  const [showFeedbackModal, setShowFeedbackModal] = useState<boolean>(false);
-  const [fbPlacementId, setFbPlacementId] = useState<string>('');
-  const [fbReadiness, setFbReadiness] = useState<number>(4);
-  const [fbRelevance, setFbRelevance] = useState<number>(4);
-  const [fbSupervision, setFbSupervision] = useState<number>(4);
-  const [fbAlignment, setFbAlignment] = useState<number>(4);
-  const [fbTechnicalGaps, setFbTechnicalGaps] = useState<string>('');
-  const [fbSoftSkillGaps, setFbSoftSkillGaps] = useState<string>('');
-  const [fbRecommendations, setFbRecommendations] = useState<string>('');
-
+  const [showSelfAssessmentModal, setShowSelfAssessmentModal] = useState<boolean>(false);
   const placement = data.placements.find((item) => item.studentId === user.id);
   const selectedCourse =
     user.role === 'STUDENT'
@@ -338,7 +326,7 @@ export default function AssessmentWorkspace({
   async function run(action: Action, values: Record<string, string | number>) {
     setBusy(true);
     try {
-      await onAction(action, values);
+      if (onAction) await onAction(action, values);
     } finally {
       setBusy(false);
     }
@@ -355,12 +343,6 @@ export default function AssessmentWorkspace({
   }
 
   // Eligible placements for industry feedback
-  const feedbackEligiblePlacements = data.placements.filter((p) => {
-    if (!p.companyId) return false;
-    if (user.role === 'SUPERVISOR' && user.companyId && p.companyId !== user.companyId) return false;
-    return true;
-  });
-
   const allCohortPeriods = Array.from(
     new Set(
       data.placements
@@ -381,26 +363,6 @@ export default function AssessmentWorkspace({
     }
   );
 
-  async function handleRecordIndustryFeedback(e: React.FormEvent) {
-    e.preventDefault();
-    const targetPlacementId =
-      fbPlacementId || (feedbackEligiblePlacements[0]?.id ? String(feedbackEligiblePlacements[0].id) : '');
-    if (!targetPlacementId || !fbRecommendations.trim()) return;
-    await run('industryFeedback', {
-      placementId: targetPlacementId,
-      workplaceReadiness: fbReadiness,
-      competencyRelevance: fbRelevance,
-      supervisionSupport: fbSupervision,
-      curriculumAlignment: fbAlignment,
-      technicalGaps: fbTechnicalGaps.trim(),
-      softSkillGaps: fbSoftSkillGaps.trim(),
-      recommendations: fbRecommendations.trim(),
-    });
-    setShowFeedbackModal(false);
-    setFbTechnicalGaps('');
-    setFbSoftSkillGaps('');
-    setFbRecommendations('');
-  }
 
   return (
     <div className="assessment-workspace">
@@ -440,16 +402,18 @@ export default function AssessmentWorkspace({
 
       {activeTab === 'outcome' && (
         <div className="outcome-evaluation-section">
-          {/* Decision Support Disclaimer Notice */}
-          <div className="notice outcome-disclaimer-notice" role="alert">
-            <ShieldAlert size={18} className="disclaimer-icon" />
-            <div>
-              <strong>Decision Support Only:</strong> Calculated outcome results are derived using
-              deterministic rubric dimensions and published thresholds. They assist academic evaluation,
-              but <em>never</em> automatically certify OJT completion, approve a grade, or replace a
-              coordinator’s formal academic decision.
+          {/* Decision Support Disclaimer Notice (Coordinators and Administrators only) */}
+          {user.role !== 'STUDENT' && (
+            <div className="notice outcome-disclaimer-notice" role="alert">
+              <ShieldAlert size={18} className="disclaimer-icon" />
+              <div>
+                <strong>Decision Support Only:</strong> Calculated outcome results are derived using
+                deterministic rubric dimensions and published thresholds. They assist academic evaluation,
+                but <em>never</em> automatically certify OJT completion, approve a grade, or replace a
+                coordinator’s formal academic decision.
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Student Placement Selector for Coordinator */}
           {user.role === 'COORDINATOR' && visiblePlacements.length > 0 && (
@@ -473,6 +437,54 @@ export default function AssessmentWorkspace({
             </section>
           )}
 
+          {/* Baseline Self-Assessment Gating & Status Banner */}
+          {currentOutcomePlacement && (() => {
+            const baselineEval = data.evaluations.find(
+              (e) => e.placementId === currentOutcomePlacement.id && e.kind === 'BASELINE'
+            );
+            if (!baselineEval) {
+              return (
+                <div className="notice" role="alert" style={{ background: '#fffcf6', borderColor: '#f7e0b1', color: '#966914', marginBottom: 16 }}>
+                  <ShieldAlert size={18} style={{ color: '#d97706', flexShrink: 0 }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 12 }}>
+                    <div>
+                      <strong>HTE Evaluation Gate: Baseline Self-Assessment Pending.</strong>{' '}
+                      {user.role === 'STUDENT'
+                        ? 'You have not yet submitted your baseline Self-Assessment Competency Report. Host company evaluations cannot begin until this report is recorded in Weekly Reports.'
+                        : `Student ${text(currentOutcomePlacement, 'studentName')} has not yet submitted their baseline Self-Assessment Competency Report. Company evaluation remains gated until the student records their perceived skill baseline.`}
+                    </div>
+                    {user.role === 'STUDENT' && (
+                      <button
+                        type="button"
+                        className="primary"
+                        style={{ fontSize: 12, padding: '6px 14px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                        onClick={() => setShowSelfAssessmentModal(true)}
+                      >
+                        <Sparkles size={13} />
+                        <span>Complete self-assessment</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            if (user.role === 'STUDENT') {
+              return null;
+            }
+            return (
+              <div className="notice" role="status" style={{ background: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534', marginBottom: 16 }}>
+                <CheckCircle2 size={18} style={{ color: '#16a34a', flexShrink: 0 }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <strong>Student Competency Baseline Established:</strong>{' '}
+                    Baseline self-assessment (v{Number(baselineEval.version ?? 1)}) submitted on{' '}
+                    {dateLabel(text(baselineEval, 'createdAt').slice(0, 10))}. Evaluators compare self-perception with observed workplace performance.
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {outcome && currentOutcomePlacement ? (
             <>
               {/* Overall Outcome Attainment Hero Card */}
@@ -480,9 +492,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Rubric Outcome Attainment</h2>
-                    <p>
-                      {outcome.frameworkName} · Version {outcome.frameworkVersion} · Scale {outcome.scaleMin}–{outcome.scaleMax} · Published Threshold: {outcome.attainmentThreshold.toFixed(2)} / 5.0
-                    </p>
                   </div>
                   <span
                     className={`chip outcome-hero-badge ${
@@ -548,7 +557,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Transparent Calculation &amp; Formula</h2>
-                    <p>Explainable, deterministic calculation inputs and applied weights.</p>
                   </div>
                 </div>
                 <div className="panel-body outcome-derivation-body">
@@ -654,7 +662,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Dimension Details &amp; Weights</h2>
-                    <p>Evidence summary per configured rubric dimension.</p>
                   </div>
                 </div>
                 <div className="panel-body">
@@ -729,9 +736,6 @@ export default function AssessmentWorkspace({
                   <div className="panel-head">
                     <div>
                       <h2>Record Human Academic Decision</h2>
-                      <p>
-                        Review the calculated decision support and record your official evaluation decision.
-                      </p>
                     </div>
                   </div>
                   <div className="panel-body outcome-decision-form-body">
@@ -794,7 +798,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Academic Decision History</h2>
-                    <p>Audited records of coordinator evaluations for this student placement.</p>
                   </div>
                   <History size={18} className="muted-icon" />
                 </div>
@@ -876,7 +879,6 @@ export default function AssessmentWorkspace({
               <div className="panel-head">
                 <div>
                   <h2>Course assessment schedule</h2>
-                  <p>Choose weekly, monthly, or both for students in this course.</p>
                 </div>
               </div>
               <div className="panel-body assessment-controls">
@@ -928,15 +930,6 @@ export default function AssessmentWorkspace({
               <div className="panel-head">
                 <div>
                   <h2>My competency assessment</h2>
-                  <p>
-                    {schedule
-                      ? `${
-                          schedule.cadence === 'BOTH'
-                            ? 'Weekly and monthly'
-                            : kindLabel(text(schedule, 'cadence'))
-                        } assessments are enabled for your course.`
-                      : 'Your coordinator has not configured an assessment schedule.'}
-                  </p>
                 </div>
               </div>
               <div className="panel-body">
@@ -1053,7 +1046,6 @@ export default function AssessmentWorkspace({
               <div className="panel-head">
                 <div>
                   <h2>Assessments awaiting review</h2>
-                  <p>Approve student self-ratings or request a revision with a reason.</p>
                 </div>
                 <span className="chip orange">
                   {visible.filter((item) => item.status === 'SUBMITTED').length} pending
@@ -1155,10 +1147,6 @@ export default function AssessmentWorkspace({
             <div className="panel-head">
               <div>
                 <h2>Approved assessment trend</h2>
-                <p>
-                  Average of submitted rubric scores, grouped by period. Only coordinator-approved
-                  assessments are included.
-                </p>
               </div>
             </div>
             <div className="panel-body">
@@ -1191,7 +1179,6 @@ export default function AssessmentWorkspace({
             <div className="panel-head">
               <div>
                 <h2>Period assessment history</h2>
-                <p>Weekly and monthly submissions, including review feedback.</p>
               </div>
             </div>
             <div className="panel-body">
@@ -1220,10 +1207,6 @@ export default function AssessmentWorkspace({
               <div className="panel-head">
                 <div>
                   <h2>Earlier assessment records</h2>
-                  <p>
-                    Baseline and final records created before the weekly/monthly workflow. They remain
-                    read-only.
-                  </p>
                 </div>
               </div>
               <div className="panel-body">
@@ -1251,36 +1234,19 @@ export default function AssessmentWorkspace({
           <div className="industry-section-header">
             <div>
               <h2>Industry Supervisor Competency Evaluations</h2>
-              <p className="small muted">
-                Structured employer evaluations of student workplace readiness, competency relevance,
-                supervision support, and curriculum alignment under Framework v1.0.
-              </p>
+
             </div>
-            {(user.role === 'COORDINATOR' || user.role === 'SUPER_ADMIN' || user.role === 'SUPERVISOR') &&
-              feedbackEligiblePlacements.length > 0 && (
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => {
-                    if (!fbPlacementId && feedbackEligiblePlacements.length > 0) {
-                      setFbPlacementId(String(feedbackEligiblePlacements[0].id));
-                    }
-                    setShowFeedbackModal(true);
-                  }}
-                >
-                  <PlusCircle size={15} />
-                  <span>Record Supervisor Competency Evaluation</span>
-                </button>
-              )}
+
           </div>
 
+          <EmployerFeedbackLedger data={data} onAction={onAction}/>
           {/* Student Reviews Strict Separation Notice */}
           <div className="notice industry-separation-notice" role="alert">
             <ShieldAlert size={18} className="disclaimer-icon" />
             <div>
               <strong>Strict Workflow Separation:</strong> Student reviews of companies (student → company)
               are maintained in an independent workflow and strictly excluded from employer feedback metrics.
-              All analytics below represent direct supervisor and employer evaluations.
+              Analytics include only verified direct submissions, using the latest eligible response per placement. Legacy and invalidated responses remain visible to authorized reviewers and are excluded.
             </div>
           </div>
 
@@ -1385,7 +1351,7 @@ export default function AssessmentWorkspace({
               <div className="privacy-suppressed-content">
                 <Lock size={36} className="text-amber-600" />
                 <h3>Aggregate Metrics Suppressed for Privacy</h3>
-                <p>{curriculumAnalytics.privacySuppressionNotice}</p>
+
                 <div className="privacy-rules-box">
                   <span>
                     Privacy Rule: Threshold is set to {curriculumAnalytics.privacyThreshold} evaluations. Current sample has {curriculumAnalytics.feedbackCount}.
@@ -1414,9 +1380,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Preparedness &amp; Alignment Dimensions</h2>
-                    <p>
-                      Evaluated on a 1 (Needs Improvement) to 5 (Exemplary) scale across 4 core competencies.
-                    </p>
                   </div>
                   {curriculumAnalytics.overallIndex !== null && (
                     <div className="overall-index-badge">
@@ -1468,10 +1431,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Recurring Curriculum &amp; Skill Gaps</h2>
-                    <p>
-                      Technical tools and workplace soft skills flagged by industry supervisors as
-                      requiring reinforcement, with transparent sample frequencies.
-                    </p>
                   </div>
                 </div>
                 <div className="panel-body">
@@ -1521,10 +1480,6 @@ export default function AssessmentWorkspace({
                 <div className="panel-head">
                   <div>
                     <h2>Supervisor Curriculum Recommendations</h2>
-                    <p>
-                      Actionable industry insights and curriculum improvement proposals submitted by
-                      partner supervisors.
-                    </p>
                   </div>
                 </div>
                 <div className="panel-body">
@@ -1558,229 +1513,34 @@ export default function AssessmentWorkspace({
                 </div>
               </section>
 
-              {/* Individual Feedback Responses Table (Audited) */}
-              {(user.role === 'COORDINATOR' || user.role === 'SUPER_ADMIN') && (
-                <section className="panel industry-table-panel">
-                  <div className="panel-head">
-                    <div>
-                      <h2>Individual Industry Feedback Ledger</h2>
-                      <p>
-                        Access-controlled supervisor feedback submissions. All views are logged to the
-                        audit ledger.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="panel-body">
-                    <div className="industry-table-wrap">
-                      <table className="industry-feedback-table">
-                        <thead>
-                          <tr>
-                            <th>DATE</th>
-                            <th>STUDENT</th>
-                            <th>HOST COMPANY</th>
-                            <th>SUPERVISOR</th>
-                            <th>READINESS</th>
-                            <th>RELEVANCE</th>
-                            <th>SUPERVISION</th>
-                            <th>ALIGNMENT</th>
-                            <th>GAPS &amp; RECOMMENDATIONS</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(data.industryFeedback ?? []).map((fb) => (
-                            <tr key={fb.id}>
-                              <td className="small muted">
-                                {dateLabel(text(fb, 'createdAt').slice(0, 10))}
-                              </td>
-                              <td>
-                                <strong>
-                                  {text(fb, 'studentName') ||
-                                    String(
-                                      visiblePlacements.find((p) => p.id === fb.placementId)?.studentName ??
-                                        'Student'
-                                    )}
-                                </strong>
-                              </td>
-                              <td>
-                                {text(fb, 'companyName') ||
-                                  String(
-                                    data.companies.find((c) => c.id === fb.companyId)?.name ??
-                                      'Partner Company'
-                                  )}
-                              </td>
-                              <td className="small">{text(fb, 'supervisorName') || 'Supervisor'}</td>
-                              <td><strong>{fb.workplaceReadiness} / 5</strong></td>
-                              <td><strong>{fb.competencyRelevance} / 5</strong></td>
-                              <td><strong>{fb.supervisionSupport} / 5</strong></td>
-                              <td><strong>{fb.curriculumAlignment} / 5</strong></td>
-                              <td className="small">
-                                {fb.technicalGaps && <div><strong>Tech:</strong> {text(fb, 'technicalGaps')}</div>}
-                                {fb.softSkillGaps && <div><strong>Soft:</strong> {text(fb, 'softSkillGaps')}</div>}
-                                {fb.recommendations && <div className="muted">{text(fb, 'recommendations')}</div>}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </section>
-              )}
+
             </>
           )}
 
-          {/* Supervisor Feedback Submission Modal */}
-          {showFeedbackModal && (
-            <div className="modal-backdrop" role="dialog" aria-modal="true">
-              <div className="modal-content industry-feedback-modal">
-                <div className="modal-header">
-                  <div>
-                    <h3>Record Industry Supervisor Feedback</h3>
-                    <p className="small muted">
-                      Evaluate workplace preparedness and suggest curriculum improvements (Framework v1.0).
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="modal-close-btn"
-                    onClick={() => setShowFeedbackModal(false)}
-                    aria-label="Close dialog"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
 
-                <form onSubmit={handleRecordIndustryFeedback} className="industry-feedback-form">
-                  <label className="form-field">
-                    <strong>Student Training Placement:</strong>
-                    <select
-                      value={fbPlacementId || (feedbackEligiblePlacements[0]?.id ? String(feedbackEligiblePlacements[0].id) : '')}
-                      onChange={(e) => setFbPlacementId(e.target.value)}
-                      required
-                    >
-                      {feedbackEligiblePlacements.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {text(p, 'studentName')} · {text(p, 'courseCode')} · {text(p, 'companyName')}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="rating-inputs-grid">
-                    <label className="rating-select-field">
-                      <span>Workplace Readiness</span>
-                      <select
-                        value={fbReadiness}
-                        onChange={(e) => setFbReadiness(Number(e.target.value))}
-                      >
-                        <option value={5}>5 — Exemplary (Exceeds entry expectations)</option>
-                        <option value={4}>4 — Proficient (Well-prepared for tasks)</option>
-                        <option value={3}>3 — Competent (Acceptable foundational skills)</option>
-                        <option value={2}>2 — Developing (Needs significant guidance)</option>
-                        <option value={1}>1 — Unsatisfactory (Unprepared for workplace)</option>
-                      </select>
-                    </label>
-
-                    <label className="rating-select-field">
-                      <span>Competency Relevance</span>
-                      <select
-                        value={fbRelevance}
-                        onChange={(e) => setFbRelevance(Number(e.target.value))}
-                      >
-                        <option value={5}>5 — Directly relevant to current industry tech</option>
-                        <option value={4}>4 — High industry relevance</option>
-                        <option value={3}>3 — Moderately relevant</option>
-                        <option value={2}>2 — Partially outdated / tangential</option>
-                        <option value={1}>1 — Obsolete / Irrelevant to job roles</option>
-                      </select>
-                    </label>
-
-                    <label className="rating-select-field">
-                      <span>Supervision Support</span>
-                      <select
-                        value={fbSupervision}
-                        onChange={(e) => setFbSupervision(Number(e.target.value))}
-                      >
-                        <option value={5}>5 — Comprehensive daily mentorship</option>
-                        <option value={4}>4 — Regular structured supervision</option>
-                        <option value={3}>3 — Adequate periodic guidance</option>
-                        <option value={2}>2 — Minimal supervisor availability</option>
-                        <option value={1}>1 — Inadequate supervision</option>
-                      </select>
-                    </label>
-
-                    <label className="rating-select-field">
-                      <span>Curriculum Alignment</span>
-                      <select
-                        value={fbAlignment}
-                        onChange={(e) => setFbAlignment(Number(e.target.value))}
-                      >
-                        <option value={5}>5 — Excellent alignment with industry stack</option>
-                        <option value={4}>4 — Strong academic alignment</option>
-                        <option value={3}>3 — Moderate alignment</option>
-                        <option value={2}>2 — Notable skill stack gaps</option>
-                        <option value={1}>1 — Severe mismatch with industry demands</option>
-                      </select>
-                    </label>
-                  </div>
-
-                  <label className="form-field">
-                    <span>Observed Technical Skill Gaps (comma-separated):</span>
-                    <input
-                      type="text"
-                      value={fbTechnicalGaps}
-                      onChange={(e) => setFbTechnicalGaps(e.target.value)}
-                      placeholder="e.g. Git branching, Docker containerization, REST API design"
-                      maxLength={500}
-                    />
-                  </label>
-
-                  <label className="form-field">
-                    <span>Observed Workplace Soft Skill Gaps (comma-separated):</span>
-                    <input
-                      type="text"
-                      value={fbSoftSkillGaps}
-                      onChange={(e) => setFbSoftSkillGaps(e.target.value)}
-                      placeholder="e.g. Client communication, Meeting etiquette, Sprint reviews"
-                      maxLength={500}
-                    />
-                  </label>
-
-                  <label className="form-field">
-                    <span>Actionable Curriculum Recommendations:</span>
-                    <textarea
-                      value={fbRecommendations}
-                      onChange={(e) => setFbRecommendations(e.target.value)}
-                      placeholder="Provide concrete curriculum enhancements or training adjustments (minimum 5 characters)..."
-                      rows={3}
-                      maxLength={2000}
-                      required
-                    />
-                    <span className="small muted">{fbRecommendations.length}/2000 characters</span>
-                  </label>
-
-                  <div className="modal-actions">
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => setShowFeedbackModal(false)}
-                      disabled={busy}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="primary"
-                      disabled={busy || fbRecommendations.trim().length < 5}
-                    >
-                      Submit Feedback
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
         </div>
+      )}
+
+      {showSelfAssessmentModal && currentOutcomePlacement && (
+        <SelfAssessmentModal
+          placement={currentOutcomePlacement}
+          data={data}
+          isLocked={
+            !!data.evaluations.find(
+              (e) => e.placementId === currentOutcomePlacement.id && e.kind === 'FINAL'
+            )
+          }
+          onClose={() => setShowSelfAssessmentModal(false)}
+          onSubmit={async (scores, version) => {
+            if (!onAction) return false;
+            await onAction('studentSelfAssessment', {
+              placementId: currentOutcomePlacement.id,
+              scores,
+              version,
+            });
+            return true;
+          }}
+        />
       )}
     </div>
   );

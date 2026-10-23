@@ -1,3 +1,4 @@
+import {installSqliteScopeGuards} from './isolation-sqlite';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -51,12 +52,16 @@ class LocalDemoDatabase implements DemoDatabase {
 }
 
 const sqliteGlobal = globalThis as typeof globalThis & {
-  practiSyncLocalDemo?: { path: string; database: LocalDemoDatabase };
+  practiSyncLocalDemo?: { path: string; database: LocalDemoDatabase; schemaVersion?: number };
 };
 
 function migrate(sql: DatabaseSync) {
   const root = process.cwd();
-  const read = (path: string) => readFileSync(join(root, path), 'utf8');
+  const read = (file: string) => {
+    if(file.startsWith('packages/db/prisma/migrations/'))return readFileSync(join(root,'packages/db/prisma/migrations',file.slice('packages/db/prisma/migrations/'.length)),'utf8');
+    if(file.startsWith('drizzle/'))return readFileSync(join(root,'drizzle',file.slice('drizzle/'.length)),'utf8');
+    throw new Error('Local schema files must stay inside the migration directories.');
+  };
 
   sql.exec('BEGIN');
   try {
@@ -173,9 +178,52 @@ function upgradeToFormTypesV4(sql: DatabaseSync) {
   }
 }
 
+function upgradeCalendarEventsV5(sql: DatabaseSync) {
+  sql.exec('BEGIN');
+  try {
+    sql.exec(`
+      CREATE TABLE calendar_events (
+        id TEXT PRIMARY KEY NOT NULL, tenant_id TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        event_type TEXT NOT NULL CHECK(event_type IN ('ACADEMIC','HOLIDAY','DEADLINE','APPOINTMENT')),
+        title TEXT NOT NULL, description TEXT, start_date TEXT NOT NULL, end_date TEXT NOT NULL,
+        start_time TEXT, end_time TEXT, all_day INTEGER NOT NULL DEFAULT 0 CHECK(all_day IN (0,1)),
+        location TEXT, meeting_url TEXT, audience TEXT NOT NULL CHECK(audience IN ('UNIVERSITY','CLASS')),
+        class_id TEXT, created_by TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','CANCELLED')),
+        CHECK(end_date >= start_date),
+        CHECK((start_time IS NULL AND end_time IS NULL) OR (start_time IS NOT NULL AND end_time IS NOT NULL))
+      );
+      CREATE INDEX calendar_events_tenant_start ON calendar_events (tenant_id,start_date);
+      CREATE INDEX calendar_events_class_start ON calendar_events (tenant_id,class_id,start_date);
+      PRAGMA user_version = 5;
+    `);
+    sql.exec('COMMIT');
+  } catch (error) {
+    sql.exec('ROLLBACK');
+    throw error;
+  }
+}
+
+function upgradeCalendarEventsV6(sql: DatabaseSync) {
+  sql.exec('BEGIN');
+  try {
+    const tableInfo = sql.prepare("PRAGMA table_info('calendar_events')").all() as { name: string }[];
+    const hasStatus = tableInfo.some((col) => col.name === 'status');
+    if (!hasStatus) {
+      sql.exec("ALTER TABLE calendar_events ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','CANCELLED'))");
+    }
+    sql.exec('PRAGMA user_version = 6');
+    sql.exec('COMMIT');
+  } catch (error) {
+    sql.exec('ROLLBACK');
+    throw error;
+  }
+}
+
 export function openLocalDemoDatabase(): DemoDatabase {
-  const path = resolve(process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
-  if (sqliteGlobal.practiSyncLocalDemo?.path === path) return sqliteGlobal.practiSyncLocalDemo.database;
+  // The operator's local demo file must not make the production tracer bundle the workspace.
+  const path = resolve(/*turbopackIgnore: true*/ process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
+  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 18) return sqliteGlobal.practiSyncLocalDemo.database;
 
   mkdirSync(dirname(path), { recursive: true });
   const sql = new DatabaseSync(path);
@@ -185,8 +233,74 @@ export function openLocalDemoDatabase(): DemoDatabase {
   else if (version < 2) upgradeToFormTypesV2(sql);
   if (version < 3) upgradeToFormTypesV3(sql);
   if (version < 4) upgradeToFormTypesV4(sql);
+  const hasTable = (name: string) => Boolean(sql.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name));
+  if (!hasTable('calendar_events')) upgradeCalendarEventsV5(sql);
+  const calendarColumns = sql.prepare("PRAGMA table_info('calendar_events')").all() as { name: string }[];
+  if (!calendarColumns.some(column => column.name === 'status')) upgradeCalendarEventsV6(sql);
 
+  if (!hasTable('document_templates')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610150001_reflowable_document_templates/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+
+  if (!hasTable('native_document_sources')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610150002_native_document_generator/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  if (!hasTable('final_dtrs')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610190001_hte_approvals_final_dtr/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  if (!hasTable('student_verifications')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610200001_student_verification/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  const userColumns = sql.prepare("PRAGMA table_info('users')").all() as { name: string }[];
+  if (!userColumns.some(column => column.name === 'email_domain_exception')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610200003_student_registration/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  const feedbackColumns = sql.prepare("PRAGMA table_info('industry_feedback')").all() as { name: string }[];
+  if (!feedbackColumns.some(column => column.name === 'verification_state')) sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610210001_feedback_provenance/migration.sql'), 'utf8'));
+  if (!hasTable('account_tokens')) sql.exec(readFileSync(join(process.cwd(),'packages/db/prisma/migrations/202610210002_account_lifecycle/migration.sql'),'utf8'));
+  if (!hasTable('deadline_reminder_policies')) sql.exec(readFileSync(join(process.cwd(),'packages/db/prisma/migrations/202610210003_deadline_reminders/migration.sql'),'utf8'));
+  const placementColumns = sql.prepare("PRAGMA table_info('placements')").all() as { name: string }[];
+  if (!placementColumns.some(column => column.name === 'is_external')) {
+    sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610220001_external_hte_workflows/migration.sql'), 'utf8'));
+  }
+  const companyColumns = sql.prepare("PRAGMA table_info('companies')").all() as { name: string }[];
+  if (!companyColumns.some(column => column.name === 'contact_phone')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610220002_industry_partner_recruitment/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  if (!hasTable('queue_entries')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610230001_student_queuing/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
+  installSqliteScopeGuards(sql);
+  sql.exec('PRAGMA user_version = 18');
   const database = new LocalDemoDatabase(sql);
-  sqliteGlobal.practiSyncLocalDemo = { path, database };
+  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 18 };
   return database;
 }

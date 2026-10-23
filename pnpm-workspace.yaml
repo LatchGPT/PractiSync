@@ -9,3 +9,4 @@ allowBuilds:
   'sharp': true
   'unrs-resolver': true
   'fsevents': false
+  msgpackr-extract: false

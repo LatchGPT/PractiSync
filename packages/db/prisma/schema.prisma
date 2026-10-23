@@ -370,6 +370,7 @@ model StudentProfile {
   tenant                  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
+  yearLevel               Int?
   studentNumber           String
   userId                  String
   courseId                String
@@ -1528,6 +1529,7 @@ model DemoAnnouncements {
 }
 
 model DemoApplications {
+  contactPhone String @default("") @map("contact_phone")
   id          String @id
   tenantId    String @map("tenant_id")
   createdAt   String @map("created_at")
@@ -1551,6 +1553,8 @@ model DemoAssignments {
 
   @@unique([tenantId, placementId, supervisorId], map: "assignment_pair")
   @@map("assignments")
+  @@unique([id,tenantId], map:"scope_assignments_identity")
+
 }
 
 model DemoAudit {
@@ -1597,9 +1601,44 @@ model DemoClasses {
   @@unique([codeHash], map: "classes_code")
   @@index([tenantId, coordinatorId], map: "classes_coordinator")
   @@map("classes")
+  @@unique([id,tenantId], map:"scope_classes_identity")
+
+}
+
+model DemoCalendarEvents {
+  id          String  @id
+  tenantId    String  @map("tenant_id")
+  createdAt   String  @map("created_at")
+  updatedAt   String  @map("updated_at")
+  eventType   String  @map("event_type")
+  title       String
+  description String?
+  startDate   String  @map("start_date")
+  endDate     String  @map("end_date")
+  startTime   String? @map("start_time")
+  endTime     String? @map("end_time")
+  allDay      Int     @default(0) @map("all_day")
+  location    String?
+  meetingUrl  String? @map("meeting_url")
+  audience    String
+  classId     String? @map("class_id")
+  createdBy   String  @map("created_by")
+  status      String  @default("ACTIVE")
+
+  @@index([tenantId, startDate], map: "calendar_events_tenant_start")
+  @@index([tenantId, classId, startDate], map: "calendar_events_class_start")
+  @@map("calendar_events")
+  @@unique([id,tenantId], map:"scope_calendar_events_identity")
+
 }
 
 model DemoCompanies {
+  contactName String @default("") @map("contact_name")
+  contactEmail String @default("") @map("contact_email")
+  contactPhone String @default("") @map("contact_phone")
+  contactPosition String @default("") @map("contact_position")
+  website String @default("")
+  version Int @default(1)
   id          String @id
   tenantId    String @map("tenant_id")
   createdAt   String @map("created_at")
@@ -1611,6 +1650,8 @@ model DemoCompanies {
   canPost     Int    @default(0) @map("can_post")
 
   @@map("companies")
+  @@unique([id,tenantId], map:"scope_companies_identity")
+
 }
 
 model DemoCompletion {
@@ -1636,6 +1677,8 @@ model DemoCourses {
   code         String
 
   @@map("courses")
+  @@unique([id,tenantId], map:"scope_courses_identity")
+
 }
 
 model DemoDepartments {
@@ -1646,6 +1689,8 @@ model DemoDepartments {
   code      String
 
   @@map("departments")
+  @@unique([id,tenantId], map:"scope_departments_identity")
+
 }
 
 model DemoDocuments {
@@ -1690,6 +1735,8 @@ model DemoEntries {
 
   @@index([tenantId, placementId, date], map: "entries_placement_date")
   @@map("entries")
+  @@unique([id,tenantId], map:"scope_entries_identity")
+
 }
 
 model DemoEvaluations {
@@ -1745,6 +1792,8 @@ model DemoIntervals {
 }
 
 model DemoJobs {
+  requiredCoursesJson String @default("[]") @map("required_courses_json")
+  version Int @default(1)
   id          String @id
   tenantId    String @map("tenant_id")
   createdAt   String @map("created_at")
@@ -1762,6 +1811,7 @@ model DemoJobs {
 }
 
 model DemoPlacements {
+  dtrRevision Int @default(0) @map("dtr_revision")
   id              String @id
   tenantId        String @map("tenant_id")
   createdAt       String @map("created_at")
@@ -1779,6 +1829,8 @@ model DemoPlacements {
   @@index([tenantId, studentId], map: "placement_student")
   @@index([tenantId, classId], map: "placement_class")
   @@map("placements")
+  @@unique([id,tenantId], map:"scope_placements_identity")
+
 }
 
 model DemoPolicies {
@@ -1873,6 +1925,7 @@ model DemoUsers {
   name               String
   username           String
   email              String
+  emailDomainException Int   @default(0) @map("email_domain_exception")
   role               String
   status             String  @default("ACTIVE")
   passwordHash       String? @map("password_hash")
@@ -1886,6 +1939,8 @@ model DemoUsers {
   @@unique([username], map: "users_username")
   @@index([tenantId, role], map: "users_tenant_role")
   @@map("users")
+  @@unique([id,tenantId], map:"scope_users_identity")
+
 }
 
 model DemoJoinRequests {
@@ -2024,6 +2079,211 @@ model DemoIndustryFeedback {
   @@index([tenantId, courseId, academicPeriod], map: "industry_feedback_course_period")
   @@index([tenantId, companyId], map: "industry_feedback_company")
   @@map("industry_feedback")
+  evaluatorId String? @map("evaluator_id")
+  enteredBy String? @map("entered_by")
+  assignmentId String? @map("assignment_id")
+  authorshipMethod String @default("LEGACY") @map("authorship_method")
+  verificationState String @default("UNVERIFIED") @map("verification_state")
+  verifiedAt String? @map("verified_at")
+  submittedAt String? @map("submitted_at")
+  version Int @default(1)
+  invalidatedBy String? @map("invalidated_by")
+  invalidationReason String? @map("invalidation_reason")
+  invalidatedAt String? @map("invalidated_at")
+
+  @@unique([id,tenantId], map:"scope_industry_feedback_identity")
+
+}
+
+model DocumentTemplate {
+  id               String @id
+  tenantId         String @map("tenant_id")
+  createdAt        String @map("created_at")
+  updatedAt        String @map("updated_at")
+  title            String
+  kind             String @default("RECOMMENDATION")
+  originalFilename String @default("") @map("original_filename")
+  docxBase64       String @default("") @map("docx_base64") @db.Text
+  htmlContent      String @map("html_content") @db.Text
+  layoutJson       String @map("layout_json") @db.Text
+  status           String @default("DRAFT")
+  version          Int @default(1)
+  fields           DocumentTemplateField[]
+  submissions      DocumentTemplateSubmission[]
+
+  @@index([tenantId, kind, status], map: "document_templates_tenant_kind")
+  @@map("document_templates")
+  @@unique([id,tenantId], map:"scope_document_templates_identity")
+
+}
+
+model DocumentTemplateField {
+  id            String @id
+  tenantId      String @map("tenant_id")
+  createdAt     String @map("created_at")
+  templateId    String @map("template_id")
+  template      DocumentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  variableKey   String @map("variable_key")
+  label         String
+  inputType     String @map("input_type")
+  dataSource    String @map("data_source")
+  systemMapKey  String? @map("system_map_key")
+  defaultValue  String @default("") @map("default_value")
+  selectOptions String @default("[]") @map("select_options")
+  isEditable    Int @default(1) @map("is_editable")
+  isRequired    Int @default(1) @map("is_required")
+  tooltipText   String @default("") @map("tooltip_text")
+  placeholder   String @default("")
+  displayOrder  Int @default(0) @map("display_order")
+
+  @@unique([templateId, variableKey])
+  @@map("document_template_fields")
+}
+
+model DocumentTemplateSubmission {
+  id              String @id
+  tenantId        String @map("tenant_id")
+  createdAt       String @map("created_at")
+  updatedAt       String @map("updated_at")
+  templateId      String @map("template_id")
+  template        DocumentTemplate @relation(fields: [templateId], references: [id])
+  studentId       String @map("student_id")
+  placementId     String @map("placement_id")
+  templateVersion Int @map("template_version")
+  templateJson    String @map("template_json") @db.Text
+  formData        String @map("form_data") @db.Text
+  pdfBase64       String @default("") @map("pdf_base64") @db.Text
+  status          String
+  version         Int @default(1)
+  reviewNote      String? @map("review_note")
+  reviewerId      String? @map("reviewer_id")
+
+  @@unique([tenantId, placementId, templateId])
+  @@index([tenantId, studentId], map: "document_submissions_student")
+  @@index([tenantId, placementId, status], map: "document_submissions_placement")
+  @@map("document_submissions")
+}
+
+model NativeDocumentSource {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  createdBy String @map("created_by")
+  filename String
+  sha256 String
+  contentBase64 String @map("content_base64") @db.Text
+  fontsJson String @map("fonts_json")
+  scannedAt String @map("scanned_at")
+  versions NativeDocumentVersion[]
+  @@map("native_document_sources")
+  @@unique([id,tenantId], map:"scope_native_document_sources_identity")
+
+}
+model NativeDocumentTemplate {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  createdBy String @map("created_by")
+  name String
+  status String @default("ACTIVE")
+  publishedVersionId String? @map("published_version_id")
+  lastVersion Int @default(1) @map("last_version")
+  versions NativeDocumentVersion[]
+  @@index([tenantId,status],map:"native_templates_tenant")
+  @@map("native_document_templates")
+  @@unique([id,tenantId], map:"scope_native_document_templates_identity")
+
+}
+model NativeDocumentVersion {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  templateId String @map("template_id")
+  template NativeDocumentTemplate @relation(fields:[templateId],references:[id])
+  sourceId String @map("source_id")
+  source NativeDocumentSource @relation(fields:[sourceId],references:[id])
+  version Int
+  revision Int @default(1)
+  status String
+  fieldsJson String @default("[]") @map("fields_json") @db.Text
+  tokenizedBase64 String @default("") @map("tokenized_base64") @db.Text
+  publishedAt String? @map("published_at")
+  originalPages Int @default(0) @map("original_pages")
+  fields NativeDocumentField[]
+  drafts NativeDocumentDraft[]
+  documents NativeGeneratedDocument[]
+  @@unique([templateId,version])
+  @@map("native_document_versions")
+  @@unique([id,tenantId], map:"scope_native_document_versions_identity")
+
+}
+model NativeDocumentField {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  versionId String @map("version_id")
+  version NativeDocumentVersion @relation(fields:[versionId],references:[id])
+  variableKey String @map("variable_key")
+  label String
+  type String
+  configJson String @map("config_json") @db.Text
+  displayOrder Int @map("display_order")
+  occurrences NativeDocumentOccurrence[]
+  @@unique([versionId,variableKey])
+  @@map("native_document_fields")
+  @@unique([id,tenantId], map:"scope_native_document_fields_identity")
+
+}
+model NativeDocumentOccurrence {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  fieldId String @map("field_id")
+  field NativeDocumentField @relation(fields:[fieldId],references:[id],onDelete:Cascade)
+  locationJson String @map("location_json") @db.Text
+  @@map("native_document_occurrences")
+}
+model NativeDocumentDraft {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  userId String @map("user_id")
+  versionId String @map("version_id")
+  version NativeDocumentVersion @relation(fields:[versionId],references:[id])
+  valuesJson String @map("values_json") @db.Text
+  revision Int @default(1)
+  updatedAt String @map("updated_at")
+  documents NativeGeneratedDocument[]
+  @@unique([tenantId,userId,versionId])
+  @@map("native_document_drafts")
+  @@unique([id,tenantId], map:"scope_native_document_drafts_identity")
+
+}
+model NativeGeneratedDocument {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  userId String @map("user_id")
+  draftId String? @map("draft_id")
+  draft NativeDocumentDraft? @relation(fields:[draftId],references:[id],onDelete:SetNull)
+  versionId String @map("version_id")
+  version NativeDocumentVersion @relation(fields:[versionId],references:[id])
+  format String
+  valuesJson String @map("values_json") @db.Text
+  fileBase64 String @map("file_base64") @db.Text
+  expiresAt String @map("expires_at")
+  expiredAt String? @map("expired_at")
+  @@index([tenantId,userId,createdAt],map:"native_generated_owner")
+  @@map("native_generated_documents")
+}
+model NativeDocumentRenderCache {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  expiresAt String @map("expires_at")
+  pdfBase64 String @map("pdf_base64") @db.Text
+  pageCount Int @map("page_count")
+  @@map("native_document_render_cache")
 }
 
 model DemoPrivateHosts {
@@ -2036,4 +2296,296 @@ model DemoPrivateHosts {
 
   @@unique([tenantId, placementId], map: "private_host_placement")
   @@map("private_hosts")
+}
+
+model DemoHteRequests {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  requesterId String @map("requester_id")
+  companyId String @map("company_id")
+  resourceId String @map("resource_id")
+  kind String
+  payloadJson String @map("payload_json")
+  baseVersion Int @default(1) @map("base_version")
+  status String @default("PENDING")
+  note String?
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt String? @map("reviewed_at")
+  version Int @default(1)
+  @@map("hte_requests")
+}
+
+model DemoFinalDtrs {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  placementId String @map("placement_id")
+  version Int @default(1)
+  attendanceRevision Int @map("attendance_revision")
+  snapshotJson String @map("snapshot_json")
+  totalMinutes Int @map("total_minutes")
+  status String
+  submittedBy String @map("submitted_by")
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt String? @map("reviewed_at")
+  note String?
+  @@unique([tenantId, placementId])
+  @@map("final_dtrs")
+}
+
+model DemoFinalDtrHistory {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  finalDtrId String @map("final_dtr_id")
+  version Int
+  recordJson String @map("record_json")
+  @@unique([tenantId, finalDtrId, version])
+  @@map("final_dtr_history")
+}
+
+model DemoFinalDtrReopens {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  placementId String @map("placement_id")
+  finalDtrVersion Int @map("final_dtr_version")
+  studentId String @map("student_id")
+  reason String
+  status String @default("PENDING")
+  note String?
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt String? @map("reviewed_at")
+  version Int @default(1)
+  @@map("final_dtr_reopens")
+}
+
+model DemoHteEvaluationTemplates {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  createdBy String @map("created_by")
+  title String
+  filename String
+  pdfBase64 String @map("pdf_base64")
+  questionsJson String @default("[]") @map("questions_json")
+  status String @default("DRAFT")
+  version Int @default(1)
+  @@map("hte_evaluation_templates")
+}
+
+model DemoHteEvaluationResponses {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  placementId String @map("placement_id")
+  evaluatorId String @map("evaluator_id")
+  templateId String @map("template_id")
+  finalDtrVersion Int @map("final_dtr_version")
+  answersJson String @map("answers_json")
+  status String
+  note String?
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt String? @map("reviewed_at")
+  updatedAt String @map("updated_at")
+  version Int @default(1)
+  @@unique([tenantId, placementId])
+  @@map("hte_evaluation_responses")
+  assignmentId String? @map("assignment_id")
+  authorshipMethod String @default("LEGACY") @map("authorship_method")
+  verificationState String @default("UNVERIFIED") @map("verification_state")
+  verifiedAt String? @map("verified_at")
+
+  enteredBy String? @map("entered_by")
+
+}
+
+model DemoHteEvaluationHistory {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  responseId String @map("response_id")
+  version Int
+  recordJson String @map("record_json")
+  @@unique([tenantId, responseId, version])
+  @@map("hte_evaluation_history")
+}
+
+// Fictional runtime verification tables. Institutional records remain separate.
+model DemoStudentProfiles {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  userId String @map("user_id")
+  studentNumber String @map("student_number")
+  yearLevel Int @map("year_level")
+  @@unique([tenantId,userId])
+  @@unique([tenantId,studentNumber])
+  @@map("student_profiles")
+}
+model DemoStudentVerifications {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  requesterId String @map("requester_id")
+  status String @default("DRAFT")
+  legalName String @default("") @map("legal_name")
+  studentNumber String @default("") @map("student_number")
+  courseId String? @map("course_id")
+  yearLevel Int? @map("year_level")
+  classId String? @map("class_id")
+  approvedStudentId String? @map("approved_student_id")
+  reviewNote String? @map("review_note")
+  reviewerId String? @map("reviewer_id")
+  submittedAt String? @map("submitted_at")
+  reviewedAt String? @map("reviewed_at")
+  updatedAt String @map("updated_at")
+  version Int @default(1)
+  @@unique([tenantId,requesterId])
+  @@unique([tenantId,approvedStudentId])
+  @@index([tenantId,classId,status,submittedAt],map:"student_verification_queue")
+  @@map("student_verifications")
+}
+
+model IndustryFeedbackHistory {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ feedbackId String @map("feedback_id")
+ version Int
+ actorId String @map("actor_id")
+ recordJson String @map("record_json")
+ @@unique([tenantId,feedbackId,version])
+ @@map("industry_feedback_history")
+}
+
+model AuthIdentity {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ userId String @map("user_id")
+ provider String
+ issuer String
+ subject String
+ @@unique([provider,issuer,subject])
+ @@unique([tenantId,userId,provider])
+ @@map("auth_identities")
+}
+model AccountAccessToken {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ userId String @map("user_id")
+ tokenHash String @unique @map("token_hash")
+ purpose String
+ email String
+ sessionVersion Int @map("session_version")
+ expiresAt String @map("expires_at")
+ usedAt String? @map("used_at")
+ claimedBy String? @map("claimed_by")
+ @@index([tenantId,userId,purpose])
+ @@map("account_tokens")
+}
+model AccountEmailOutbox {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ encryptedPayload String @map("encrypted_payload")
+ status String @default("PENDING")
+ attempts Int @default(0)
+ availableAt String @map("available_at")
+ lockedUntil String? @map("locked_until")
+ deliveredAt String? @map("delivered_at")
+ lastError String? @map("last_error")
+ @@index([status,availableAt])
+ @@map("email_outbox")
+}
+
+model DeadlineReminderPolicy {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ eventId String @map("event_id")
+ enabled Int @default(1)
+ targetKind String @default("NONE") @map("target_kind")
+ targetId String? @map("target_id")
+ revision Int @default(1)
+ updatedAt String @map("updated_at")
+ updatedBy String @map("updated_by")
+ @@unique([tenantId,eventId])
+ @@map("deadline_reminder_policies")
+}
+model DeadlineReminderSlot {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ eventId String @map("event_id")
+ policyRevision Int @map("policy_revision")
+ leadDays Int @map("lead_days")
+ dueAt String @map("due_at")
+ deadlineAt String @map("deadline_at")
+ status String @default("PENDING")
+ attempts Int @default(0)
+ nextAttemptAt String @map("next_attempt_at")
+ lastError String? @map("last_error")
+ @@unique([tenantId,eventId,policyRevision,leadDays])
+ @@index([tenantId,status,nextAttemptAt])
+ @@map("deadline_reminder_slots")
+  @@unique([id,tenantId], map:"scope_deadline_reminder_slots_identity")
+
+}
+model DeadlineReminderDelivery {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ slotId String @map("slot_id")
+ userId String @map("user_id")
+ status String @default("PENDING")
+ claimId String? @map("claim_id")
+ deliveredAt String? @map("delivered_at")
+ reason String?
+ @@unique([tenantId,slotId,userId])
+ @@map("deadline_reminder_deliveries")
+}
+model DeadlineNotificationPreference {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ userId String @map("user_id")
+ deadlineReminders Int @default(1) @map("deadline_reminders")
+ @@unique([tenantId,userId])
+ @@map("notification_preferences")
+}
+model WorkflowWorkerState {
+ id String @id
+ tenantId String @map("tenant_id")
+ createdAt String @map("created_at")
+ checkedAt String @map("checked_at")
+ lastError String? @map("last_error")
+ @@map("workflow_worker_state")
+}
+
+
+model QueueEntry {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  studentId      String   @map("student_id")
+  coordinatorId  String   @map("coordinator_id")
+  serviceDate    String   @map("service_date")
+  session        String
+  queueNumber    Int      @map("queue_number")
+  joinedAt       DateTime @default(now()) @map("joined_at")
+  scheduledStart String   @map("scheduled_start")
+  scheduledEnd   String   @map("scheduled_end")
+  status         String   @default("WAITING")
+  startedAt      DateTime? @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+
+  @@unique([tenantId, id], map: "queue_entries_tenant_id_id_key")
+  @@index([tenantId, coordinatorId, serviceDate, session, status, scheduledStart], map: "queue_entries_coordinator_day")
+  @@index([tenantId, studentId, serviceDate, status], map: "queue_entries_student_day")
+  @@map("queue_entries")
 }

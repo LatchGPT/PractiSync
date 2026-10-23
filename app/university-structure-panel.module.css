@@ -1,0 +1,601 @@
+.structure {
+  display: grid;
+  grid-template-columns: minmax(245px, 282px) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.unitIndex,
+.catalog {
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.unitIndex {
+  padding: 18px 13px 12px;
+}
+
+.unitIndexHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 4px 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+.unitIndexHeader h2 {
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.unitIndexHeader p {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+.addUnitButton,
+.editButton,
+.addFirstCourse,
+.clearFilters {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 10px;
+  color: var(--rtu-navy);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.addUnitButton {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding-inline: 9px;
+}
+
+.unitNavigation {
+  margin-top: 11px;
+}
+
+.unitList {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unitButton {
+  display: flex;
+  width: 100%;
+  min-height: 53px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 9px;
+  color: var(--foreground);
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.unitButton[aria-pressed='true'] {
+  color: var(--rtu-navy);
+  background: var(--rtu-ice);
+  border-color: var(--border);
+}
+
+.unitButtonMain {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.unitName {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.unitCode {
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.035em;
+  line-height: 1.2;
+}
+
+.unitCount {
+  display: grid;
+  flex: 0 0 auto;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  border-radius: 7px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.unitButton[aria-pressed='true'] .unitCount {
+  color: var(--rtu-navy);
+  background: var(--card);
+}
+
+
+
+.unitIndexNote svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--rtu-blue);
+}
+
+.catalog {
+  overflow: hidden;
+}
+
+.catalogHeader {
+  display: grid;
+  gap: 17px;
+  padding: 19px 22px 16px;
+}
+
+.catalogTitleLockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.catalogMark {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: white;
+  background: var(--rtu-blue);
+  border-radius: 8px;
+}
+
+.catalogTitleLockup h2 {
+  min-width: 0;
+  color: var(--rtu-navy);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.catalogHeading > p {
+  margin: 8px 0 0 44px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.catalogTools {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) auto;
+  align-items: end;
+  gap: 11px;
+}
+
+.searchGroup,
+.mobileUnitFilter {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.searchGroup > label,
+.mobileUnitFilter > span {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.searchField {
+  position: relative;
+  min-width: 0;
+}
+
+.searchIcon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  color: var(--muted-foreground);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.searchInput {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 39px 9px 37px;
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.searchInput::placeholder {
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+
+.searchInput:focus-visible,
+.mobileUnitFilter select:focus-visible,
+.unitButton:focus-visible,
+.addUnitButton:focus-visible,
+.editButton:focus-visible,
+.addFirstCourse:focus-visible,
+.clearFilters:focus-visible {
+  outline: 2px solid var(--rtu-gold);
+  outline-offset: 2px;
+}
+
+.searchInput::-webkit-search-cancel-button {
+  display: none;
+}
+
+.clearButton {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.addCourseButton {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.mobileUnitFilter {
+  display: none;
+}
+
+.groups {
+  border-top: 1px solid var(--border);
+}
+
+.unitGroup + .unitGroup {
+  border-top: 1px solid var(--border);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 22px 10px;
+  background: var(--muted);
+}
+
+.groupHeading {
+  min-width: 0;
+}
+
+.groupNameLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 9px;
+}
+
+.groupNameLine h3 {
+  color: var(--rtu-navy);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.groupCode {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 6px;
+  color: var(--rtu-blue);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1.2;
+}
+
+.groupHeading p {
+  margin-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.courseList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.courseRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(74px, 110px) auto;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  padding: 11px 22px;
+  border-top: 1px solid var(--border);
+}
+
+.courseDetails {
+  min-width: 0;
+}
+
+.courseDetails h4 {
+  color: var(--foreground);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.courseDetails > span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.courseCode {
+  justify-self: start;
+  padding: 4px 6px;
+  color: var(--rtu-navy);
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.editButton {
+  min-height: 34px;
+  padding-inline: 9px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.emptyState {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 38px 20px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.emptyState > svg {
+  color: var(--rtu-blue);
+}
+
+.emptyState h3 {
+  color: var(--rtu-navy);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+
+.clearFilters {
+  margin-top: 4px;
+  color: var(--rtu-blue);
+  background: transparent;
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.emptyUnit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+}
+
+.emptyUnit p {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.addFirstCourse {
+  min-height: 34px;
+  color: var(--rtu-blue);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .unitButton:hover {
+    background: var(--muted);
+  }
+
+  .unitButton[aria-pressed='true']:hover {
+    background: var(--rtu-ice);
+  }
+
+  .addUnitButton:hover,
+  .editButton:hover,
+  .addFirstCourse:hover {
+    color: var(--rtu-blue);
+    background: var(--muted);
+    border-color: var(--border);
+  }
+
+  .clearButton:hover {
+    color: var(--foreground);
+    background: var(--muted);
+  }
+
+  .clearFilters:hover {
+    color: var(--rtu-navy);
+  }
+
+  .courseRow:hover {
+    background: var(--rtu-ice);
+  }
+}
+
+@media (max-width: 1000px) {
+  .structure {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .unitIndex {
+    padding: 13px 16px;
+  }
+
+  .unitIndexHeader {
+    padding: 0;
+    border: 0;
+  }
+
+  .unitNavigation,
+
+
+  .catalogTools {
+    grid-template-columns: minmax(170px, 1fr) minmax(220px, 1.2fr) auto;
+  }
+
+  .mobileUnitFilter {
+    display: grid;
+  }
+
+  .mobileUnitFilter select {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 32px 8px 10px;
+    color: var(--foreground);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font: inherit;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 700px) {
+  .searchInput,
+  .mobileUnitFilter select,
+  .addCourseButton,
+  .addUnitButton,
+  .editButton,
+  .addFirstCourse,
+  .clearFilters {
+    min-height: 44px;
+  }
+
+  .clearButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .catalogHeader {
+    padding: 16px 15px 14px;
+  }
+
+  .catalogTools {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .addCourseButton {
+    width: 100%;
+  }
+
+  .groupHeader {
+    padding-inline: 15px;
+  }
+
+  .courseRow {
+    padding-inline: 15px;
+    gap: 9px;
+  }
+
+  .emptyUnit {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-inline: 15px;
+  }
+}
+
+@media (max-width: 460px) {
+  .catalogTitleLockup h2 {
+    font-size: 16px;
+  }
+
+  .catalogHeading > p {
+    margin-left: 0;
+  }
+
+  .groupHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .courseRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .courseCode {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .courseRow .editButton {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}

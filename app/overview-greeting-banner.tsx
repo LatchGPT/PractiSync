@@ -3,9 +3,9 @@
 import {
   AlertCircle,
   BookOpen,
+  CalendarDays,
   CheckCircle2,
   Clock,
-  Download,
   FileText,
   GraduationCap,
   Plus,
@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import type {Snapshot} from '@/packages/validation/contracts';
+import {studentForecastDetail, studentForecastLabel, studentGoal} from './student-goal';
 
 interface OverviewGreetingBannerProps {
   data: Snapshot;
@@ -64,12 +65,25 @@ export default function OverviewGreetingBanner({
     const hasLoggedToday = data.entries.some(
       e => e.placementId === placement?.id && e.date === todayManila
     );
+    const completionForecast = placement
+      ? studentGoal(
+          data.entries.filter(entry => entry.placementId === placement.id),
+          Number(placement.requiredMinutes ?? 0),
+          data.calendarEvents
+        ).forecast
+      : null;
 
     const pendingDocs = placement
       ? data.documents.filter(
           d => d.placementId === placement.id && d.status !== 'APPROVED'
         )
       : [];
+
+    const baselineEvaluation = placement
+      ? data.evaluations.find(
+          e => e.placementId === placement.id && e.kind === 'BASELINE'
+        )
+      : null;
 
     const isPlacementActive = placement?.status === 'ACTIVE';
 
@@ -84,20 +98,6 @@ export default function OverviewGreetingBanner({
           <h1 className="banner-title">
             {timeGreeting}, {firstName} 👋
           </h1>
-
-          <p className="banner-subtitle">
-            <GraduationCap size={15} />
-            <span>
-              {course?.name ?? 'BS Information Technology'}
-              {placement ? (
-                <>
-                  {' '}· <strong style={{color: '#fff'}}>{placement.companyName}</strong> ({placement.section})
-                </>
-              ) : (
-                ' · Awaiting placement allocation'
-              )}
-            </span>
-          </p>
 
           <div className="banner-pills">
             {/* Primary Placement Status */}
@@ -131,13 +131,25 @@ export default function OverviewGreetingBanner({
               )
             )}
 
+            {completionForecast?.date && (
+              <span
+                className={`banner-pill ${completionForecast.status === 'completed' ? 'pill-green' : 'pill-glass'}`}
+                title={studentForecastDetail(completionForecast)}
+              >
+                {completionForecast.status === 'completed'
+                  ? <CheckCircle2 size={13} aria-hidden="true" />
+                  : <CalendarDays size={13} aria-hidden="true" />}
+                <span>{studentForecastLabel(completionForecast)}</span>
+              </span>
+            )}
+
             {/* Pending Document Alert */}
             {pendingDocs.length > 0 ? (
               <button
                 type="button"
                 className="banner-pill pill-amber clickable"
                 onClick={() => navigate('documents')}
-                title="View document clearance"
+                title="View Internship Documents"
               >
                 <FileText size={13} />
                 <span>{pendingDocs.length} doc{pendingDocs.length > 1 ? 's' : ''} pending review</span>
@@ -148,10 +160,39 @@ export default function OverviewGreetingBanner({
                 <span>Documents on track</span>
               </span>
             )}
+            {/* Baseline Self-Assessment Gate Status */}
+            {!baselineEvaluation ? (
+              <button
+                type="button"
+                className="banner-pill pill-amber clickable"
+                onClick={() => navigate('competencies')}
+                title="Establish your baseline competency self-assessment before supervisor grading"
+              >
+                <Sparkles size={13} />
+                <span>Self-assessment required</span>
+              </button>
+            ) : (
+              <span className="banner-pill pill-glass" title="Baseline competency self-assessment completed">
+                <ShieldCheck size={13} style={{ color: '#6ee7b7' }} />
+                <span>Baseline recorded</span>
+              </span>
+            )}
           </div>
         </div>
 
         <div className="banner-actions">
+          {!baselineEvaluation && (
+            <button
+              type="button"
+              className="overview-btn secondary"
+              style={{ borderColor: '#f7e0b1', color: '#966914', background: '#fffdf8' }}
+              onClick={() => navigate('competencies')}
+              title="Complete your competency self-assessment baseline"
+            >
+              <Sparkles size={14} color="#d97706" />
+              <span>Self-assessment</span>
+            </button>
+          )}
           <button
             type="button"
             className="overview-btn primary"
@@ -159,14 +200,6 @@ export default function OverviewGreetingBanner({
           >
             <Plus size={15} />
             <span>Log attendance</span>
-          </button>
-          <button
-            type="button"
-            className="overview-btn secondary"
-            onClick={() => navigate('portfolio')}
-          >
-            <Download size={14} />
-            <span>My portfolio</span>
           </button>
         </div>
       </section>
@@ -189,11 +222,6 @@ export default function OverviewGreetingBanner({
           <h1 className="banner-title">
             {timeGreeting}, {user.name} 👋
           </h1>
-
-          <p className="banner-subtitle">
-            <BookOpen size={15} />
-            <span>OJT Practicum Coordinator</span>
-          </p>
 
           <div className="banner-pills">
             <span className="banner-pill pill-green">
@@ -271,11 +299,6 @@ export default function OverviewGreetingBanner({
         <h1 className="banner-title">
           {timeGreeting}, {firstName} 👋
         </h1>
-
-        <p className="banner-subtitle">
-          <ShieldCheck size={15} />
-          <span>Practicum Office Administration</span>
-        </p>
 
         <div className="banner-pills">
           <span className="banner-pill pill-green">

@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     const predicate = where.join(' AND ');
     const offset = (page - 1) * pageSize;
     const [students, count] = await Promise.all([
-      list(`SELECT u.id,u.tenant_id,u.name,u.username,u.email,u.role,u.status,u.course_id,u.is_demo,u.created_at,c.code AS course_code,c.name AS course_name FROM users u LEFT JOIN courses c ON c.id=u.course_id AND c.tenant_id=u.tenant_id WHERE ${predicate} ORDER BY COALESCE(u.name,''),u.id LIMIT ? OFFSET ?`, ...values, pageSize, offset),
+      list(`SELECT u.id,u.tenant_id,u.name,u.username,u.email,u.role,u.status,u.course_id,u.is_demo,u.email_domain_exception,u.created_at,c.code AS course_code,c.name AS course_name FROM users u LEFT JOIN courses c ON c.id=u.course_id AND c.tenant_id=u.tenant_id WHERE ${predicate} ORDER BY COALESCE(u.name,''),u.id LIMIT ? OFFSET ?`, ...values, pageSize, offset),
       one(`SELECT COUNT(*) AS total FROM users u WHERE ${predicate}`, ...values),
     ]);
 

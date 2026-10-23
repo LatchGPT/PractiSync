@@ -4,6 +4,10 @@ PractiSync is a login-first cooperative education and on-the-job training worksp
 
 This document describes the current visual system and gives conventions for extending it. Values marked as current come from the repository; review guidance describes expectations for future changes, not a claim that every existing screen already meets them.
 
+OJT Recruitment is an Operate surface: use program categories first, then industry/location filters and optional search. Desktop uses a compact opportunity list beside full details; intermediate/phone widths stack these with keyboard-accessible return navigation. Reuse the RTU palette and Inter. Blue identifies interaction and selection; gold identifies focus. Keep the position and company above program, location, and intern-count metadata. Students have one primary Apply action, with explicit already-applied and ineligible states. Posting selects multiple programs using labeled checkboxes and preserves input on failures. Applicant contact actions remain within authorized application views and open an email app. Scoped styles are in `app/recruitment.css`; the full contract and finish-gate evidence are in `docs/latch-revision-plan.md`.
+
+Student registration is an Operate surface using the existing Inter and RTU blue-and-gold system. Its contract is in `docs/student-verification-design.md`. Keep the required first-login form in a bounded, internally scrolling dialog with labels, retained input, inline errors and a single primary action: Complete registration. The class-code preview shows the program, section and coordinator; successful registration opens the student workspace immediately. There is no student approval queue or waiting dialog. Class rosters include students without placements and offer a quieter destructive Remove action with a confirmation naming the student and section. Preserve account access and records when removing class membership. On phones, keep student details and actions visible, with placement information beneath the student name. Styles are scoped in `app/student-verification.css`.
+
 ## 1. Design direction
 
 The visual identity is inspired by Rizal Technological University's blue and gold. The product is a fictional demonstration, and the visual inspiration does not imply institutional endorsement. Demo content currently uses Rizal Technological University and fictional people, companies, policies, and records.
@@ -14,7 +18,7 @@ The interface should feel orderly, reassuring, and focused on practical work:
 - Place white surfaces on a pale blue-gray background.
 - Make progress, outstanding work, and the next useful action easy to find.
 - Use compact tables and summaries while preserving readable labels and values.
-- Explain statuses precisely. Reported hours, company-confirmed hours, document approval, and formal completion are separate concepts.
+- Explain statuses precisely. Reported hours, HTE-verified hours, document approval, and formal completion are separate concepts.
 - Keep sample data and unavailable services visibly identified.
 
 Gradients, gentle shadows, and small movement give the interface depth. Reserve stronger decoration for the sign-in identity panel, overview greeting, brand mark, and key actions.
@@ -90,7 +94,7 @@ Use **Inter** with the existing system sans-serif fallback stack. The base body 
 | Supporting copy | Usually 12â€“14px |
 | Badge, metadata, and eyebrow | Usually 10â€“12px |
 
-Use sentence case for actions and descriptions. Uppercase eyebrows are short contextual labels with expanded tracking. Keep numeric summaries aligned with tabular numerals where supported.
+Use sentence case for actions and descriptions. Use Title Case for module names and page headings, capitalizing each word while preserving standard acronyms. Uppercase eyebrows are short contextual labels with expanded tracking. Keep numeric summaries aligned with tabular numerals where supported.
 
 Use `lucide-react` for application icons. Most control icons are 14â€“18px; brand icons are larger. Pair unfamiliar icons with visible labels. Give icon-only controls an accessible name. The brand uses a graduation-cap mark, a blue rounded tile with a gold lower accent, and the PractiSync wordmark with a gold period. The favicon is the blue-and-gold monogram in [public/favicon.svg](public/favicon.svg).
 
@@ -156,12 +160,12 @@ Reuse primitives from `components/ui` and application patterns before introducin
 
 | Role | Primary design focus |
 | --- | --- |
-| Student | Placement context, daily attendance and narratives, target progress, document clearance, competency development, support, and portfolio |
+| Student | Placement context, daily attendance and narratives, target progress, document clearance, competency development, support, and OJT opportunities |
 | Coordinator | Class membership, student progress, document review, scoped announcements, and student support queues |
-| Supervisor | Assigned interns, optional attendance confirmation, evaluations, authorized hour policies, and company internship postings |
+| Supervisor | Assigned interns, whole-internship final DTR verification, evaluations, authorized hour policies, and company internship postings |
 | Super Admin | University office administration, account access, institution structure, and partner approvals |
 
-Super Admin navigation focuses on overview, accounts and roles, university structure, the internship board, and university announcements. Coordinator-facing class management, attendance review, document review, competency workflows, student portfolios, and support queues stay out of the office menu. Institutional read access still follows the permissions matrix. Other roles see modules according to their permissions and scope.
+Super Admin navigation focuses on overview, accounts and roles, university structure, the internship board, and university announcements. Coordinator-facing class management, attendance review, document review, competency workflows, and support queues stay out of the office menu. Institutional read access still follows the permissions matrix. Other roles see modules according to their permissions and scope.
 
 Role-specific summaries may use different accents, but should preserve the same card, typography, status, and action conventions. UI visibility follows permissions; server checks remain authoritative. Follow [docs/permissions.md](docs/permissions.md) when exposing a new action or record.
 
@@ -224,3 +228,32 @@ These are review expectations; this document does not certify an accessibility a
 - Update this document when changing shared tokens or interaction conventions.
 
 For code changes, run the repository checks relevant to the change and visually inspect affected screens. A successful build alone does not verify layout or usability.
+
+## 12. Original Word document generator
+
+The generator is an Operate surface for students completing documents and administrators configuring DOCX templates. Preserve the existing Inter, navy, blue, gold, white, and pale blue-gray tokens; component styles live in `app/native-document-generator.css` and are scoped to `.native-generator-dialog`.
+
+- Use a bounded desktop dialog capped at 1440px wide and 900px tall, with 24px viewport margins, a stable title and close control, independently scrolling work areas, and a full-width footer. Keep save status on the left and the next action on the right.
+- Student actions progress from **Review document** to **Download PDF** or **Download Word**. Saving drafts and editing details are secondary. Show named steps, inline field errors, and clearly selected download formats.
+- Administrators use a quiet preview-mode switch, field search, optional field-management help, collapsible settings, and labeled icon controls for removal. Field row headers show the title beside the drag handle; omit location counts and input-type badges. Keep **Save settings** secondary and **Publish template** primary. The field-selection action takes priority while text is being marked; finish or cancel selection before publishing.
+- At 850px and below, switch between details/settings and document preview instead of stacking a long form beneath the document. Keep both mounted to preserve answers and preview state. The footer remains visible; controls use at least 44px touch targets and phone inputs use 16px text.
+- Fit the document preview to its available width initially. Preserve manual zoom, and provide a labeled fit-to-width control.
+- Keep field help beside its input, retain input after failures, and show persistent action errors inside the modal. Confirm saves in the footer and downloads inside the dialog so floating notifications cannot cover its actions. Explicitly save drafts/settings; warn before closing with unsaved changes and prevent accidental backdrop dismissal. Retain Radix focus trapping and Escape handling.
+- Use a restrained 200ms modal entrance and honor the application's reduced-motion setting. Reuse existing field drag and keyboard reordering, server actions, document rendering, and permission rules.
+
+## HTE approval and final review extension
+
+The Operate surface and existing blue-and-gold identity remain authoritative. See `docs/hte-workflows.md` for the design contract. Use a compact approval queue with requested/current values, explicit reasons for rejection, and a single primary action per review. Whole-internship DTR verification replaces daily confirmation controls and queue counts. The school evaluation placeholder reads “Waiting for evaluation form” and explains that Super Admin must upload and publish the document for every course and program. Preserve the school’s wording and scale labels when configuring its online answer fields; no sample questionnaire is seeded.
+
+## Tasks 5–8 extension
+
+Feedback provenance, account recovery and deadline settings are Operate surfaces. Follow `docs/backlog-5-8-contract.md`; reuse the existing Inter/RTU tokens and shared controls, use one primary action per form, retain failed input and state the verification/configuration status in text.
+
+The HTE placement form leads with its attributed submission receipt. University reviewers can reach the provenance ledger even when sample-size rules suppress analytics; legacy and invalidated evidence remains visible with explicit labels. Keep destructive invalidation behind an expanded, reasoned confirmation. Pending submissions disable editable fields and preserve failed drafts. Associate labels explicitly with their inputs. On phones, contain wide tables and Settings tab scrolling, stack controls, and leave optional deadline times genuinely optional. Security controls must describe actual configured behavior; do not show simulated password changes, MFA, device locations or email digests as active. See `docs/backlog-5-8-evidence.md` for the rendered finish gate.
+
+Calendar defaults to Agenda on compact viewports while retaining a mode the user explicitly selects. Grid cells use `aria-selected`, and arrow-key navigation keeps focus with the selected date. Bound phone summary-card tracks with `minmax(0, 1fr)` so long deadline labels cannot widen the page.
+\n## 13. University structure register
+
+The Super Admin's academic structure view supports the OJT workflow: students, classes, policies, and internship eligibility rely on the university's academic units and degree programs. Use a searchable course register grouped by academic unit, with the unit index beside it on desktop and an in-flow unit selector on smaller screens. Preserve the seven RTU units and the exact program names supplied for the catalog.
+
+Keep create and edit actions close to the unit or program they affect. Course forms must show the owning academic unit, and edits that move a course must make that change explicit. Reject duplicate unit names, program names within a unit, and codes before saving, and explain stale records clearly. This view has no unit or course removal action; do not add one. Restrict management controls and writes to Super Admins, while search and browsing remain readable to authorized viewers.

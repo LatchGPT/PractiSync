@@ -1,3 +1,5 @@
+name: practisync
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -21,7 +23,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: practisync-app
     restart: unless-stopped
     depends_on:
       postgres:
@@ -38,3 +39,4 @@ services:
 
 volumes:
   practisync-data:
+    name: practisync_practisync-data

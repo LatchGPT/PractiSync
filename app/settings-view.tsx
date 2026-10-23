@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 import {useState, useEffect} from 'react';
 import {
   UserRound,
@@ -16,14 +18,11 @@ import {
   Sun,
   CheckCircle2,
   Globe,
-  Eye,
-  EyeOff,
   RotateCcw,
 } from 'lucide-react';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
 import {Switch} from '@/components/ui/switch';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '@/components/ui/select';
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from '@/components/ui/dialog';
 import {toast} from 'sonner';
 import type {Snapshot, Identity, Role} from '@/packages/validation/contracts';
 
@@ -95,7 +94,7 @@ const DEFAULT_SETTINGS: PractiSyncSettings = {
 const titleRole: Record<Role, string> = {
   STUDENT: 'Student',
   COORDINATOR: 'Coordinator',
-  SUPERVISOR: 'HTE Supervisor',
+  SUPERVISOR: 'Industry Partner Supervisor',
   SUPER_ADMIN: 'Super Admin'
 };
 
@@ -126,12 +125,9 @@ export default function SettingsView({
     return DEFAULT_SETTINGS;
   });
 
+  const router=useRouter();
+  const [revoking,setRevoking]=useState(false);
   const [activeTab, setActiveTab] = useState('general');
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPasswords, setShowPasswords] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -218,29 +214,6 @@ export default function SettingsView({
     toast.info('Preferences reset to Rizal Technological University defaults.');
   };
 
-  // Change password submission handler
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword) {
-      toast.error('Please enter your current password.');
-      return;
-    }
-    if (newPassword.length < 12) {
-      toast.error('New password must be at least 12 characters.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match.');
-      return;
-    }
-
-    toast.success('Password updated successfully. Session token renewed.');
-    setPasswordModalOpen(false);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-  };
-
   // Export User JSON Data
   const handleExportData = () => {
     const userPlacements = data.placements.filter((p) => p.studentId === user.id);
@@ -303,10 +276,6 @@ export default function SettingsView({
                 <CheckCircle2 size={12} /> Active Account
               </span>
             </div>
-            <p className="settings-subtext">
-              {settings.maskSensitiveData ? '••••••••@rtu.edu.ph' : user.email} ·{' '}
-              <strong>Rizal Technological University</strong> · RTU Practicum System
-            </p>
           </div>
         </div>
 
@@ -322,8 +291,8 @@ export default function SettingsView({
             <span className="stat-label">
               <Laptop size={13} /> Active Session
             </span>
-            <strong className="stat-value">Windows · Chrome</strong>
-            <small className="stat-meta">Localhost (Metro Manila)</small>
+            <strong className="stat-value">Signed in</strong>
+            <small className="stat-meta">Access checked by the server</small>
           </div>
         </div>
       </section>
@@ -357,7 +326,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Account Identity & University Affiliation</h3>
-                <p>Personal credentials and institutional practicum mapping for all accounts.</p>
+
               </div>
               <button type="button" className="secondary" onClick={onEditProfile}>
                 Edit display name
@@ -368,7 +337,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Display Name</strong>
-                  <p>Visible across class rosters, attendance records, and evaluations.</p>
+
                 </div>
                 <span className="settings-value-pill">{user.name}</span>
               </div>
@@ -376,7 +345,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Username</strong>
-                  <p>Permanent institutional identifier used during authentication.</p>
+
                 </div>
                 <code className="settings-code-pill">{user.username}</code>
               </div>
@@ -384,7 +353,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Institutional Email</strong>
-                  <p>Official university communication address.</p>
+
                 </div>
                 <span className="settings-value-pill">
                   {settings.maskSensitiveData ? '••••••••@rtu.edu.ph' : user.email}
@@ -394,7 +363,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Institutional Role</strong>
-                  <p>Permissions level and system scope granted by the Super Admin.</p>
+
                 </div>
                 <span className="chip blue">{titleRole[role]}</span>
               </div>
@@ -404,7 +373,7 @@ export default function SettingsView({
                   <div className="settings-item-row">
                     <div>
                       <strong>Degree Program & Section</strong>
-                      <p>Academic curricular assignment.</p>
+
                     </div>
                     <span className="settings-value-pill">
                       {String(ownPlacement.courseCode || 'BSIT')} · {String(ownPlacement.section || 'Section 4-1')}
@@ -413,7 +382,7 @@ export default function SettingsView({
                   <div className="settings-item-row">
                     <div>
                       <strong>Assigned OJT Partner Company</strong>
-                      <p>Host training establishment endorsed for internship.</p>
+
                     </div>
                     <span className="settings-value-pill">
                       {String(ownPlacement.companyName || 'Acme Innovations')}
@@ -426,7 +395,7 @@ export default function SettingsView({
                 <div className="settings-item-row">
                   <div>
                     <strong>Managed Classes</strong>
-                    <p>Total active academic sections under your coordination.</p>
+
                   </div>
                   <span className="settings-value-pill">{data.classes.length} active classes</span>
                 </div>
@@ -436,7 +405,7 @@ export default function SettingsView({
                 <div className="settings-item-row">
                   <div>
                     <strong>Tenant Authority</strong>
-                    <p>Full institutional administration access.</p>
+
                   </div>
                   <span className="chip green">Rizal Technological University (Root Admin)</span>
                 </div>
@@ -448,7 +417,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Locale & Regional Preferences</h3>
-                <p>Regional formatting for academic timetables and currency.</p>
+
               </div>
             </div>
 
@@ -456,7 +425,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Language & Terminology</strong>
-                  <p>Primary language for UI labels and notifications.</p>
+
                 </div>
                 <Select
                   value={settings.language}
@@ -475,7 +444,6 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>University Academic Year</strong>
-                  <p>Current active practicum term.</p>
                 </div>
                 <span className="settings-value-pill">AY 2026–2027 · 1st Semester</span>
               </div>
@@ -494,7 +462,7 @@ export default function SettingsView({
               <strong>Philippine Standard Time (PHT, UTC+8) Mandatory Anchor</strong>
               <p>
                 To adhere to Philippine higher education internship policies, all daily training
-                records, attendance time-in/out timestamps, and coordinator confirmations are
+                records, attendance time-in/out timestamps, and final Industry Partner verifications are
                 calculated strictly in <strong>Asia/Manila (UTC+8)</strong>.
               </p>
             </div>
@@ -508,7 +476,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Time & Attendance Logging Preferences</h3>
-                <p>Configure how hours and daily reflections are formatted and captured.</p>
+
               </div>
             </div>
 
@@ -516,7 +484,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Time Display Format</strong>
-                  <p>Choose between standard 12-hour (AM/PM) or 24-hour military notation.</p>
+
                 </div>
                 <div className="settings-radio-group">
                   <button
@@ -539,7 +507,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Daily DTR Reminder Prompt</strong>
-                  <p>Receive an in-app banner alert if today&apos;s attendance has not been logged.</p>
+
                 </div>
                 <div className="flex items-center gap-4">
                   {settings.dailyReminder && (
@@ -569,7 +537,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Default Lunch Break Duration</strong>
-                  <p>Pre-populates break deduction when opening the Log Attendance dialog.</p>
+
                 </div>
                 <Select
                   value={String(settings.defaultBreakMinutes)}
@@ -590,7 +558,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Auto-Save Daily Narratives</strong>
-                  <p>Continuously cache your draft reflections to local browser storage.</p>
+
                 </div>
                 <Switch
                   checked={settings.autoSaveNarratives}
@@ -602,7 +570,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Progress Ring Primary Value</strong>
-                  <p>Display percentage or completed hours in the center of the DTR ring chart.</p>
+
                 </div>
                 <div className="settings-radio-group">
                   <button
@@ -625,12 +593,12 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Highlight Coordinator Confirmations</strong>
-                  <p>Show distinct visual indicators for confirmed vs reported hours.</p>
+
                 </div>
                 <Switch
                   checked={settings.showConfirmedBadge}
                   onCheckedChange={(c) => updateSetting('showConfirmedBadge', c, 'Confirmation badge setting saved.')}
-                  aria-label="Highlight coordinator confirmations"
+                  aria-label="Highlight final Industry Partner verifications"
                 />
               </div>
             </div>
@@ -643,7 +611,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Notification Channels & Alert Triggers</h3>
-                <p>Manage how and when PractiSync notifies you about critical practicum milestones.</p>
+
               </div>
               <button
                 type="button"
@@ -658,7 +626,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>In-App Toast Alerts</strong>
-                  <p>Display real-time popup toasts on status updates and successful saves.</p>
+
                 </div>
                 <Switch
                   checked={settings.toastsEnabled}
@@ -670,7 +638,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Attendance & Hour Endorsements</strong>
-                  <p>Notify when hours are submitted, corrected, or verified by your coordinator.</p>
+
                 </div>
                 <Switch
                   checked={settings.notifyDtr}
@@ -681,13 +649,13 @@ export default function SettingsView({
 
               <div className="settings-item-row">
                 <div>
-                  <strong>Document Clearance Workflow</strong>
-                  <p>Alert when coordinator approves or requests changes on sample clearance papers.</p>
+                  <strong>Internship Document Review Updates</strong>
+
                 </div>
                 <Switch
                   checked={settings.notifyClearance}
-                  onCheckedChange={(c) => updateSetting('notifyClearance', c, 'Clearance alerts updated.')}
-                  aria-label="Document clearance workflow alerts"
+                  onCheckedChange={(c) => updateSetting('notifyClearance', c, 'Internship document review alerts updated.')}
+                  aria-label="Internship document review alerts"
                 />
               </div>
 
@@ -697,7 +665,7 @@ export default function SettingsView({
                     <strong>Support & Urgent SOS Cases</strong>
                     <span className="chip red">Priority</span>
                   </div>
-                  <p>Immediate notifications for confidential coordinator inquiries and responses.</p>
+
                 </div>
                 <Switch
                   checked={settings.notifySupport}
@@ -709,7 +677,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Campus & Class Announcements</strong>
-                  <p>Alerts when new official updates are broadcast by coordinators or faculty.</p>
+
                 </div>
                 <Switch
                   checked={settings.notifyAnnouncements}
@@ -720,24 +688,24 @@ export default function SettingsView({
 
               <div className="settings-item-row">
                 <div>
-                  <strong>Internship Board & Job Matches</strong>
-                  <p>Notifies of new verified company openings matching your course curriculum.</p>
+                  <strong>Internship Recruitment & Job Matches</strong>
+
                 </div>
                 <Switch
                   checked={settings.notifyJobs}
                   onCheckedChange={(c) => updateSetting('notifyJobs', c, 'Job board alerts updated.')}
-                  aria-label="Internship board & job matches alerts"
+                  aria-label="Internship Recruitment & job matches alerts"
                 />
               </div>
 
               <div className="settings-item-row">
                 <div>
                   <strong>Institutional Email Digest</strong>
-                  <p>Frequency of consolidated summary emails sent to your registered address.</p>
+                  <p>Email digests are not configured.</p>
                 </div>
                 <Select
-                  value={settings.emailDigest}
-                  onValueChange={(v) => updateSetting('emailDigest', v as PractiSyncSettings['emailDigest'], 'Email digest preference saved.')}
+                  value="off"
+                  disabled
                 >
                   <SelectTrigger className="w-56 h-10" aria-label="Institutional email digest frequency">
                     <SelectValue />
@@ -746,7 +714,7 @@ export default function SettingsView({
                     <SelectItem value="immediate">Real-time alerts</SelectItem>
                     <SelectItem value="daily">Daily digest (6:00 PM PHT)</SelectItem>
                     <SelectItem value="weekly">Weekly briefing (Mondays)</SelectItem>
-                    <SelectItem value="off">Disabled in demo</SelectItem>
+                    <SelectItem value="off">Not configured</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -754,7 +722,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Sound & Audio Effects</strong>
-                  <p>Play a subtle chime upon successful attendance logging or milestone completion.</p>
+
                 </div>
                 <Switch
                   checked={settings.soundEffects}
@@ -772,7 +740,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Theme & Visual Palette</h3>
-                <p>Customize the workspace aesthetics to your preferred lighting environment.</p>
+
               </div>
             </div>
 
@@ -849,7 +817,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Layout & Visual Density</h3>
-                <p>Adjust padding, sidebar behaviors, and visual accessibility.</p>
+
               </div>
             </div>
 
@@ -857,7 +825,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Table & Card Density</strong>
-                  <p>Choose between comfortable spacious rows or dense compact data tables.</p>
+
                 </div>
                 <div className="settings-radio-group">
                   <button
@@ -880,7 +848,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>High Contrast Borders</strong>
-                  <p>Enhance card, table, and partition borders for greater visibility.</p>
+
                 </div>
                 <Switch
                   checked={settings.highContrast}
@@ -892,7 +860,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Micro-Animations & Smooth Transitions</strong>
-                  <p>Enable fluid hover transitions, milestone stepper fills, and animated charts.</p>
+
                 </div>
                 <Switch
                   checked={settings.animations}
@@ -910,40 +878,32 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Credentials & Authentication Security</h3>
-                <p>Password management and access validation per university compliance.</p>
+
               </div>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setPasswordModalOpen(true)}
-              >
-                <Key size={14} /> Change password
-              </button>
+              {user.isDemo?<span className="chip">Fixed demo credentials</span>:<Link className="secondary" href="/account-access"><Key size={14}/>Recover account access</Link>}
             </div>
 
             <div className="settings-grid-rows">
               <div className="settings-item-row">
                 <div>
                   <strong>Account Password</strong>
-                  <p>Encrypted using argon2/PBKDF2 salted hash with minimum 12-character policy.</p>
+
                 </div>
                 <span className="chip green">
-                  <ShieldCheck size={12} /> Compliant with Security Policy
+                  <ShieldCheck size={12} /> Server-managed access
                 </span>
               </div>
 
               <div className="settings-item-row">
                 <div>
                   <strong>Two-Factor Authentication (2FA)</strong>
-                  <p>Extra verification via institutional authenticator app or email OTP.</p>
+                  <p>Application-managed 2FA is not configured.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`chip ${settings.twoFactorEnabled ? 'green' : 'orange'}`}>
-                    {settings.twoFactorEnabled ? 'Active (Authenticator)' : 'Not configured'}
-                  </span>
+                  <span className="chip orange">Not configured</span>
                   <Switch
-                    checked={settings.twoFactorEnabled}
-                    onCheckedChange={(c) => updateSetting('twoFactorEnabled', c, c ? '2FA enabled.' : '2FA disabled.')}
+                    checked={false}
+                    disabled
                     aria-label="Two-factor authentication (2FA)"
                   />
                 </div>
@@ -952,7 +912,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Presentation Shield (Privacy Mode)</strong>
-                  <p>Masks personal student IDs, phone numbers, and email addresses during presentations.</p>
+
                 </div>
                 <Switch
                   checked={settings.maskSensitiveData}
@@ -966,15 +926,16 @@ export default function SettingsView({
           <div className="settings-panel-card">
             <div className="settings-card-header">
               <div>
-                <h3>Active Browser Sessions</h3>
-                <p>Currently authorized login sessions and device tokens.</p>
+                <h3>Session access</h3>
+
               </div>
               <button
                 type="button"
                 className="secondary destructive"
-                onClick={() => toast.success('All other remote sessions have been revoked.')}
+                disabled={revoking}
+                onClick={async()=>{if(!confirm('Sign out all sessions for '+user.name+', including this browser? You will need to sign in again.'))return;setRevoking(true);try{const response=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'revokeOwnSessions',values:{}})});const result=await response.json() as {error?:string};if(!response.ok)throw new Error(result.error??'Sessions could not be revoked. Try again.');router.replace('/login');}catch(error){toast.error(error instanceof Error?error.message:'Sessions could not be revoked.');}finally{setRevoking(false);}}}
               >
-                Revoke other sessions
+                {revoking?'Signing out…':'Sign out all sessions'}
               </button>
             </div>
 
@@ -985,11 +946,11 @@ export default function SettingsView({
                 </div>
                 <div className="session-details">
                   <div className="flex items-center gap-2">
-                    <strong>Windows 11 · Chrome Modern</strong>
+                    <strong>Current sign-in</strong>
                     <span className="chip green">This Device</span>
                   </div>
-                  <p>Metro Manila, Philippines · IP 120.29.112.44 · Asia/Manila</p>
-                  <small className="muted">Active now · Session rolling token v{user.sessionVersion || 1}</small>
+                  <p>Device and location details are not collected here.</p>
+                  <small className="muted">Changing your password or signing out all sessions invalidates existing access.</small>
                 </div>
               </div>
             </div>
@@ -1002,7 +963,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>PractiSync System Architecture</h3>
-                <p>Sandbox runtime status and institutional specifications.</p>
+
               </div>
               <button
                 type="button"
@@ -1026,7 +987,6 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Platform Edition</strong>
-                  <p>Higher education practicum & OJT tracking platform.</p>
                 </div>
                 <span className="settings-value-pill">PractiSync v2.4.0 (RTU-Inspired)</span>
               </div>
@@ -1034,7 +994,6 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Deployment Mode</strong>
-                  <p>Interactive demonstration runtime with seeded fixtures.</p>
                 </div>
                 <span className="chip orange">Fictional Demo Sandbox</span>
               </div>
@@ -1042,7 +1001,6 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Database Architecture</strong>
-                  <p>Multi-tenant relational PostgreSQL schema with Prisma ORM.</p>
                 </div>
                 <span className="settings-value-pill">Prisma Multi-Tenant v6</span>
               </div>
@@ -1053,7 +1011,7 @@ export default function SettingsView({
             <div className="settings-card-header">
               <div>
                 <h3>Personal Data & Workspace Backups</h3>
-                <p>Download a copy of your records or reset preferences to defaults.</p>
+
               </div>
             </div>
 
@@ -1061,7 +1019,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Export Complete Training Records</strong>
-                  <p>Export your full attendance history, reflections, and document metadata as JSON.</p>
+
                 </div>
                 <button type="button" className="secondary" onClick={handleExportData}>
                   <Download size={14} /> Export JSON Data
@@ -1071,7 +1029,7 @@ export default function SettingsView({
               <div className="settings-item-row">
                 <div>
                   <strong>Reset Preferences to University Defaults</strong>
-                  <p>Restores theme, density, time formatting, and notifications to default configuration.</p>
+
                 </div>
                 <button type="button" className="secondary" onClick={handleReset}>
                   <RotateCcw size={14} /> Reset Defaults
@@ -1082,77 +1040,7 @@ export default function SettingsView({
         </TabsContent>
       </Tabs>
 
-      {/* Change Password Dialog Modal */}
-      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
-        <DialogContent className="sm:max-w-[460px]">
-          <DialogHeader>
-            <DialogTitle>Change Account Password</DialogTitle>
-            <DialogDescription>
-              Enter your current password and choose a secure new password (minimum 12 characters).
-            </DialogDescription>
-          </DialogHeader>
 
-          <form onSubmit={handlePasswordSubmit} className="modal-form">
-            <div className="field">
-              <label htmlFor="current-pw">Current Password</label>
-              <input
-                id="current-pw"
-                type={showPasswords ? 'text' : 'password'}
-                placeholder="Enter current password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="new-pw">New Password</label>
-              <input
-                id="new-pw"
-                type={showPasswords ? 'text' : 'password'}
-                placeholder="Minimum 12 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                minLength={12}
-                required
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="confirm-pw">Confirm New Password</label>
-              <input
-                id="confirm-pw"
-                type={showPasswords ? 'text' : 'password'}
-                placeholder="Repeat new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                minLength={12}
-                required
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="textbutton text-xs"
-                onClick={() => setShowPasswords(!showPasswords)}
-              >
-                {showPasswords ? <EyeOff size={13} className="inline mr-1" /> : <Eye size={13} className="inline mr-1" />}
-                {showPasswords ? 'Hide passwords' : 'Show passwords'}
-              </button>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" className="secondary" onClick={() => setPasswordModalOpen(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="primary">
-                Update password
-              </button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
