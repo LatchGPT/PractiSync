@@ -123,39 +123,7 @@ export default function RoleDashboard({data,navigate,onLogAttendance,onViewStude
  }
 
  const departments=data.departments;
- return <div className="role-dashboard admin-dashboard">
-  <div className="role-columns">
-   <div className="role-stack">
-    <Card title="Academic structure" action={<Link to="institution" navigate={navigate}>Manage departments and courses</Link>}>
-     {departments.length?<div className="role-list">{departments.map(department=>{
-      const courseCount=data.courses.filter(course=>course.departmentId===department.id).length;
-      return <div className="role-list-row" key={department.id}>
-       <span className="role-symbol"><GraduationCap size={17}/></span>
-       <div><strong>{value(department,'name')}</strong><span>{value(department,'code')}</span></div>
-       <span className="role-list-end"><strong>{courseCount}</strong><small>{courseCount===1?'course':'courses'}</small></span>
-      </div>;
-     })}</div>:<Empty>No academic departments have been added yet.</Empty>}
-    </Card>
-    <Card title="Recent activity" action={<Link to="accounts" navigate={navigate}>View accounts</Link>}>
-     {data.audit.length?<div className="role-list">{data.audit.slice(0,5).map(event=><div className="role-list-row" key={event.id}>
-      <span className="role-symbol soft"><ShieldCheck size={17}/></span>
-      <div><strong>{value(event,'action').toLowerCase().replaceAll('_',' ')}</strong><span>{date(value(event,'createdAt'))}</span></div>
-     </div>)}</div>:<Empty>No recent account or academic structure updates.</Empty>}
-    </Card>
-   </div>
-   <div className="role-stack">
-    <Card title="Administration shortcuts">
-     <div className="role-actions">
-      <button onClick={()=>navigate('accounts')}><Users size={18}/><span><strong>Accounts and roles</strong><small>Manage university access</small></span><ArrowRight size={16}/></button>
-      <button onClick={()=>navigate('institution')}><GraduationCap size={18}/><span><strong>Departments and courses</strong><small>Maintain academic structure</small></span><ArrowRight size={16}/></button>
-      <button onClick={()=>navigate('jobs')}><BriefcaseBusiness size={18}/><span><strong>Industry partners</strong><small>Review partners and openings</small></span><ArrowRight size={16}/></button>
-      <button onClick={()=>navigate('announcements')}><Megaphone size={18}/><span><strong>University announcements</strong><small>Publish updates across campus</small></span><ArrowRight size={16}/></button>
-     </div>
-    </Card>
-    <Card title="University calendar" className="role-calendar-card"><AdminMiniCalendar events={data.calendarEvents}/></Card>
-   </div>
-  </div>
- </div>;
+ return <div className="role-dashboard admin-dashboard"><div className="role-columns"><div className="role-stack"><Card title="Curriculum Management" action={<Link to="institution" navigate={navigate}>Manage curriculum</Link>}>{departments.length?<div className="role-list">{departments.map(department=><div className="role-list-row" key={department.id}><span className="role-symbol"><GraduationCap size={17}/></span><div><strong>{value(department,'name')}</strong><span>{value(department,'code')}</span></div><span className="role-list-end"><strong>{data.courses.filter(course=>course.departmentId===department.id).length}</strong><small>courses</small></span></div>)}</div>:<Empty>No departments configured.</Empty>}</Card><Card title="Recent account activity" action={<Link to="accounts" navigate={navigate}>Accounts & roles</Link>}>{data.audit.length?<div className="role-list">{data.audit.slice(0,5).map(event=><div className="role-list-row" key={event.id}><span className="role-symbol soft"><ShieldCheck size={17}/></span><div><strong>{value(event,'action').toLowerCase().replaceAll('_',' ')}</strong><span>{date(value(event,'createdAt'))}</span></div></div>)}</div>:<Empty>Account and structure changes will appear here after they are made.</Empty>}</Card></div><div className="role-stack"><Card title="University office"><div className="role-actions"><button onClick={()=>navigate('accounts')}><Users size={18}/><span><strong>Accounts and roles</strong></span><ArrowRight size={16}/></button><button onClick={()=>navigate('institution')}><GraduationCap size={18}/><span><strong>Departments and courses</strong></span><ArrowRight size={16}/></button><button onClick={()=>navigate('jobs')}><BriefcaseBusiness size={18}/><span><strong>Internship partners</strong></span><ArrowRight size={16}/></button><button onClick={()=>navigate('announcements')}><Megaphone size={18}/><span><strong>University announcements</strong></span><ArrowRight size={16}/></button></div></Card><Card title="Calendar" className="role-calendar-card"><AdminMiniCalendar events={data.calendarEvents}/></Card></div></div></div>;
 }
 
 function Announcements({data,navigate}:{data:Snapshot;navigate:(page:string)=>void}){
