@@ -43,6 +43,7 @@ interface Step {
 }
 
 const hours = (minutes: number) => `${Number((minutes / 60).toFixed(1))} hrs`;
+const countLabel = (count: number, singular: string, plural = `${singular}s`) => `${count} ${count === 1 ? singular : plural}`;
 const formatLogDate = (value: string) => {
   const [year, month, day] = value.slice(0, 10).split('-').map(Number);
   return year && month && day
@@ -336,13 +337,13 @@ export default function PracticumMilestoneStepper({
     steps = [
       {
         id: 'adm-accounts',
-        phase: 'SYSTEM 01',
-        title: 'Accounts & Access',
+        phase: 'AREA 01',
+        title: 'Accounts and access',
         status: totalAccounts ? 'current' : 'empty',
         badgeLabel: totalAccounts ? 'Active' : 'No accounts',
-        kpiValue: `${totalAccounts} Accounts`,
+        kpiValue: countLabel(totalAccounts, 'account'),
         kpiSubLabel: `${disabledUsers} disabled accounts`,
-        detail: 'Provision sample accounts and manage roles',
+        detail: 'Manage university accounts and access roles',
         to: 'accounts',
         icon: ShieldCheck,
         metrics: [
@@ -354,13 +355,13 @@ export default function PracticumMilestoneStepper({
       },
       {
         id: 'adm-academics',
-        phase: 'SYSTEM 02',
-        title: 'Curriculum Management',
+        phase: 'AREA 02',
+        title: 'Academic structure',
         status: data.departments.length || data.courses.length ? 'current' : 'empty',
         badgeLabel: data.departments.length || data.courses.length ? 'Active' : 'No structure',
-        kpiValue: `${data.departments.length} Depts`,
-        kpiSubLabel: `${data.courses.length} accredited courses`,
-        detail: 'Rizal Technological University departments & curricula',
+        kpiValue: countLabel(data.departments.length, 'department'),
+        kpiSubLabel: countLabel(data.courses.length, 'course'),
+        detail: 'Maintain university departments and course offerings',
         to: 'institution',
         icon: GraduationCap,
         metrics: [
@@ -370,13 +371,13 @@ export default function PracticumMilestoneStepper({
       },
       {
         id: 'adm-partners',
-        phase: 'SYSTEM 03',
-        title: 'Training Partners',
+        phase: 'AREA 03',
+        title: 'Industry partners',
         status: pendingCompanies.length ? 'attention' : data.companies.length ? 'clear' : 'empty',
         badgeLabel: pendingCompanies.length ? 'Needs verification' : data.companies.length ? 'Up to date' : 'No partners',
-        kpiValue: `${data.companies.length} Partners`,
+        kpiValue: countLabel(data.companies.length, 'partner'),
         kpiSubLabel: `${pendingCompanies.length} awaiting verification`,
-        detail: 'Verify organizations that want to host students',
+        detail: 'Review organizations seeking to host practicum students',
         to: 'jobs',
         icon: BriefcaseBusiness,
         metrics: [
@@ -387,13 +388,13 @@ export default function PracticumMilestoneStepper({
       },
       {
         id: 'adm-posts',
-        phase: 'SYSTEM 04',
-        title: 'Internship Approvals',
+        phase: 'AREA 04',
+        title: 'Internship openings',
         status: pendingPosts.length ? 'attention' : data.jobs.length ? 'clear' : 'empty',
         badgeLabel: pendingPosts.length ? 'Needs review' : data.jobs.length ? 'Queue clear' : 'No postings',
         kpiValue: `${pendingPosts.length} Pending`,
-        kpiSubLabel: `${publishedPosts.length} published openings`,
-        detail: 'Review internship posts before they appear to students',
+        kpiSubLabel: countLabel(publishedPosts.length, 'published opening'),
+        detail: 'Review internship openings before they are published to students',
         to: 'jobs',
         icon: ShieldCheck,
         metrics: [
@@ -404,7 +405,7 @@ export default function PracticumMilestoneStepper({
       },
     ];
 
-    currentPhaseLabel = 'University Office Overview';
+    currentPhaseLabel = 'University overview';
   }
 
   const [active, setActive] = useState<{id: string; pinned: boolean} | null>(null);
@@ -438,14 +439,14 @@ export default function PracticumMilestoneStepper({
   };
 
   return (
-    <section className="practicum-stepper-card" aria-label={role === 'COORDINATOR' ? 'Coordinator workload' : 'Practicum lifecycle and key metrics'}>
+    <section className="practicum-stepper-card" aria-label={role === 'COORDINATOR' ? 'Coordinator workload' : role === 'SUPER_ADMIN' ? 'University administration overview' : 'Practicum lifecycle and key metrics'}>
       <div className="stepper-header">
         <div className="stepper-header-left">
           <div className="stepper-eyebrow">
             <Compass size={13} className="stepper-eyebrow-icon" />
-            <span>{role === 'COORDINATOR' ? 'COORDINATOR WORKLOAD' : 'PRACTICUM LIFECYCLE &amp; KEY METRICS'}</span>
+            <span>{role === 'COORDINATOR' ? 'COORDINATOR WORKLOAD' : role === 'SUPER_ADMIN' ? 'UNIVERSITY OPERATIONS' : 'PRACTICUM LIFECYCLE &amp; KEY METRICS'}</span>
           </div>
-          <h2 className="stepper-title">{isStudent ? 'Your practicum phases' : role === 'COORDINATOR' ? 'Workload at a glance' : 'Areas in your practicum workspace'}</h2>
+          <h2 className="stepper-title">{isStudent ? 'Your practicum phases' : role === 'COORDINATOR' ? 'Workload at a glance' : role === 'SUPER_ADMIN' ? 'University operations at a glance' : 'Areas in your practicum workspace'}</h2>
         </div>
         <div className="stepper-badge">
           <Sparkles size={12} className="stepper-badge-icon" />
@@ -453,7 +454,7 @@ export default function PracticumMilestoneStepper({
         </div>
       </div>
 
-      <div className="phase-track" role="list" aria-label={isStudent ? 'Student practicum phases' : role === 'COORDINATOR' ? 'Coordinator work areas' : 'Practicum operations areas'}>
+      <div className="phase-track" role="list" aria-label={isStudent ? 'Student practicum phases' : role === 'COORDINATOR' ? 'Coordinator work areas' : role === 'SUPER_ADMIN' ? 'University administration areas' : 'Practicum operations areas'}>
         {steps.map((step, index) => {
           const Icon = step.icon;
           const isOpen = active?.id === step.id;
