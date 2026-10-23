@@ -6,7 +6,7 @@ export type Role=typeof roles[number];
 export type Row={id:string;tenantId:string;createdAt:string;[key:string]:string|number|null};
 export interface Identity {id:string;name:string;username:string;email:string;role:Role;status:string;sessionVersion:number;isDemo:number;courseId:string|null;companyId:string|null;tenantId:string;authenticationId?:string;}
 export interface StudentAccountSummary extends Row {courseId:string|null;courseCode:string|null;courseName:string|null;total:number;active:number;disabled:number;}
-export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];calendarEvents:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];outcomeDecisions:Row[];industryFeedback:Row[];completionResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];studentAccountSummary?:StudentAccountSummary[];classMembers?:Row[];}
+export interface Snapshot {user:Identity;users:Row[];departments:Row[];courses:Row[];classes:Row[];placements:Row[];entries:Row[];documents:Row[];incidents:Row[];jobs:Row[];applications:Row[];announcements:Row[];calendarEvents:Row[];evaluations:Row[];assessmentSchedules:Row[];scores:Row[];companies:Row[];reviews:Row[];policies:Row[];completion:Row[];audit:Row[];joinRequests:Row[];notifications:Row[];outcomeDecisions:Row[];industryFeedback:Row[];completionResponses?:Row[];guestEvaluationLinks?:Row[];privateHosts?:Row[];studentAccountSummary?:StudentAccountSummary[];classMembers?:Row[];queueEntries?:Row[];}
 const str=(max=500)=>z.string().trim().min(1).max(max);
 export interface Snapshot {
  reminderPolicies?: Row[];
@@ -77,6 +77,9 @@ export const inputs={
  structure:z.object({kind:z.enum(['DEPARTMENT','COURSE']),operation:z.enum(['CREATE','UPDATE']).optional().default('CREATE'),recordId:z.string().optional(),name:str(120),code:str(20),departmentId:z.string().optional()}).superRefine((value,ctx)=>{if(value.kind==='COURSE'&&!value.departmentId?.trim())ctx.addIssue({code:'custom',path:['departmentId'],message:'Choose an academic unit.'});if(value.operation==='UPDATE'&&!value.recordId?.trim())ctx.addIssue({code:'custom',path:['recordId'],message:'Choose a record to update.'});}),
  studentSelfAssessment:z.object({placementId:str(),scores:z.object({technicalSkills:z.object({score:z.coerce.number().int().min(1).max(5),evidence:z.string().trim().max(1000).optional().default('')}),communication:z.object({score:z.coerce.number().int().min(1).max(5),evidence:z.string().trim().max(1000).optional().default('')}),professionalism:z.object({score:z.coerce.number().int().min(1).max(5),evidence:z.string().trim().max(1000).optional().default('')}),problemSolving:z.object({score:z.coerce.number().int().min(1).max(5),evidence:z.string().trim().max(1000).optional().default('')})}),version:z.coerce.number().int().min(1).optional()}),
  reachOutAudit:z.object({placementId:z.string().optional(),coordinatorEmail:z.string().email(),channel:z.enum(['MAILTO','COPY_EMAIL','COPY_TEMPLATE']).default('MAILTO')}),
+ queueJoin:z.object({coordinatorId:z.string().optional()}),
+ queueAddStudent:z.object({studentId:str(),coordinatorId:z.string().optional()}),
+ queueStatus:z.object({queueId:str(),status:z.enum(['SERVING','SERVED','ABSENT','CANCELLED'])}),
  markNotificationRead:z.object({notificationId:str()}),
  markAllNotificationsRead:z.object({}),
 };

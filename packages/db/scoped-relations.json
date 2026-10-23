@@ -228,5 +228,15 @@
     "native_generated_documents",
     "draft_id",
     "native_document_drafts"
+  ],
+  [
+    "queue_entries",
+    "student_id",
+    "users"
+  ],
+  [
+    "queue_entries",
+    "coordinator_id",
+    "users"
   ]
 ]

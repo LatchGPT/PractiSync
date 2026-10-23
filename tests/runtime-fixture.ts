@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 export function workflowTargetFixtures(sql:DatabaseSync){
  if (!(sql.prepare("PRAGMA table_info('companies')").all() as {name:string}[]).some(column => column.name === 'contact_phone')) sql.exec(readFileSync('packages/db/prisma/migrations/202610220002_industry_partner_recruitment/migration.sql','utf8'));
  const has=(name:string)=>sql.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name);
+ if(!has('queue_entries'))sql.exec(readFileSync('packages/db/prisma/migrations/202610230001_student_queuing/migration.sql','utf8'));
  if(!has('document_templates'))sql.exec(readFileSync('packages/db/prisma/migrations/202610150001_reflowable_document_templates/migration.sql','utf8'));
  if(!has('custom_document_templates'))sql.exec(readFileSync('packages/db/prisma/migrations/202610140003_admin_document_templates/migration.sql','utf8').replaceAll('DEFAULT CURRENT_TIMESTAMP::text','DEFAULT CURRENT_TIMESTAMP'));
  installSqliteScopeGuards(sql);

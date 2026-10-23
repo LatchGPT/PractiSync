@@ -2565,3 +2565,27 @@ model WorkflowWorkerState {
  lastError String? @map("last_error")
  @@map("workflow_worker_state")
 }
+
+
+model QueueEntry {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  studentId      String   @map("student_id")
+  coordinatorId  String   @map("coordinator_id")
+  serviceDate    String   @map("service_date")
+  session        String
+  queueNumber    Int      @map("queue_number")
+  joinedAt       DateTime @default(now()) @map("joined_at")
+  scheduledStart String   @map("scheduled_start")
+  scheduledEnd   String   @map("scheduled_end")
+  status         String   @default("WAITING")
+  startedAt      DateTime? @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+
+  @@unique([tenantId, id], map: "queue_entries_tenant_id_id_key")
+  @@index([tenantId, coordinatorId, serviceDate, session, status, scheduledStart], map: "queue_entries_coordinator_day")
+  @@index([tenantId, studentId, serviceDate, status], map: "queue_entries_student_day")
+  @@map("queue_entries")
+}

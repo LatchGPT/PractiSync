@@ -223,7 +223,7 @@ function upgradeCalendarEventsV6(sql: DatabaseSync) {
 export function openLocalDemoDatabase(): DemoDatabase {
   // The operator's local demo file must not make the production tracer bundle the workspace.
   const path = resolve(/*turbopackIgnore: true*/ process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
-  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 17) return sqliteGlobal.practiSyncLocalDemo.database;
+  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 18) return sqliteGlobal.practiSyncLocalDemo.database;
 
   mkdirSync(dirname(path), { recursive: true });
   const sql = new DatabaseSync(path);
@@ -291,9 +291,16 @@ export function openLocalDemoDatabase(): DemoDatabase {
       sql.exec('COMMIT');
     } catch (error) { sql.exec('ROLLBACK'); throw error; }
   }
+  if (!hasTable('queue_entries')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610230001_student_queuing/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
   installSqliteScopeGuards(sql);
-  sql.exec('PRAGMA user_version = 17');
+  sql.exec('PRAGMA user_version = 18');
   const database = new LocalDemoDatabase(sql);
-  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 17 };
+  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 18 };
   return database;
 }

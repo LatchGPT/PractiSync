@@ -15,10 +15,10 @@ const dashboardSegments:Record<string,Role>={
 };
 
 const workspaceViews:Record<Role,readonly string[]>={
- STUDENT:['overview','classes','attendance','documents','competencies','incidents','jobs','announcements','profile','settings'],
- COORDINATOR:['overview','classes','documents','competencies','incidents','jobs','announcements','policies','profile','settings'],
+ STUDENT:['overview','queue','classes','attendance','documents','competencies','incidents','jobs','announcements','profile','settings'],
+ COORDINATOR:['overview','queue','classes','documents','competencies','incidents','jobs','announcements','policies','profile','settings'],
  SUPERVISOR:[],
- SUPER_ADMIN:['hte-requests','overview','accounts','institution','required-documents','jobs','announcements','profile','settings'],
+ SUPER_ADMIN:['hte-requests','overview','queue','accounts','institution','required-documents','jobs','announcements','profile','settings'],
 };
 
 export function isRole(value:unknown):value is Role{

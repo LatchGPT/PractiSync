@@ -24,8 +24,11 @@ export async function deliverAccountMail(now=new Date(),tenantId?:string):Promis
   await statement("UPDATE email_outbox SET status='SENDING',locked_until=?,last_error=? WHERE id=? AND tenant_id=? AND (status='PENDING' OR (status='SENDING' AND locked_until<?))",lease,claim,row.id,row.tenantId,time).run();
   if(!(await one('SELECT id FROM email_outbox WHERE id=? AND tenant_id=? AND last_error=?',row.id,row.tenantId,claim)))continue;
   try{
-   const active=await one("SELECT t.id FROM account_tokens t JOIN users u ON u.id=t.user_id AND u.tenant_id=t.tenant_id WHERE t.tenant_id=? AND t.id=? AND t.used_at IS NULL AND t.expires_at>? AND t.session_version=u.session_version AND u.status IN ('ACTIVE','INVITED')",row.tenantId,row.id,time);
-   if(!active){await statement("UPDATE email_outbox SET status='CANCELLED',encrypted_payload='',locked_until=NULL WHERE tenant_id=? AND id=? AND last_error=?",row.tenantId,row.id,claim).run();continue;}
+    const accountToken=await one('SELECT id FROM account_tokens WHERE tenant_id=? AND id=?',row.tenantId,row.id);
+    if(accountToken){
+     const active=await one("SELECT t.id FROM account_tokens t JOIN users u ON u.id=t.user_id AND u.tenant_id=t.tenant_id WHERE t.tenant_id=? AND t.id=? AND t.used_at IS NULL AND t.expires_at>? AND t.session_version=u.session_version AND u.status IN ('ACTIVE','INVITED')",row.tenantId,row.id,time);
+     if(!active){await statement("UPDATE email_outbox SET status='CANCELLED',encrypted_payload='',locked_until=NULL WHERE tenant_id=? AND id=? AND last_error=?",row.tenantId,row.id,claim).run();continue;}
+    }
    const mail=decryptMail(String(row.encryptedPayload));
    if(process.env.MAIL_TRANSPORT==='test')capturedTestMail.push(mail);
    else {const result=await fetch('https://api.resend.com/emails',{method:'POST',signal:AbortSignal.timeout(20000),headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':row.id},body:JSON.stringify({from:process.env.MAIL_FROM,...mail})});if(!result.ok)throw new Error('Email provider rejected delivery.');}
