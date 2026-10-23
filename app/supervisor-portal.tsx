@@ -11,6 +11,7 @@ import { RtuSeal } from '@/components/rtu-seal';
 import { authSubmit } from './login-client';
 import { FinalDtrCard, HteEvaluationForm, HteRequestQueue, HteStatus, SchoolEvaluationLibrary, useHteAction } from './hte-workflows';
 import type { Row, Snapshot } from '@/packages/validation/contracts';
+import Link from 'next/link';
 
 const text = (r: Row | undefined, k: string) => String(r?.[k] ?? '');
 const num = (r: Row | undefined, k: string) => Number(r?.[k] ?? 0);
@@ -32,7 +33,7 @@ export default function SupervisorPortal({ data,onRefresh }: { data: Snapshot; o
  async function signOut() { try {await authSubmit('signout',{},'/');router.replace('/login');}catch(e){toast.error(e instanceof Error ? e.message : 'Sign out failed.');} }
  return <main className="hte-portal hte-workspace"><header className="hte-header"><div className="brand"><span className="brand-icon"><RtuSeal /></span><span>PractiSync.</span></div><div className="hte-account"><span>{data.user.name} · Industry Partner Supervisor</span><button className="secondary" onClick={() => void onRefresh().catch(() => toast.error('Refresh failed. Try again.'))} disabled={busy}><RefreshCw size={15}/>Refresh</button><button className="secondary" onClick={() => void signOut()}><LogOut size={15}/>Sign out</button></div></header>
  <section className="hte-intro"><span className="chip blue"><ShieldCheck size={13}/>{verified ? 'Approved partner access' : 'Partner approval required'}</span><h1>{text(company,'name') || 'Your Industry Partner account'}</h1>{company && <HteStatus value={text(company,'status')}/>}</section>
- <nav className="hte-portal-nav" aria-label="Industry Partner sections"><a href="#hte-requests">Requests</a>{verified && <><a href="#hte-interns">Assigned interns</a><a href="#hte-posts">Intern recruitment</a><a href="#hte-applicants">Applicants</a></>}<a href="#hte-account">Account</a></nav>
+ <nav className="hte-portal-nav" aria-label="Industry Partner sections"><a href="#hte-requests">Requests</a>{verified && <><a href="#hte-interns">Assigned interns</a><a href="#hte-posts">Intern recruitment</a><a href="#hte-applicants">Applicants</a></>}<a href="#hte-account">Account</a><Link href="/settings/privacy">Settings · Privacy</Link></nav>
  {error && <p className="hte-error" role="alert">{error}</p>}
  {(!company || company.status === 'REJECTED') && <section className="hte-card"><h2><Building2 size={18}/>{company ? 'Correct your registration details' : 'Submit your company details'}</h2><CompanyProfile key={`${company?.id}:${company?.version}`} company={company} onRefresh={onRefresh}/></section>}
  <HteRequestQueue data={data} onRefresh={onRefresh}/>

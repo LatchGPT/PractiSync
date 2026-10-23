@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { PDFDocument } from 'pdf-lib';
 import { identity } from '@/packages/auth/auth';
 import { auditStatement, database, list, statement } from '@/packages/db/demo';
@@ -17,7 +18,7 @@ function errorResponse(error: unknown) {
   );
 }
 
-export async function GET(request: Request) {
+async function handlerGET(request: Request) {
   try {
     const user = await identity(request);
     requireRole(user, 'SUPER_ADMIN', 'COORDINATOR', 'STUDENT');
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+async function handlerPOST(request: Request) {
   try {
     if (request.headers.get('origin') !== new URL(request.url).origin) throw new DomainError('Request origin is not allowed.', 403);
     const user = await identity(request);
@@ -103,3 +104,7 @@ export async function POST(request: Request) {
     return errorResponse(error);
   }
 }
+
+export const GET=withConsent(handlerGET);
+
+export const POST=withConsent(handlerPOST);

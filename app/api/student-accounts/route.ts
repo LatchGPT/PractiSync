@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { identity } from '@/packages/auth/auth';
 import { list, one } from '@/packages/db/demo';
 import { DomainError, requireRole } from '@/packages/domain/policies';
@@ -6,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const pageSize = 50;
 
-export async function GET(request: Request) {
+async function handlerGET(request: Request) {
   try {
     const user = await identity(request);
     requireRole(user, 'SUPER_ADMIN');
@@ -58,3 +59,5 @@ export async function GET(request: Request) {
     return Response.json({ error: message }, { status, headers: { 'Cache-Control': 'no-store' } });
   }
 }
+
+export const GET=withConsent(handlerGET);

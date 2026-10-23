@@ -1,3 +1,4 @@
+import { acceptFixtureUsers } from './consent-fixture';
 import { workflowTargetFixtures } from './runtime-fixture';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
@@ -16,7 +17,7 @@ const actors = {} as Record<string,Identity>;
 const origin = 'http://verification-test.local';
 const migration = (name: string) => readFileSync(`packages/db/prisma/migrations/${name}/migration.sql`, 'utf8');
 function prepared(query: string, values: (string | number | null)[] = []): PreparedStatement {
- return { bind: (...next) => prepared(query, next), all: async <T extends Record<string,unknown>>() => ({ results: sql.prepare(query).all(...values) as T[] }), first: async <T extends Record<string,unknown>>() => (sql.prepare(query).get(...values) as T | undefined) ?? null, run: async () => ({ meta: sql.prepare(query).run(...values) }) };
+ return { bind: (...next) => prepared(query, next.map(value=>value instanceof Date?value.toISOString():typeof value==='boolean'?Number(value):value)), all: async <T extends Record<string,unknown>>() => ({ results: sql.prepare(query).all(...values) as T[] }), first: async <T extends Record<string,unknown>>() => (sql.prepare(query).get(...values) as T | undefined) ?? null, run: async () => ({ meta: sql.prepare(query).run(...values) }) };
 }
 async function signIn(values: Record<string,string> = {username:'demo.newstudent',password:'RegistrationFlow!2026'}) {
  const csrfResponse = await authHandler(new Request(origin + '/api/auth/csrf'));
@@ -52,14 +53,14 @@ beforeAll(async () => {
  sql.exec(migration('202610200003_student_registration'));
  installInteractiveFormSchema();
  installTestDatabase({ prepare: query => prepared(query), batch: async statements => { sql.exec('BEGIN'); try { const result=[]; for (const query of statements) result.push(await query.run()); sql.exec('COMMIT'); return result; } catch (error) { sql.exec('ROLLBACK'); throw error; } } });
- workflowTargetFixtures(sql);await seed(); await ensureNewStudentDemo();
+ workflowTargetFixtures(sql);await seed();await acceptFixtureUsers(); await ensureNewStudentDemo();
  for (const role of ['coordinator','admin']) actors[role] = await one('SELECT * FROM users WHERE id=?', 'demo-' + role) as unknown as Identity;
  actors.other = await one('SELECT * FROM users WHERE id=?', 'coordinator-other') as unknown as Identity;
  actors.student = await one('SELECT * FROM users WHERE id=?', 'demo-new-student') as unknown as Identity;
 });
 beforeEach(async () => {
  sql.exec("DELETE FROM student_verifications; DELETE FROM student_profiles; DELETE FROM enrollments WHERE student_id='demo-new-student'; UPDATE users SET status='ACTIVE',course_id=NULL,email='isabel.mendoza@rtu.edu.ph',email_domain_exception=0,session_version=1,name='Isabel Mendoza' WHERE id='demo-new-student'; UPDATE users SET status='ACTIVE' WHERE id='demo-student'; DELETE FROM audit WHERE resource_id='verification-demo-new-student'; DELETE FROM rate_limits;");
- await ensureNewStudentDemo();
+ await ensureNewStudentDemo();await acceptFixtureUsers();
  sql.prepare("UPDATE users SET password_hash=? WHERE id='demo-new-student'").run(await hashPassword('RegistrationFlow!2026'));
 });
 afterAll(() => { installTestDatabase(undefined); sql.close(); vi.unstubAllEnvs(); });
@@ -122,7 +123,7 @@ describe('Student registration and RTU access', () => {
   await submitStudentVerification(actors.student,details);await submitStudentVerification(actors.student,details);
   expect(await list('SELECT id FROM student_profiles WHERE user_id=?',actors.student.id)).toHaveLength(1);
   expect(await list("SELECT id FROM audit WHERE action='STUDENT_REGISTRATION_COMPLETED' AND resource_id=?",(await request()).id)).toHaveLength(1);
-  expect((await retiredReview()).status).toBe(410);
+  expect((await retiredReview(new Request(origin+'/api/student-verification/review',{headers:{Cookie:await signIn()}}))).status).toBe(410);
   expect(canAccessWorkspaceView('COORDINATOR','student-verifications')).toBe(false);
   await expect(mutate(actors.coordinator,'joinRequestDecision',{requestId:'req-1',decision:'APPROVE'})).rejects.toThrow('no longer requires approval');
  });

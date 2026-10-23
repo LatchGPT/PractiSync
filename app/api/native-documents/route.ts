@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { z } from 'zod';
 import { identity } from '@/packages/auth/auth';
 import { auditStatement,database,insert,one,statement } from '@/packages/db/demo';
@@ -12,8 +13,8 @@ import { renderNativePdf } from '@/packages/documents/native-queue';
 export const dynamic='force-dynamic';export const runtime='nodejs';export const maxDuration=120;
 const headers={'Cache-Control':'private, no-store'};
 const id=z.string().min(1).max(120);
-export async function GET(request:Request){try{const user=await identity(request);requireRole(user,'STUDENT','SUPER_ADMIN');const data=await listNativeDocuments(user);return Response.json(data,{headers});}catch(error){return letterError(error);}}
-export async function POST(request:Request){
+async function handlerGET(request:Request){try{const user=await identity(request);requireRole(user,'STUDENT','SUPER_ADMIN');const data=await listNativeDocuments(user);return Response.json(data,{headers});}catch(error){return letterError(error);}}
+async function handlerPOST(request:Request){
   try{
     if(request.headers.get('origin')!==new URL(request.url).origin)throw new DomainError('Request origin is not allowed.',403);
     const user=await identity(request);requireRole(user,'STUDENT','SUPER_ADMIN');const body=await readJsonObject(request,500_000);
@@ -52,7 +53,7 @@ export async function POST(request:Request){
       if(body.action==='publish'){
         try{validateFieldConfiguration(fields);}catch(error){throw new DomainError(error instanceof Error?error.message:'Check the field settings.');}
         // Run the original through the same real layout engine before publishing.
-        await renderNativePdf(user.tenantId,version,{},'raw');
+        await renderNativePdf(user,version,{},'raw');
       }
       return Response.json({version:await saveNativeFields(user,version,fields,body.action==='publish')},{headers});
     }
@@ -101,7 +102,7 @@ export async function POST(request:Request){
       if(input.documentId){const generated=await one('SELECT * FROM native_generated_documents WHERE tenant_id=? AND user_id=? AND id=?',user.tenantId,user.id,input.documentId);if(!generated)throw new DomainError('Generated document not found.',404);draftId=generated.draftId===null?null:String(generated.draftId);versionId=String(generated.versionId);values=JSON.parse(String(generated.valuesJson));}
       else{if(!input.draftId)throw new DomainError('Choose a draft.');const draft=await ownNativeDraft(user,input.draftId);if(input.revision!==undefined&&Number(draft.revision)!==input.revision)throw new DomainError('This draft changed in another session. Reload it before generating.',409);draftId=draft.id;versionId=String(draft.versionId);values=JSON.parse(String(draft.valuesJson));}
       const version=await nativeVersion(user.tenantId,versionId);try{values=resolveNativeValues(version.fields,values,true);}catch(error){throw new DomainError(error instanceof Error?error.message:'Check the required fields.');}
-      const file=input.format==='docx'?await buildNativeDocx(await sourceBytes(user.tenantId,version.sourceId),version.fields,values,'final'):(await renderNativePdf(user.tenantId,version,values,'final')).bytes;
+      const file=input.format==='docx'?await buildNativeDocx(await sourceBytes(user.tenantId,version.sourceId),version.fields,values,'final'):(await renderNativePdf(user,version,values,'final')).bytes;
       const generatedId=crypto.randomUUID(),expiresAt=new Date(Date.now()+Number(process.env.DOCUMENT_RETENTION_DAYS||30)*86400_000).toISOString();
       await database().batch([insert('native_generated_documents',{tenant_id:user.tenantId,user_id:user.id,draft_id:draftId,version_id:version.id,format:input.format,values_json:JSON.stringify(values),file_base64:file.toString('base64'),expires_at:expiresAt},generatedId),auditStatement(user.id,'NATIVE_DOCUMENT_GENERATED',generatedId)]);
       return Response.json({id:generatedId,url:`/api/native-documents/files/${generatedId}`,format:input.format},{headers});
@@ -109,3 +110,7 @@ export async function POST(request:Request){
     throw new DomainError('Unknown document action.');
   }catch(error){return letterError(error);}
 }
+
+export const GET=withConsent(handlerGET);
+
+export const POST=withConsent(handlerPOST);

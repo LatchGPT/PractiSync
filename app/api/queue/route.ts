@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { identity } from '@/packages/auth/auth';
 import { getQueueView, manilaNow } from '@/packages/domain/queue';
 import { DomainError } from '@/packages/domain/policies';
@@ -5,7 +6,7 @@ import { withTenant } from '@/packages/db/tenant-context';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+async function handlerGET(request: Request) {
   try {
     const user = await identity(request);
     const params = new URL(request.url).searchParams;
@@ -19,3 +20,5 @@ export async function GET(request: Request) {
     return Response.json({ error: message }, { status, headers: { 'Cache-Control': 'no-store' } });
   }
 }
+
+export const GET=withConsent(handlerGET);

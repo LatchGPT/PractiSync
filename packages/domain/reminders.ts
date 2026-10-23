@@ -1,3 +1,4 @@
+import { acceptedConsentPredicate } from '../privacy/consent';
 import { auditStatement,database,insert,list,one,statement,type PreparedStatement } from '../db/demo';
 import { inputs,type Identity,type Row } from '../validation/contracts';
 import { DomainError,requireRole } from './policies';
@@ -30,7 +31,7 @@ function completionPredicate(policy:Row,studentAlias='u'): {sql:string;args:stri
 }
 function recipientQuery(policy:Row,slot:Row){
  const completion=completionPredicate(policy);
- return {sql:`SELECT u.id FROM users u WHERE u.tenant_id=? AND u.role='STUDENT' AND u.status='ACTIVE' AND u.created_at<=? AND NOT EXISTS (SELECT 1 FROM student_verifications v WHERE v.tenant_id=u.tenant_id AND v.requester_id=u.id AND (v.status<>'APPROVED' OR v.approved_student_id IS NULL OR v.approved_student_id<>u.id)) AND NOT EXISTS (SELECT 1 FROM notification_preferences n WHERE n.tenant_id=u.tenant_id AND n.user_id=u.id AND n.deadline_reminders=0) AND (?='UNIVERSITY' OR EXISTS(SELECT 1 FROM enrollments e JOIN classes c ON c.id=e.class_id AND c.tenant_id=e.tenant_id WHERE e.tenant_id=u.tenant_id AND e.student_id=u.id AND e.class_id=? AND e.active=1 AND c.revoked=0 AND e.created_at<=?)) AND ${completion.sql}`,args:[policy.tenantId,String(slot.dueAt),String(policy.audience),policy.classId as string,String(slot.dueAt),...completion.args]};
+ return {sql:`SELECT u.id FROM users u WHERE u.tenant_id=? AND u.role='STUDENT' AND u.status='ACTIVE' AND ${acceptedConsentPredicate('u')} AND u.created_at<=? AND NOT EXISTS (SELECT 1 FROM student_verifications v WHERE v.tenant_id=u.tenant_id AND v.requester_id=u.id AND (v.status<>'APPROVED' OR v.approved_student_id IS NULL OR v.approved_student_id<>u.id)) AND NOT EXISTS (SELECT 1 FROM notification_preferences n WHERE n.tenant_id=u.tenant_id AND n.user_id=u.id AND n.deadline_reminders=0) AND (?='UNIVERSITY' OR EXISTS(SELECT 1 FROM enrollments e JOIN classes c ON c.id=e.class_id AND c.tenant_id=e.tenant_id WHERE e.tenant_id=u.tenant_id AND e.student_id=u.id AND e.class_id=? AND e.active=1 AND c.revoked=0 AND e.created_at<=?)) AND ${completion.sql}`,args:[policy.tenantId,String(slot.dueAt),String(policy.audience),policy.classId as string,String(slot.dueAt),...completion.args]};
 }
 
 export async function runDeadlineReminders(tenantId:string,now=new Date()):Promise<number>{

@@ -9,6 +9,8 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".next-privacy*/**",
+    ".next-weekly*/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
@@ -18,6 +20,10 @@ const eslintConfig = defineConfig([
     ".vinext/**",
     ".pnpm-store/**",
     "deliverables/**",
+    ".local/**",
+    "brag-output*/**",
+    "output/**",
+    "scratch/**",
   ]),
   {
     files: ["components/ui/**/*.{ts,tsx}", "hooks/use-mobile.ts"],

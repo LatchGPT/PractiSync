@@ -1,4 +1,5 @@
 import {installSqliteScopeGuards} from '../packages/db/isolation-sqlite';
+import { installConsentFixtureSchema, acceptFixtureUsers } from './consent-fixture';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,11 +17,12 @@ export function workflowTargetFixtures(sql:DatabaseSync){
  if(!has('document_templates'))sql.exec(readFileSync('packages/db/prisma/migrations/202610150001_reflowable_document_templates/migration.sql','utf8'));
  if(!has('custom_document_templates'))sql.exec(readFileSync('packages/db/prisma/migrations/202610140003_admin_document_templates/migration.sql','utf8').replaceAll('DEFAULT CURRENT_TIMESTAMP::text','DEFAULT CURRENT_TIMESTAMP'));
  installSqliteScopeGuards(sql);
+ installConsentFixtureSchema(sql);
 }
 export async function runtimeFixture(){
  vi.stubEnv('DEPLOYMENT_MODE','demo');vi.stubEnv('DEMO_ENABLED','true');vi.stubEnv('AUTH_SECRET','fictional-test-secret-with-more-than-32-characters');
  vi.stubEnv('PRACTISYNC_LOCAL_DEMO_PATH',join(mkdtempSync(join(tmpdir(),'practisync-test-')),'fixture.sqlite'));
- const db=openLocalDemoDatabase();installTestDatabase(db);await seed();
+ const db=openLocalDemoDatabase();installTestDatabase(db);await seed();await acceptFixtureUsers();
  const actor=async(id:string)=>await one('SELECT * FROM users WHERE id=?',id) as unknown as Identity;
  return {db,actor,cleanup:()=>{installTestDatabase(undefined);vi.unstubAllEnvs();}};
 }

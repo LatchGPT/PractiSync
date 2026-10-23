@@ -1,3 +1,4 @@
+import { installConsentFixtureSchema, acceptFixtureUsers } from './consent-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
@@ -35,6 +36,7 @@ beforeAll(async () => {
   sql.exec(readFileSync('packages/db/prisma/migrations/202610110003_limited_hte_workflows/migration.sql', 'utf8'));
   sql.exec(readFileSync('drizzle/0007_outcome_evaluations.sql', 'utf8').replace(/--> statement-breakpoint/g, ''));
   sql.exec(readFileSync('drizzle/0008_industry_feedback.sql', 'utf8'));
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql', 'utf8'));
 
   const database: DemoDatabase = {
     prepare: (query) => prepared(query),
@@ -53,7 +55,8 @@ beforeAll(async () => {
   };
 
   installTestDatabase(database);
-  await seed();
+  installConsentFixtureSchema(sql);
+  await seed();await acceptFixtureUsers();
 
   for (const role of ['student', 'coordinator', 'admin', 'supervisor']) {
     users[role] = (await one('SELECT * FROM users WHERE id=?', 'demo-' + role)) as unknown as Identity;
@@ -85,7 +88,7 @@ describe('Ticket #47: Story 5.1 & 5.2 - Baseline Competency Gate & Native Reach-
   });
 
   describe('Story 5.1: Student Self-Assessment Competency Gate', () => {
-    it('blocks HTE supervisor evaluation if baseline self-assessment is missing', async () => {
+    it('rejects the retired sample supervisor rubric before a baseline is submitted', async () => {
       // Clear any pre-existing evaluations for placement-1 to test pristine un-assessed state
       sql.prepare(`DELETE FROM scores WHERE evaluation_id IN (SELECT id FROM evaluations WHERE placement_id='placement-1')`).run();
       sql.prepare(`DELETE FROM evaluations WHERE placement_id='placement-1'`).run();
@@ -101,7 +104,7 @@ describe('Ticket #47: Story 5.1 & 5.2 - Baseline Competency Gate & Native Reach-
             problemSolving: { score: 4, evidence: 'Good troubleshooting.' },
           },
         })
-      ).rejects.toThrow('Company evaluation cannot begin until the student submits their baseline Self-Assessment Competency Report.');
+      ).rejects.toThrow('Use the school evaluation form after final DTR verification.');
     });
 
     it('allows a student to submit a baseline self-assessment with 4 dimensions', async () => {
@@ -138,8 +141,8 @@ describe('Ticket #47: Story 5.1 & 5.2 - Baseline Competency Gate & Native Reach-
       expect(scoreMap['Professionalism']).toBe(4);
     });
 
-    it('allows HTE supervisor evaluation now that baseline is submitted', async () => {
-      const evaluationResult = await mutate(users.supervisor, 'industryFinalEvaluation', {
+    it('still rejects the retired rubric after a baseline is submitted', async () => {
+      await expect(mutate(users.supervisor, 'industryFinalEvaluation', {
         placementId: 'placement-1',
         scores: {
           technicalSkills: { score: 4, evidence: 'Solid grasp of repository code.' },
@@ -147,18 +150,18 @@ describe('Ticket #47: Story 5.1 & 5.2 - Baseline Competency Gate & Native Reach-
           professionalism: { score: 5, evidence: 'Excellent work ethic.' },
           problemSolving: { score: 4, evidence: 'Independent debug skills.' },
         },
-      });
-
-      expect(evaluationResult.message).toContain('Final HTE evaluation submitted');
+      })).rejects.toThrow('Use the school evaluation form after final DTR verification.');
 
       // Verify supervisor evaluation is in the database
       const finalEval = (await one(
         `SELECT * FROM evaluations WHERE placement_id='placement-1' AND kind='FINAL'`
       )) as Row | null;
-      expect(finalEval).not.toBeNull();
+      expect(finalEval).toBeNull();
     });
 
     it('locks the student baseline self-assessment from further edits once HTE evaluation exists', async () => {
+      // Historical final evaluations still lock their original baseline.
+      sql.prepare("INSERT INTO evaluations (id,tenant_id,created_at,placement_id,evaluator_id,kind,framework_version,status,version) VALUES ('historical-final',?,'2026-10-24','placement-1',?,'FINAL',1,'SUBMITTED',1)").run(users.supervisor.tenantId,users.supervisor.id);
       await expect(
         mutate(users.student, 'studentSelfAssessment', {
           placementId: 'placement-1',

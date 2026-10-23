@@ -1,3 +1,4 @@
+import { acceptFixtureUsers } from './consent-fixture';
 import { beforeAll,afterAll,describe,it,expect,vi } from 'vitest';
 import { runtimeFixture } from './runtime-fixture';
 import { mutate } from '../packages/domain/actions';
@@ -47,7 +48,7 @@ describe('Prepared account lifecycle (local delivery and trusted-claim policy te
  it('revokes only the current account even when a payload names another account',async()=>{
   const admin=await fixture.actor('demo-admin'),before=admin.sessionVersion;
   const created=await mutate(admin,'account',{name:'Own-session fixture',username:'own.session',email:'own.session@example.invalid',role:'SUPERVISOR',password:'OwnSession!2026'});
-  const user=await fixture.actor(created.id!);await mutate(user,'revokeOwnSessions',{userId:admin.id,tenantId:'another-university'});
+  await acceptFixtureUsers();const user=await fixture.actor(created.id!);await mutate(user,'revokeOwnSessions',{userId:admin.id,tenantId:'another-university'});
   expect((await fixture.actor(created.id!)).sessionVersion).toBe(user.sessionVersion+1);expect((await fixture.actor(admin.id)).sessionVersion).toBe(before);
  });
  it('records provider failure and bounded email retries without claiming delivery',async()=>{
@@ -66,7 +67,8 @@ describe('Prepared account lifecycle (local delivery and trusted-claim policy te
   vi.stubEnv('DEPLOYMENT_MODE','institutional');vi.stubEnv('INSTITUTIONAL_ENABLED','true');vi.stubEnv('INSTITUTIONAL_TENANT_ID','university-b');vi.stubEnv('APP_ORIGIN','https://practisync.example.invalid');vi.stubEnv('MAIL_TRANSPORT','resend');vi.stubEnv('RESEND_API_KEY','fictional-not-used');vi.stubEnv('MAIL_FROM','fixture@example.invalid');
   await statement("CREATE TABLE IF NOT EXISTS Tenant (id TEXT PRIMARY KEY,mode TEXT NOT NULL)").run();await statement("INSERT INTO Tenant (id,mode) VALUES ('university-b','INSTITUTIONAL')").run();
   await insert('users',{tenant_id:'university-b',name:'Invited coordinator',username:'invited.coordinator',email:'invited.coordinator@rtu.edu.ph',role:'COORDINATOR',status:'INVITED',is_demo:0,session_version:1},'staff-b').run();
-  const admin={...await fixture.actor('demo-admin'),tenantId:'university-b'};
+  await insert('users',{tenant_id:'university-b',name:'University B admin',username:'admin.university.b',email:'admin-b@example.invalid',role:'SUPER_ADMIN',status:'ACTIVE'},'admin-b').run();await acceptFixtureUsers();
+  const admin=await fixture.actor('admin-b');
   await mutate(admin,'inviteAccount',{userId:'staff-b'});
   const mail=(await list("SELECT * FROM email_outbox WHERE tenant_id='university-b'"))[0],token=mailToken(decryptMail(String(mail.encryptedPayload)).text);
   const profile={iss:'https://accounts.google.com',sub:'staff-sub',email:'invited.coordinator@rtu.edu.ph',email_verified:true,hd:'rtu.edu.ph'};

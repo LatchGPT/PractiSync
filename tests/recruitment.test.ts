@@ -1,3 +1,4 @@
+import { acceptFixtureUsers } from './consent-fixture';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runtimeFixture } from './runtime-fixture';
 import { one, statement } from '../packages/db/demo';
@@ -25,7 +26,7 @@ describe('Industry Partner registration and recruitment', () => {
   expect(hteRegistration.safeParse({...details,website:'javascript:alert(1)'}).success).toBe(false);
  });
  it('retains company contacts through registration rejection, correction, approval, and staged profile changes', async () => {
-  const created = await registerHte(details);
+  const created = await registerHte(details);await acceptFixtureUsers();
   const request = (await one('SELECT * FROM hte_requests WHERE id=?',created.id!))!;
   let partner = await fixture.actor(String(request.requesterId));
   expect(await one('SELECT * FROM companies WHERE id=?',partner.companyId!)).toMatchObject({contactPhone:details.contactPhone,contactPosition:details.contactPosition,contactEmail:details.email});
@@ -88,7 +89,7 @@ describe('Industry Partner registration and recruitment', () => {
   expect((await snapshot(await fixture.actor('supervisor-brightside'))).applications.some(application => application.id === visible.id)).toBe(false);
   expect((await snapshot(await fixture.actor('coordinator-other'))).applications.some(application => application.id === visible.id)).toBe(false);
   expect((await snapshot(student)).applications.some(application => application.id === visible.id)).toBe(false);
-  expect((await snapshot({...supervisor,tenantId:'other-university'})).applications).toEqual([]);
+  await expect(snapshot({...supervisor,tenantId:'other-university'})).rejects.toMatchObject({code:'CONSENT_REQUIRED'});
  });
  it('preserves legacy single-program records and constructs email links without header injection', async () => {
   const legacy = (await one('SELECT * FROM jobs WHERE id=?','job-1'))!;

@@ -5,8 +5,9 @@ import { DomainError } from '../domain/policies';
 import { redisConnection } from './native-infrastructure';
 import { sha256 } from './native-repository';
 import type { NativeField,NativeValues,NativeVersion } from './native-types';
+import { requireConsent, type ConsentSubject } from '../privacy/consent';
 
-export interface RenderTaskData {tenantId:string;versionId:string;revision:number;values:NativeValues;fields?:NativeField[];mode:'raw'|'original-preview'|'preview'|'final';hash:string}
+export interface RenderTaskData {userId:string;tenantId:string;versionId:string;revision:number;values:NativeValues;fields?:NativeField[];mode:'raw'|'original-preview'|'preview'|'final';hash:string}
 const globals=globalThis as typeof globalThis&{nativeDocumentsQueue?:{queue:Queue;events:QueueEvents;redis:Redis;ready?:Promise<void>}};
 export function documentQueue(){
   if(!globals.nativeDocumentsQueue){const connection=redisConnection();const queue=new Queue('practisync-native-documents',{connection});const events=new QueueEvents('practisync-native-documents',{connection:redisConnection(true)});const redis=new Redis(connection);
@@ -31,9 +32,11 @@ export async function mergePreviewValues(userId:string,versionId:string,sessionI
   if(!result)throw new DomainError('A newer preview request already exists.',409);
   return(JSON.parse(String(result)) as{values:NativeValues}).values;
 }
-export async function renderNativePdf(tenantId:string,version:NativeVersion,values:NativeValues,mode:RenderTaskData['mode'],fields?:NativeField[]){
+export async function renderNativePdf(user:ConsentSubject,version:NativeVersion,values:NativeValues,mode:RenderTaskData['mode'],fields?:NativeField[]){
+  await requireConsent(user);
+  const tenantId=user.tenantId,userId=user.authenticationId??user.id;
   const canonical=Object.fromEntries(Object.entries(values).sort(([a],[b])=>a.localeCompare(b)));
-  const identity:unknown[]=[tenantId,version.id,version.revision,version.sourceHash,process.env.DOCUMENT_RENDER_PROFILE||'libreoffice-native-v2',mode,canonical];if(fields)identity.push(fields);
+  const identity:unknown[]=[tenantId,userId,version.id,version.revision,version.sourceHash,process.env.DOCUMENT_RENDER_PROFILE||'libreoffice-native-v2',mode,canonical];if(fields)identity.push(fields);
   const hash=sha256(JSON.stringify(identity));
   const cached=await one('SELECT pdf_base64,page_count FROM native_document_render_cache WHERE tenant_id=? AND id=? AND expires_at>?',tenantId,hash,new Date().toISOString());
   if(cached)return{bytes:Buffer.from(String(cached.pdfBase64),'base64'),pageCount:Number(cached.pageCount),hash};
@@ -42,8 +45,9 @@ export async function renderNativePdf(tenantId:string,version:NativeVersion,valu
   // BullMQ removes aged jobs lazily. A new cache window must not reuse an idle,
   // completed job whose SQL PDF has already expired and been cleaned up.
   const window=Math.floor(Date.now()/600_000);
-  const job=await queue.add('render',{tenantId,versionId:version.id,revision:version.revision,values:canonical,...(fields?{fields}:{}),mode,hash} satisfies RenderTaskData,{jobId:`render-${hash}-${window}`,attempts:1,removeOnComplete:{age:120},removeOnFail:{age:30}});
+  const job=await queue.add('render',{userId,tenantId,versionId:version.id,revision:version.revision,values:canonical,...(fields?{fields}:{}),mode,hash} satisfies RenderTaskData,{jobId:`render-${hash}-${window}`,attempts:1,removeOnComplete:{age:120},removeOnFail:{age:30}});
   try{await job.waitUntilFinished(events,55_000);}catch{throw new DomainError('The document rendering service is busy or temporarily unavailable. Please try again shortly.',503);}
+  await requireConsent(user);
   const result=await one('SELECT pdf_base64,page_count FROM native_document_render_cache WHERE tenant_id=? AND id=?',tenantId,hash);
   if(!result)throw new DomainError('The preview is not available yet. Please try again.',503);
   return{bytes:Buffer.from(String(result.pdfBase64),'base64'),pageCount:Number(result.pageCount),hash};

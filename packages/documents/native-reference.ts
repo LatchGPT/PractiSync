@@ -31,6 +31,6 @@ export async function installRecommendationReference(){
   const existing=await one("SELECT id FROM native_document_templates WHERE tenant_id=? AND name='Recommendation letter'",user.tenantId);if(existing){console.log('Native recommendation template is already installed.');return;}
   const bytes=await readFile(join(process.cwd(),'packages/documents/fixtures/recommendation.docx'));await scanDocx(bytes);
   const version=await createNativeTemplate(user,'Sample Recommendation Letter.docx',bytes,await recommendationReferenceFields(bytes),'Recommendation letter');
-  const {renderNativePdf}=await import('./native-queue');await renderNativePdf(user.tenantId,version,{},'raw');await saveNativeFields(user,version,version.fields,true);
+  const {renderNativePdf}=await import('./native-queue');await renderNativePdf(user,version,{},'raw');await saveNativeFields(user,version,version.fields,true);
   console.log(`Original recommendation DOCX installed as immutable version ${version.version}.`);
 }

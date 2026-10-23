@@ -176,7 +176,7 @@ export default function AssessmentWorkspace({
   onAction,
 }: {
   data: Snapshot;
-  onAction?: (action: Action, values: Record<string, unknown>) => Promise<unknown>;
+  onAction?: (action: Action, values: Record<string, unknown>) => Promise<void>;
 }) {
   const { user } = data;
   const ownedClasses = data.classes.filter((item) => item.coordinatorId === user.id);
@@ -1239,7 +1239,7 @@ export default function AssessmentWorkspace({
 
           </div>
 
-          <EmployerFeedbackLedger data={data} onAction={onAction}/>
+          {onAction&&<EmployerFeedbackLedger data={data} onAction={onAction}/>}
           {/* Student Reviews Strict Separation Notice */}
           <div className="notice industry-separation-notice" role="alert">
             <ShieldAlert size={18} className="disclaimer-icon" />

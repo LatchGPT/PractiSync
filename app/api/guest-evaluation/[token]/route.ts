@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { guestEvaluationContext, submitGuestEvaluation } from '@/packages/domain/industry-workflows';
 import { DomainError } from '@/packages/domain/policies';
 import { limit } from '@/packages/auth/auth';
@@ -9,11 +10,11 @@ const noStore = { 'Cache-Control': 'private, no-store' };
 const digest = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), byte => byte.toString(16).padStart(2, '0')).join('');
 type RouteParams = { params: Promise<{ token: string }> };
 
-export async function GET() {
+async function handlerGET() {
   return Response.json({ error: 'Enter the separate access code to open this evaluation.' }, { status: 401, headers: noStore });
 }
 
-export async function POST(request: Request, { params }: RouteParams) {
+async function handlerPOST(request: Request, { params }: RouteParams) {
   try {
     const origin = request.headers.get('origin');
     if (!origin || origin !== new URL(request.url).origin) return Response.json({ error: 'Request origin is not allowed.' }, { status: 403, headers: noStore });
@@ -31,3 +32,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     return Response.json({ error: message }, { status, headers: noStore });
   }
 }
+
+export const GET=withConsent(handlerGET);
+
+export const POST=withConsent(handlerPOST);

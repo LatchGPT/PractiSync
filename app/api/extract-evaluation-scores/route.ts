@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { identity } from '@/packages/auth/auth';
 import { database, one } from '@/packages/db/demo';
 import { DomainError, requireRole } from '@/packages/domain/policies';
@@ -6,7 +7,7 @@ import { evaluationQuestions } from '@/packages/validation/hte';
 
 export const runtime = 'nodejs';
 
-export async function POST(request: Request) {
+async function handlerPOST(request: Request) {
   try {
     if (request.headers.get('origin') !== new URL(request.url).origin) {
       throw new DomainError('Request origin is not allowed.', 403);
@@ -72,3 +73,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST=withConsent(handlerPOST);

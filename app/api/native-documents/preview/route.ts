@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { z } from 'zod';
 import { identity } from '@/packages/auth/auth';
 import { requireRole,DomainError } from '@/packages/domain/policies';
@@ -21,7 +22,7 @@ function validatePreviewFields(fields:NativeField[],paragraphs:WordParagraph[]){
     }
   }
 }
-export async function POST(request:Request){try{
+async function handlerPOST(request:Request){try{
   if(request.headers.get('origin')!==new URL(request.url).origin)throw new DomainError('Request origin is not allowed.',403);
   const user=await identity(request);requireRole(user,'STUDENT','SUPER_ADMIN');
   const input=z.object({versionId:z.string().min(1).max(120),sessionId:z.string().uuid(),sequence:z.number().int().min(1),delta:valuesSchema,original:z.boolean().default(false),clean:z.boolean().default(false),fields:z.array(nativeFieldSchema).max(80).optional()}).parse(await readJsonObject(request,500_000));
@@ -34,7 +35,9 @@ export async function POST(request:Request){try{
   const merged=await mergePreviewValues(`${user.tenantId}-${user.id}`,version.id,input.sessionId,input.sequence,input.delta);
   const fieldKeys=new Set(previewFields.map(field=>field.key)),currentValues=Object.fromEntries(Object.entries(merged).filter(([key])=>fieldKeys.has(key)));
   let values;try{values=resolveNativeValues(previewFields,currentValues);}catch(error){throw new DomainError(error instanceof Error?error.message:'Check the document fields.');}
-  let originalPages=version.originalPages;if(!originalPages)originalPages=(await renderNativePdf(user.tenantId,version,{},'raw')).pageCount;
-  const rendered=await renderNativePdf(user.tenantId,version,values,input.original?'original-preview':input.clean?'final':'preview',input.fields);
+  let originalPages=version.originalPages;if(!originalPages)originalPages=(await renderNativePdf(user,version,{},'raw')).pageCount;
+  const rendered=await renderNativePdf(user,version,values,input.original?'original-preview':input.clean?'final':'preview',input.fields);
   return new Response(rendered.bytes,{headers:{'Content-Type':'application/pdf','Content-Length':String(rendered.bytes.length),'Cache-Control':'private, no-store','X-Document-Pages':String(rendered.pageCount),'X-Original-Pages':String(originalPages),'X-Render-Hash':rendered.hash,'X-Content-Type-Options':'nosniff'}});
 }catch(error){return letterError(error);}}
+
+export const POST=withConsent(handlerPOST);

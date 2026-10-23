@@ -25,6 +25,8 @@ import {Switch} from '@/components/ui/switch';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '@/components/ui/select';
 import {toast} from 'sonner';
 import type {Snapshot, Identity, Role} from '@/packages/validation/contracts';
+import PrivacySettings from './privacy-settings';
+import privacyStyles from './privacy-settings.module.css';
 
 export interface PractiSyncSettings {
   // DTR & Practicum
@@ -299,7 +301,7 @@ export default function SettingsView({
 
       {/* Tabs System */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="settings-tabs-container">
-        <TabsList className="settings-tabs-nav">
+        <TabsList className={'settings-tabs-nav '+privacyStyles.settingsTabs}>
           <TabsTrigger value="general" className="settings-nav-btn">
             <UserRound size={15} /> General & Profile
           </TabsTrigger>
@@ -315,11 +317,15 @@ export default function SettingsView({
           <TabsTrigger value="security" className="settings-nav-btn">
             <ShieldCheck size={15} /> Security & Sessions
           </TabsTrigger>
+          <TabsTrigger value="privacy" className="settings-nav-btn">
+            <ShieldCheck size={15} /> Privacy
+          </TabsTrigger>
           <TabsTrigger value="system" className="settings-nav-btn">
             <Database size={15} /> System & Data
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="privacy" className="settings-tab-panel"><PrivacySettings/></TabsContent>
         {/* TAB 1: GENERAL & PROFILE */}
         <TabsContent value="general" className="settings-tab-panel">
           <div className="settings-panel-card">

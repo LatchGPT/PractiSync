@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { PDFDocument, PDFTextField, PDFCheckBox, PDFDropdown, PDFRadioGroup } from 'pdf-lib';
 import { identity } from '@/packages/auth/auth';
 import { auditStatement, database, insert } from '@/packages/db/demo';
@@ -5,7 +6,7 @@ import { DomainError, requireRole } from '@/packages/domain/policies';
 import type { EvaluationQuestion } from '@/packages/validation/hte';
 
 export const runtime = 'nodejs';
-export async function POST(request: Request) {
+async function handlerPOST(request: Request) {
  try {
   if (request.headers.get('origin') !== new URL(request.url).origin) throw new DomainError('Request origin is not allowed.', 403);
   const user = await identity(request); requireRole(user, 'SUPER_ADMIN');
@@ -39,3 +40,5 @@ export async function POST(request: Request) {
   return Response.json({ error: e instanceof DomainError ? e.message : 'The evaluation PDF could not be uploaded.' }, { status: e instanceof DomainError ? e.status : 500, headers: { 'Cache-Control':'no-store' } });
  }
 }
+
+export const POST=withConsent(handlerPOST);

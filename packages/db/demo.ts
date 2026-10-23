@@ -7,7 +7,7 @@ import { TENANT, DomainError, demoAllowed } from '../domain/policies';
 import { demoAccounts } from '../test-utils/fixtures';
 import { camelRows, type Row } from '../validation/contracts';
 
-type Values = (string | number | null)[];
+type Values = (string | number | null | Date | boolean)[];
 type RowResult = Record<string, unknown>;
 
 export interface PreparedStatement {
@@ -56,7 +56,14 @@ function compilePostgres(sql: string, values: Values): [string, Values] {
   if (position !== values.length) {
     throw new Error(`Query expected ${position} values but received ${values.length}.`);
   }
-  return [compiled, values];
+  const postgresValues: Values = values.map((val) => {
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/i.test(val)) {
+      const parsed = new Date(val);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+    return val;
+  });
+  return [compiled, postgresValues];
 }
 
 class BoundStatement implements PreparedStatement {

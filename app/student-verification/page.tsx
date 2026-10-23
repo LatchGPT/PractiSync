@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { redirect ,unstable_rethrow} from 'next/navigation';
 import { pageIdentity } from '@/app/server-identity';
 import { DomainError } from '@/packages/domain/policies';
 import { dashboardPathForRole } from '@/packages/auth/routes';
@@ -13,10 +13,10 @@ export const metadata = { title: 'Student registration · PractiSync' };
 export default async function StudentVerificationPage() {
  let user;
  try { user = await pageIdentity(true); }
- catch (error) { if (error instanceof DomainError && error.status === 401) redirect('/login'); return unavailable(error instanceof DomainError && error.status === 403 ? 'FORBIDDEN' : 'UNAVAILABLE'); }
+ catch (error) {unstable_rethrow(error); if (error instanceof DomainError && error.status === 401) redirect('/login'); return unavailable(error instanceof DomainError && error.status === 403 ? 'FORBIDDEN' : 'UNAVAILABLE'); }
  if (user.role !== 'STUDENT') redirect(dashboardPathForRole(user.role));
  let context: StudentVerificationContext;
- try { context = await studentVerificationContext(user); } catch (error) { return unavailable(error instanceof DomainError && error.status === 403 ? 'FORBIDDEN' : 'UNAVAILABLE'); }
+ try { context = await studentVerificationContext(user); } catch (error) {unstable_rethrow(error); return unavailable(error instanceof DomainError && error.status === 403 ? 'FORBIDDEN' : 'UNAVAILABLE'); }
  if (context.request.status === 'APPROVED') redirect('/dashboard/student');
  return <StudentVerificationGate initial={context}/>;
 }

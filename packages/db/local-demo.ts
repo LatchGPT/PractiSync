@@ -223,7 +223,7 @@ function upgradeCalendarEventsV6(sql: DatabaseSync) {
 export function openLocalDemoDatabase(): DemoDatabase {
   // The operator's local demo file must not make the production tracer bundle the workspace.
   const path = resolve(/*turbopackIgnore: true*/ process.env.PRACTISYNC_LOCAL_DEMO_PATH || join(process.cwd(), '.local', 'practisync-demo.sqlite'));
-  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 19) return sqliteGlobal.practiSyncLocalDemo.database;
+  if (sqliteGlobal.practiSyncLocalDemo?.path === path && sqliteGlobal.practiSyncLocalDemo.schemaVersion === 22) return sqliteGlobal.practiSyncLocalDemo.database;
 
   mkdirSync(dirname(path), { recursive: true });
   const sql = new DatabaseSync(path);
@@ -305,9 +305,19 @@ export function openLocalDemoDatabase(): DemoDatabase {
       sql.exec('COMMIT');
     } catch (error) { sql.exec('ROLLBACK'); throw error; }
   }
+  if (!hasTable('privacy_policies')) {
+    sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610240001_privacy_consent/sqlite.sql'), 'utf8'));
+  }
+  if (!hasTable('weekly_reports')) {
+    sql.exec('BEGIN');
+    try {
+      sql.exec(readFileSync(join(process.cwd(), 'packages/db/prisma/migrations/202610240002_weekly_reports/migration.sql'), 'utf8'));
+      sql.exec('COMMIT');
+    } catch (error) { sql.exec('ROLLBACK'); throw error; }
+  }
   installSqliteScopeGuards(sql);
-  sql.exec('PRAGMA user_version = 19');
+  sql.exec('PRAGMA user_version = 22');
   const database = new LocalDemoDatabase(sql);
-  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 19 };
+  sqliteGlobal.practiSyncLocalDemo = { path, database, schemaVersion: 22 };
   return database;
 }

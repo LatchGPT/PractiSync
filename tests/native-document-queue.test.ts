@@ -1,5 +1,6 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
 import type { NativeVersion } from '../packages/documents/native-types';
+vi.mock('../packages/privacy/consent',()=>({requireConsent:vi.fn(async()=>({required:false}))}));
 const state=vi.hoisted(()=>({cache:null as null|{pdfBase64:string;pageCount:number;expires:number},jobs:new Set<string>(),renders:0}));
 vi.mock('../packages/db/demo',()=>({one:vi.fn(async(query:string)=>query.includes('expires_at>')&&state.cache&&state.cache.expires<=Date.now()?null:state.cache)}));
 vi.mock('../packages/documents/native-repository',()=>({sha256:()=> 'stable-version-and-values-hash'}));
@@ -29,9 +30,10 @@ describe('render cache expiry with idle BullMQ jobs',()=>{
   it('renders again after retention cleanup even if the old completed job remains in Redis',async()=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-15T00:01:00Z'));state.cache=null;state.jobs.clear();state.renders=0;
     const version={id:'published-version',revision:1,sourceHash:'original'} as NativeVersion;
-    expect((await renderNativePdf('tenant',version,{name:'Jamie'},'preview')).bytes.toString()).toBe('%PDF-fresh');
-    await renderNativePdf('tenant',version,{name:'Jamie'},'preview');expect(state.renders).toBe(1);
+    const user={id:'student',tenantId:'tenant'};
+    expect((await renderNativePdf(user,version,{name:'Jamie'},'preview')).bytes.toString()).toBe('%PDF-fresh');
+    await renderNativePdf(user,version,{name:'Jamie'},'preview');expect(state.renders).toBe(1);
     vi.setSystemTime(new Date('2026-10-15T00:12:00Z'));state.cache=null;
-    expect((await renderNativePdf('tenant',version,{name:'Jamie'},'preview')).bytes.toString()).toBe('%PDF-fresh');expect(state.renders).toBe(2);
+    expect((await renderNativePdf(user,version,{name:'Jamie'},'preview')).bytes.toString()).toBe('%PDF-fresh');expect(state.renders).toBe(2);
   });
 });

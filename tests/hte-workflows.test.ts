@@ -1,3 +1,4 @@
+import { acceptFixtureUsers } from './consent-fixture';
 import { workflowTargetFixtures } from './runtime-fixture';
 import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
@@ -18,9 +19,9 @@ let sql: DatabaseSync;
 const users = {} as Record<string,Identity>;
 const migration = (name: string) => readFileSync(`packages/db/prisma/migrations/${name}/migration.sql`,'utf8');
 function prepared(query: string, values: (string | number | null)[] = []): PreparedStatement {
- return { bind:(...v) => prepared(query,v), all:async <T extends Record<string,unknown>>() => ({results:sql.prepare(query).all(...values) as T[]}), first:async <T extends Record<string,unknown>>() => (sql.prepare(query).get(...values) as T | undefined) ?? null, run:async () => ({meta:sql.prepare(query).run(...values)}) };
+ return { bind:(...v) => prepared(query,v.map(value=>value instanceof Date?value.toISOString():typeof value==='boolean'?Number(value):value)), all:async <T extends Record<string,unknown>>() => ({results:sql.prepare(query).all(...values) as T[]}), first:async <T extends Record<string,unknown>>() => (sql.prepare(query).get(...values) as T | undefined) ?? null, run:async () => ({meta:sql.prepare(query).run(...values)}) };
 }
-const fresh = async (id: string) => await one('SELECT * FROM users WHERE id=?',id) as unknown as Identity;
+const fresh = async (id: string) => {await acceptFixtureUsers();return await one('SELECT * FROM users WHERE id=?',id) as unknown as Identity;};
 const final = async () => (await one('SELECT * FROM final_dtrs WHERE placement_id=?','placement-1'))!;
 const response = async () => (await one('SELECT * FROM hte_evaluation_responses WHERE placement_id=?','placement-1'))!;
 const reviewRequest = (r: Row, decision = 'APPROVE', note = '') => mutate(users.admin,'hteRequestReview',{requestId:r.id,version:Number(r.version),decision,note});
@@ -36,7 +37,7 @@ beforeAll(async () => {
  sql.exec(migration('202610220001_external_hte_workflows'));
  sql.exec("ALTER TABLE completion_responses ADD COLUMN status TEXT NOT NULL DEFAULT 'SUBMITTED'; ALTER TABLE completion_responses ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''; ALTER TABLE completion_responses ADD COLUMN review_note TEXT; ALTER TABLE completion_responses ADD COLUMN reviewer_id TEXT; ALTER TABLE completion_responses ADD COLUMN reviewed_at TEXT;");
  installTestDatabase({prepare:q => prepared(q),batch:async statements => {sql.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sql.exec('COMMIT');return out;}catch(e){sql.exec('ROLLBACK');throw e;}}});
- sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));workflowTargetFixtures(sql);await seed(); for(const role of ['student','coordinator','admin','supervisor'])users[role]=await fresh('demo-'+role);
+ sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));workflowTargetFixtures(sql);await seed();await acceptFixtureUsers(); for(const role of ['student','coordinator','admin','supervisor'])users[role]=await fresh('demo-'+role);
 });
 afterAll(() => {installTestDatabase(undefined);sql.close();vi.unstubAllEnvs();});
 
@@ -137,6 +138,7 @@ describe('Whole internship DTR verification, school form and completion', () => 
   expect((await snapshot(users.student)).hteEvaluationResponses).toEqual([]);
   let r=await response();await mutate(users.supervisor,'hteEvaluationSave',{...values,version:Number(r.version),mode:'SUBMIT',answers:{work:'Meets requirements',comment:'School form response.'}});
   r=await response();expect((await snapshot(users.student)).hteEvaluationResponses).toEqual([]);
+  await insert('users',{name:'Unassigned coordinator',username:'unassigned.coordinator',email:'unassigned@example.invalid',role:'COORDINATOR',status:'ACTIVE'},'unassigned-coordinator').run();await acceptFixtureUsers();
   await expect(mutate({...users.coordinator,id:'unassigned-coordinator'},'hteEvaluationReview',{responseId:r.id,version:Number(r.version),decision:'APPROVED'})).rejects.toThrow('scope');
   await expect(mutate(users.coordinator,'completionDecision',{placementId:'placement-1',decision:'APPROVE'})).rejects.toThrow('evaluation must be approved');
   await mutate(users.coordinator,'hteEvaluationReview',{responseId:r.id,version:Number(r.version),decision:'APPROVED'});

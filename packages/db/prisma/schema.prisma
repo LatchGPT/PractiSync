@@ -7,6 +7,73 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model WeeklyQuestionGrant {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  courseId String @map("course_id")
+  coordinatorId String @map("coordinator_id")
+  active Int @default(1)
+  @@unique([tenantId, courseId, coordinatorId])
+  @@map("weekly_question_grants")
+}
+
+model WeeklyQuestionSet {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  courseId String @map("course_id")
+  effectiveWeek String @map("effective_week")
+  questionsJson String @map("questions_json")
+  authorId String @map("author_id")
+  @@index([tenantId, courseId, effectiveWeek, createdAt], map: "weekly_question_set_lookup")
+  @@map("weekly_question_sets")
+}
+
+model WeeklyCoursePeriod {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  courseId String @map("course_id")
+  week String
+  questionsJson String @map("questions_json")
+  generalSetId String @map("general_set_id")
+  courseSetId String @map("course_set_id")
+  @@unique([tenantId, courseId, week])
+  @@map("weekly_course_periods")
+}
+
+model WeeklyReport {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  placementId String @map("placement_id")
+  week String
+  status String
+  contentJson String @map("content_json")
+  answersJson String @map("answers_json")
+  periodId String? @map("period_id")
+  updatedAt String @map("updated_at")
+  submittedAt String? @map("submitted_at")
+  version Int @default(1)
+  excuseReason String? @map("excuse_reason")
+  @@unique([tenantId, placementId, week])
+  @@unique([id, tenantId])
+  @@index([tenantId, week, status], map: "weekly_report_period")
+  @@map("weekly_reports")
+}
+
+model WeeklyReportImage {
+  id String @id
+  tenantId String @map("tenant_id")
+  createdAt String @map("created_at")
+  reportId String @map("report_id")
+  name String
+  mime String
+  @@index([tenantId, reportId], map: "weekly_images_report")
+  @@map("weekly_report_images")
+}
+
 enum DeploymentMode {
   DEMO
   INSTITUTIONAL
@@ -17,6 +84,47 @@ enum Role {
   COORDINATOR
   SUPERVISOR
   STUDENT
+}
+
+enum ConsentStatus {
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+// Global RTU notice. The migration enforces one current version and immutable notice content.
+model PrivacyPolicy {
+  id          String   @id @default(cuid())
+  version     String   @unique
+  titleEn     String   @map("title_en")
+  bodyEn      String   @map("body_en") @db.Text
+  titleFil    String   @map("title_fil")
+  bodyFil     String   @map("body_fil") @db.Text
+  effectiveAt DateTime @map("effective_at")
+  isCurrent   Boolean  @default(false) @map("is_current")
+  createdAt   DateTime @default(now()) @map("created_at")
+  consents    UserConsent[]
+
+  @@map("privacy_policies")
+}
+
+// Append-only: PostgreSQL and SQLite triggers reject UPDATE and DELETE.
+model UserConsent {
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  tenantId  String        @map("tenant_id")
+  user      DemoUsers     @relation(fields: [userId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  policyId  String        @map("policy_id")
+  policy    PrivacyPolicy @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  status    ConsentStatus
+  language  String        @db.VarChar(3)
+  ipAddress String?       @map("ip_address") @db.VarChar(45)
+  userAgent String?       @map("user_agent") @db.Text
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([userId, policyId, createdAt], map: "user_consent_user_policy_created")
+  @@index([tenantId, userId, policyId, createdAt], map: "user_consent_tenant_user_policy_created")
+  @@map("user_consents")
 }
 
 enum AccountStatus {
@@ -1919,6 +2027,7 @@ model DemoSeedState {
 }
 
 model DemoUsers {
+  privacyConsents    UserConsent[]
   id                 String  @id
   tenantId           String  @map("tenant_id")
   createdAt          String  @map("created_at")

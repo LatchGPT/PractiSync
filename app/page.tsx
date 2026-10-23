@@ -1,5 +1,5 @@
 import {StudentVerificationRequired} from '@/packages/domain/student-verification';
-import {forbidden,redirect} from 'next/navigation';
+import {forbidden,redirect,unstable_rethrow} from 'next/navigation';
 import {pageIdentity} from '@/app/server-identity';
 import {dashboardPathForRole} from '@/packages/auth/routes';
 import type {Identity} from '@/packages/validation/contracts';
@@ -14,11 +14,14 @@ export default async function Page(){
  let initialError:string|null=null;
  try{
   user=await pageIdentity();
- }catch(error){
+ }catch(error){unstable_rethrow(error);
   if(error instanceof StudentVerificationRequired)redirect('/student-verification');
-  console.error('Page error:',error);
-  if(error instanceof DomainError&&error.status===403)denied=true;
-  else if(!(error instanceof DomainError&&(error.status===401||error.status===503)))initialError='PractiSync could not load your workspace. Check your connection and try again.';
+  if(error instanceof DomainError&&error.status===403){
+   denied=true;
+  }else if(!(error instanceof DomainError&&(error.status===401||error.status===503))){
+   console.error('Page error:',error);
+   initialError='PractiSync could not load your workspace. Check your connection and try again.';
+  }
  }
  if(denied)forbidden();
  if(user)redirect(dashboardPathForRole(user.role));

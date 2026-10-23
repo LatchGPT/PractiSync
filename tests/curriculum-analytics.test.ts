@@ -1,3 +1,4 @@
+import { acceptFixtureUsers } from './consent-fixture';
 import { workflowTargetFixtures } from './runtime-fixture';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
@@ -120,7 +121,7 @@ UPDATE completion_responses SET updated_at=COALESCE(submitted_at,created_at);`);
     },
   };
   installTestDatabase(database);
-  sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));workflowTargetFixtures(sql);await seed();
+  sql.exec(readFileSync('packages/db/prisma/migrations/202610200001_student_verification/migration.sql','utf8').split('ALTER TABLE "StudentProfile"')[0]!);sql.exec(readFileSync('packages/db/prisma/migrations/202610200003_student_registration/migration.sql','utf8'));workflowTargetFixtures(sql);await seed();await acceptFixtureUsers();
 });
 
 afterAll(() => {

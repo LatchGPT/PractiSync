@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { identity } from '@/packages/auth/auth';
 import { requireRole,DomainError } from '@/packages/domain/policies';
 import { letterError } from '@/packages/documents/http';
@@ -5,7 +6,7 @@ import { openNativeDocx } from '@/packages/documents/native-docx';
 import { scanDocx } from '@/packages/documents/native-infrastructure';
 import { createNativeTemplate } from '@/packages/documents/native-repository';
 export const runtime='nodejs';export const maxDuration=120;
-export async function POST(request:Request){try{
+async function handlerPOST(request:Request){try{
   if(request.headers.get('origin')!==new URL(request.url).origin)throw new DomainError('Request origin is not allowed.',403);
   const user=await identity(request);requireRole(user,'SUPER_ADMIN');let filename:string;try{filename=decodeURIComponent(request.headers.get('x-file-name')??'').replace(/[\\/\r\n\0]/g,'_').slice(0,180);}catch{throw new DomainError('Invalid filename.');}
   if(!filename.toLowerCase().endsWith('.docx')||filename.toLowerCase().endsWith('.docm'))throw new DomainError('Only standard DOCX files are accepted. Macro-enabled files are not supported.');
@@ -18,3 +19,5 @@ export async function POST(request:Request){try{
   await scanDocx(bytes);const version=await createNativeTemplate(user,filename,bytes);
   return Response.json({version},{headers:{'Cache-Control':'no-store'}});
 }catch(error){return letterError(error);}}
+
+export const POST=withConsent(handlerPOST);

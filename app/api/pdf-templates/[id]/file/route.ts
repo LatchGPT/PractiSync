@@ -1,3 +1,4 @@
+import { withConsent } from '@/packages/privacy/api-guard';
 import { identity } from '@/packages/auth/auth';
 import { one } from '@/packages/db/demo';
 import { DomainError, requireRole } from '@/packages/domain/policies';
@@ -5,7 +6,7 @@ import { DomainError, requireRole } from '@/packages/domain/policies';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function handlerGET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await identity(request);
     requireRole(user, 'SUPER_ADMIN', 'COORDINATOR', 'STUDENT');
@@ -35,3 +36,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     );
   }
 }
+
+export const GET=withConsent(handlerGET);

@@ -6,6 +6,7 @@ export function installSqliteScopeGuards(sql:DatabaseSync){
  const has=(name:string)=>!!sql.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name);
  sql.exec('BEGIN');
  try{
+  if(has('users'))sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS scope_users_identity ON users(id,tenant_id)');
   for(const [table,column,target] of relations){
    if(!has(table)||!has(target))continue;
    const columns=sql.prepare(`PRAGMA table_info(${table})`).all() as {name:string}[];

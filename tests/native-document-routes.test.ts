@@ -1,3 +1,4 @@
+import { installConsentFixtureSchema, acceptFixtureUsers } from './consent-fixture';
 import { afterAll,beforeAll,describe,expect,it,vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
@@ -15,13 +16,14 @@ import type { NativeDraft,NativeVersion } from '../packages/documents/native-typ
 let sql:DatabaseSync,version:NativeVersion,draft:NativeDraft,generatedId:string;
 const user=(id:string,role:Identity['role'],tenantId='fictional-university')=>({id,name:id,role,tenantId,username:id,email:`${id}@example.test`,status:'ACTIVE',sessionVersion:1,isDemo:1,courseId:null,companyId:null}) as Identity;
 const admin=user('admin','SUPER_ADMIN'),student=user('student','STUDENT');
-function prepared(query:string,values:(string|number|null)[]=[]):PreparedStatement{return{bind:(...values)=>prepared(query,values),all:async<T extends Record<string,unknown>>()=>({results:sql.prepare(query).all(...values) as T[]}),first:async<T extends Record<string,unknown>>()=>(sql.prepare(query).get(...values) as T|undefined)??null,run:async()=>({meta:sql.prepare(query).run(...values)})};}
+function prepared(query:string,values:(string|number|null)[]=[]):PreparedStatement{return{bind:(...values)=>prepared(query,values.map(value=>value instanceof Date?value.toISOString():typeof value==='boolean'?Number(value):value)),all:async<T extends Record<string,unknown>>()=>({results:sql.prepare(query).all(...values) as T[]}),first:async<T extends Record<string,unknown>>()=>(sql.prepare(query).get(...values) as T|undefined)??null,run:async()=>({meta:sql.prepare(query).run(...values)})};}
 const request=(action:string,values:unknown,origin='http://localhost')=>new Request('http://localhost/api/native-documents',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({action,values})});
 const json=async(response:Response)=>await response.json() as {templates:NativeVersion[];drafts:NativeDraft[];version:NativeVersion;draft:NativeDraft;id:string};
 beforeAll(async()=>{
   vi.stubEnv('DEPLOYMENT_MODE','demo');vi.stubEnv('DEMO_ENABLED','true');sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON');sql.exec(readFileSync('packages/db/prisma/migrations/202610150002_native_document_generator/migration.sql','utf8'));
   sql.exec('CREATE TABLE audit(id TEXT PRIMARY KEY,tenant_id TEXT,created_at TEXT,actor_id TEXT,action TEXT,resource_id TEXT,reason TEXT)');
   installTestDatabase({prepare:query=>prepared(query),batch:async statements=>{sql.exec('BEGIN');try{const results=[];for(const item of statements)results.push(await item.run());sql.exec('COMMIT');return results;}catch(error){sql.exec('ROLLBACK');throw error;}}});
+  sql.exec("CREATE TABLE users(id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,status TEXT DEFAULT 'ACTIVE'); INSERT INTO users(id,tenant_id) VALUES ('admin','fictional-university'),('student','fictional-university'),('other','other-tenant'),('coordinator','fictional-university'),('other-student','fictional-university');");installConsentFixtureSchema(sql);await acceptFixtureUsers();
   const bytes=readFileSync('packages/documents/fixtures/recommendation.docx'),fields=await recommendationReferenceFields(bytes);fields.find(f=>f.key==='required_hours')!.locked=true;
   version=await createNativeTemplate(admin,'recommendation.docx',bytes,fields);version=await saveNativeFields(admin,version,fields,true);
 });
