@@ -141,7 +141,7 @@ async function mutateScoped(user:Identity,action:Action,payload:unknown):Promise
   case 'markAllNotificationsRead':{parse('markAllNotificationsRead');tx.push(statement('UPDATE notifications SET read_at=? WHERE tenant_id=? AND user_id=? AND read_at IS NULL',new Date().toISOString(),user.tenantId,user.id));message='All notifications marked as read.';break;}
  default:throw new DomainError('Unknown action.');
  }
- tx.push(auditStatement(user.id,action==='studentSelfAssessment'?'STUDENT_SELF_ASSESSMENT_SUBMITTED':action==='reachOutAudit'?'STUDENT_REACH_OUT_INITIATED':action==='incident'?'CASE_CREATE':action==='resolveCase'?'CASE_STATUS':action==='industryFeedback'?'INDUSTRY_FEEDBACK_SUBMITTED':action==='outcomeDecision'?'OUTCOME_DECISION_RECORDED':action==='calendarEvent'?'CALENDAR_EVENT_RECORDED':action==='cancelCalendarEvent'?'CALENDAR_EVENT_CANCELLED':action==='deleteCalendarEvent'?'CALENDAR_EVENT_DELETED':action.toUpperCase(),resourceId));
+ tx.push(auditStatement(user.id,action==='studentSelfAssessment'?'STUDENT_SELF_ASSESSMENT_SUBMITTED':action==='reachOutAudit'?'STUDENT_REACH_OUT_INITIATED':action==='incident'?'CASE_CREATE':action==='resolveCase'?'CASE_STATUS':action==='outcomeDecision'?'OUTCOME_DECISION_RECORDED':action==='calendarEvent'?'CALENDAR_EVENT_RECORDED':action==='cancelCalendarEvent'?'CALENDAR_EVENT_CANCELLED':action==='deleteCalendarEvent'?'CALENDAR_EVENT_DELETED':action.toUpperCase(),resourceId));
  try{await database().batch(tx);}catch(error){console.error('Mutation failed',action,error instanceof Error?error.name:'DatabaseError');throw new DomainError('The record changed or conflicts with existing data. Refresh and try again.',409);}
  return {message,id:resourceId};
 }

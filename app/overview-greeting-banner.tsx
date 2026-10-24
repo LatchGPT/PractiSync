@@ -2,7 +2,6 @@
 
 import {
   AlertCircle,
-  BookOpen,
   CalendarDays,
   CheckCircle2,
   Clock,
@@ -61,7 +60,6 @@ export default function OverviewGreetingBanner({
       data.placements.find(p => p.studentId === user.id && p.status === 'ACTIVE') ??
       data.placements.find(p => p.studentId === user.id);
 
-    const course = data.courses.find(c => c.id === user.courseId);
     const hasLoggedToday = data.entries.some(
       e => e.placementId === placement?.id && e.date === todayManila
     );

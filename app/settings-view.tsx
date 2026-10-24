@@ -926,7 +926,7 @@ export default function SettingsView({
           <div className="settings-panel-card">
             <div className="settings-card-header">
               <div>
-                <h3>Session access</h3>
+                <h3>Session Access</h3>
 
               </div>
               <button

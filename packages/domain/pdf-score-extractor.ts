@@ -61,7 +61,7 @@ export async function extractScoresFromPdf(
         return { scores, recommendations, method: 'FORM_FIELDS', fieldCount: fields.length };
       }
     }
-  } catch (err) {
+  } catch {
     // Non-fillable or standard flattened PDF
   }
 
@@ -97,7 +97,7 @@ export async function extractScoresFromPdf(
     if (Object.keys(scores).length > 0 || recommendations) {
       return { scores, recommendations, method: 'TEXT_PATTERN', fieldCount: extractedNumbers.length };
     }
-  } catch (err) {
+  } catch {
     // PDF text stream unavailable or scanned image
   }
 

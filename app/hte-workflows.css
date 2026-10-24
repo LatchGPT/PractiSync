@@ -26,3 +26,992 @@
 .hte-flow-step{display:grid;gap:8px;padding:16px;border:1px solid var(--border);border-radius:var(--radius-btn);background:#fff;margin-bottom:12px}
 .hte-flow-step-header{display:flex;align-items:center;gap:10px}
 .hte-flow-step-title{font-size:14px;font-weight:600;color:var(--rtu-navy)}
+
+/* Student Unified Final DTR & Internship Completion Container */
+.hte-student-final-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #dce5f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(18, 76, 145, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.hte-student-final-card > .hte-final-dtr {
+  gap: 20px;
+}
+
+.hte-student-final-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #124c91 0%, #1e6ec7 50%, #d7aa3e 100%);
+}
+
+.hte-student-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hte-student-card-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #966916;
+  margin-bottom: 4px;
+}
+
+.hte-student-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #124c91;
+  line-height: 1.3;
+}
+
+.hte-student-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.hte-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: #1e3a8a;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.hte-meta-badge.purple {
+  color: #6b21a8;
+  background: #f3e8ff;
+  border-color: #e9d5ff;
+}
+
+/* Hours Progress & Tracking Bar */
+.hte-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.hte-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hte-progress-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+.hte-progress-stats strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f2d59;
+}
+
+.hte-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.hte-progress-pill.in-progress {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.hte-progress-pill.ready {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.hte-progress-pill.verified {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.hte-progress-pill.pending {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.hte-progress-bar-track {
+  width: 100%;
+  height: 9px;
+  background: #cbd5e1;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hte-progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #124c91 0%, #1e6ec7 70%, #d7aa3e 100%);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Active Tracker Checklist (when !eligible) */
+.hte-tracker-checklist {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.hte-checklist-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.hte-checklist-header strong {
+  font-size: 14px;
+  color: #124c91;
+  display: block;
+}
+
+.hte-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.hte-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.hte-check-item.current {
+  border-color: #93c5fd;
+  background: #f0f7ff;
+}
+
+.hte-check-item.done {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.hte-check-item.locked {
+  opacity: 0.75;
+}
+
+.hte-check-bullet {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.hte-check-item.done .hte-check-bullet {
+  background: #0d7454;
+  color: #ffffff;
+}
+
+.hte-check-item.current .hte-check-bullet {
+  background: #124c91;
+  color: #ffffff;
+}
+
+.hte-check-item.locked .hte-check-bullet {
+  background: #cbd5e1;
+  color: #475569;
+}
+
+.hte-check-item strong {
+  font-size: 12.5px;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.hte-submit-guidance {
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* Status Banners */
+.hte-student-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid;
+}
+
+.hte-student-banner.pending {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.hte-student-banner.verified {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.hte-student-banner.revision {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.hte-student-banner h4 {
+  font-size: 14.5px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: inherit;
+}
+
+.hte-student-banner p {
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+  color: inherit;
+}
+
+.hte-reopen-details {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #f8fafc;
+}
+
+.hte-reopen-details summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #124c91;
+  cursor: pointer;
+}
+
+.hte-reopen-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.hte-review-disclosure {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #ffffff;
+}
+
+.hte-review-disclosure summary {
+  font-size: 13px;
+  font-weight: 600;
+  color: #124c91;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .hte-student-final-card {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hte-progress-bar-fill,
+  .hte-document-dropzone {
+    transition: none !important;
+  }
+}
+
+.hte-document-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.hte-document-card {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  min-height: 240px;
+  padding: 24px;
+  border: 1px solid #cbd9ea;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(18, 76, 145, 0.07);
+}
+
+.hte-document-card-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.hte-document-card-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.hte-document-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 1px solid #bfdbfe;
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #124c91;
+}
+
+.hte-document-card-heading h3 {
+  margin: 0;
+  color: var(--rtu-navy);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.hte-document-card-heading p,
+.hte-document-locked {
+  margin: 6px 0 0;
+  color: #526781;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hte-document-card-heading .chip {
+  flex: 0 0 auto;
+}
+
+.hte-document-print {
+  justify-self: start;
+  min-height: 44px;
+}
+
+.hte-document-card--signed-dtr .hte-document-print {
+  justify-self: stretch;
+  width: 100%;
+  justify-content: center;
+}
+
+.hte-document-locked {
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #edf3fb;
+}
+
+.hte-document-dropzone {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-height: 96px;
+  padding: 16px;
+  border: 1px dashed #b8cbe0;
+  border-radius: 9px;
+  background: #fff;
+  color: #124c91;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.hte-document-dropzone:hover,
+.hte-document-dropzone.dragging {
+  border-color: #124c91;
+  background: #f0f7ff;
+}
+
+.hte-document-dropzone.is-locked {
+  border-color: #cbd5e1;
+  background: #f3f6fa;
+  color: #75849a;
+  cursor: not-allowed;
+}
+
+.hte-document-dropzone.is-locked:hover {
+  border-color: #cbd5e1;
+  background: #f3f6fa;
+}
+
+.hte-document-dropzone.is-locked span {
+  color: #526781;
+}
+
+.hte-document-dropzone.is-locked small {
+  color: #75849a;
+}
+
+.hte-document-dropzone:focus-within,
+.hte-document-replace:focus-within {
+  outline: 2px solid #d7aa3e;
+  outline-offset: 2px;
+}
+
+.hte-document-dropzone span {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hte-document-dropzone small {
+  color: #526781;
+  font-size: 11px;
+}
+
+.hte-document-dropzone input[type="file"],
+.hte-document-replace input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hte-document-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #c4ebd4;
+  border-radius: 9px;
+  background: #edf8f3;
+  color: #166b42;
+}
+
+.hte-document-file > strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #166b42;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hte-document-replace {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: 6px;
+  color: #124c91;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hte-document-file .textbutton {
+  color: #9e3023;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .hte-document-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hte-document-card {
+    min-height: 0;
+    padding: 20px;
+  }
+}
+
+.hte-prefilled-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #ffffff;
+  color: #124c91;
+  border: 1.5px solid #124c91;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.hte-prefilled-btn:hover {
+  background: #124c91;
+  color: #ffffff;
+}
+
+/* Gold RTU Completion Badge & Clearance Showcase */
+.hte-cert-showcase {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0f2648 0%, #153456 60%, #0d213d 100%);
+  color: #ffffff;
+  padding: 28px 24px;
+  border: 1.5px solid #d7aa3e;
+  box-shadow: 0 10px 30px rgba(18, 76, 145, 0.18), 0 0 0 1px rgba(215, 170, 62, 0.25);
+}
+
+.hte-cert-showcase::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #d7aa3e, #fde047, #d7aa3e);
+}
+
+.hte-cert-header-area {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.hte-cert-seal-badge {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hte-gold-seal {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fde047, #d7aa3e 70%, #996515 100%);
+  color: #0b1d35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(215, 170, 62, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  border: 2px solid #ffffff;
+}
+
+.hte-cert-titles h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.hte-cert-titles p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hte-cert-chip-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(215, 170, 62, 0.18);
+  border: 1px solid #d7aa3e;
+  color: #fde047;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.hte-cert-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.hte-cert-stat-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 3px;
+}
+
+.hte-cert-stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.hte-cert-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hte-cert-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #d7aa3e 0%, #c49527 100%);
+  color: #0b1d35;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(215, 170, 62, 0.35);
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.hte-cert-download-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* Pre-filled DTR Modal & Printable Document */
+.hte-prefilled-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 29, 53, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.hte-prefilled-modal-container {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px -12px rgba(11, 29, 53, 0.35);
+  border: 1px solid #dce5f0;
+  overflow: hidden;
+}
+
+.hte-prefilled-modal-header {
+  padding: 18px 24px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hte-prefilled-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hte-prefilled-modal-header h3 {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #0f2c59;
+}
+
+.hte-prefilled-modal-header p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.hte-prefilled-modal-body {
+  padding: 22px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #f8fafc;
+}
+
+.hte-advisory-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.hte-advisory-callout strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+  color: #1e3a8a;
+}
+
+.hte-printable-dtr-sheet {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 32px 36px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+  font-family: inherit;
+}
+
+.hte-doc-header {
+  text-align: center;
+  border-bottom: 2px solid #0f2c59;
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+
+.hte-doc-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #0f2c59;
+  text-transform: uppercase;
+}
+
+.hte-doc-header h5 {
+  margin: 3px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.hte-doc-header h3 {
+  margin: 10px 0 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #124c91;
+  text-transform: uppercase;
+}
+
+.hte-doc-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 24px;
+  margin-bottom: 20px;
+  font-size: 12.5px;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.hte-doc-meta-item {
+  display: flex;
+  gap: 8px;
+}
+
+.hte-doc-meta-label {
+  font-weight: 700;
+  color: #475569;
+  min-width: 140px;
+}
+
+.hte-doc-meta-val {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.hte-doc-table-wrap {
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.hte-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.hte-doc-table th {
+  background: #f1f5f9;
+  color: #0f2c59;
+  font-weight: 700;
+  text-align: left;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  font-size: 11.5px;
+}
+
+.hte-doc-table td {
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+.hte-doc-table tr.total-row td {
+  background: #f8fafc;
+  font-weight: 800;
+  border-top: 2px solid #0f2c59;
+  color: #0f2c59;
+}
+
+.hte-sig-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 28px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.hte-sig-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  text-align: center;
+}
+
+.hte-sig-statement {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-bottom: 32px;
+  min-height: 38px;
+  line-height: 1.35;
+}
+
+.hte-sig-line {
+  border-top: 1.5px solid #0f172a;
+  padding-top: 6px;
+}
+
+.hte-sig-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.hte-sig-title {
+  font-size: 11px;
+  color: #64748b;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .hte-prefilled-modal-backdrop,
+  .hte-prefilled-modal-backdrop * {
+    visibility: visible;
+  }
+  .hte-prefilled-modal-backdrop {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .hte-prefilled-modal-container {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    padding: 0 !important;
+  }
+  .hte-no-print {
+    display: none !important;
+  }
+  .hte-printable-dtr-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 10pt !important;
+  }
+  .hte-doc-table th,
+  .hte-doc-table td {
+    border-color: #666 !important;
+  }
+}

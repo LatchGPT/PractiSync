@@ -18,7 +18,7 @@ export const hteInputs = {
  hteProfileChange: companyDetails.extend({ version: z.number().int().positive() }),
  hteJobChange: jobDetails.extend({ jobId: text(100), version: z.number().int().positive() }),
  hteJobClose: z.object({ jobId: text(100), version: z.number().int().positive() }),
- finalDtrSubmit: z.object({ placementId: text(100), version: z.number().int().min(0), attachmentFilename: text(180).optional(), attachmentBase64: z.string().optional() }),
+ finalDtrSubmit: z.object({ placementId: text(100), version: z.number().int().min(0), attachmentFilename: text(180).optional(), attachmentBase64: z.string().optional(), cocFilename: text(180).optional(), cocBase64: z.string().optional() }),
  finalDtrReview: z.object({ placementId: text(100), version: z.number().int().positive(), decision: z.enum(['VERIFY','REJECT']), note: z.string().trim().max(2000).default('') }),
  finalDtrReopen: z.object({ placementId: text(100), version: z.number().int().positive(), reason: text(2000) }),
  finalDtrReopenReview: z.object({ requestId: text(100), version: z.number().int().positive(), decision: z.enum(['APPROVE','REJECT']), note: text(2000) }),

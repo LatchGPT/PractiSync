@@ -1,5 +1,5 @@
 import { identity } from '@/packages/auth/auth';
-import { database, one } from '@/packages/db/demo';
+import { one } from '@/packages/db/demo';
 import { DomainError, requireRole } from '@/packages/domain/policies';
 import { extractScoresFromPdf } from '@/packages/domain/pdf-score-extractor';
 import { evaluationQuestions } from '@/packages/validation/hte';

@@ -1,27 +1,25 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  GraduationCap,
-  Star,
-  ShieldCheck,
   Building2,
   CalendarDays,
-  Users,
-  Search,
-  Mail,
-  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Check,
   Clock,
   Copy,
+  GraduationCap,
+  Mail,
   Plus,
-  BookOpen,
-  Check,
-  Building,
-  UserCheck,
-  ArrowUpRight,
+  Search,
+  ShieldCheck,
+  Star,
+  Users,
 } from 'lucide-react';
 import type { Snapshot, Identity, Row } from '@/packages/validation/contracts';
 import { toast } from 'sonner';
+import styles from './student-my-class-view.module.css';
 
 interface StudentMyClassViewProps {
   data: Snapshot;
@@ -33,105 +31,87 @@ interface StudentMyClassViewProps {
   onReachOut?: () => void;
 }
 
+interface ClassMemberItem {
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  yearLevel: number | null;
+  classId?: string;
+}
+
+const yearLabel = (year: number | null) => year && Number.isInteger(year) && year >= 1 && year <= 6
+  ? `${['1st', '2nd', '3rd', '4th', '5th', '6th'][year - 1]} Year`
+  : 'Year Level Not Set';
+
+const placementLabel = (status: string) => ({ ACTIVE: 'Active', PLANNED: 'Planned', COMPLETED: 'Completed', AWAITING: 'Awaiting Placement' })[status] ?? 'Status Unavailable';
+
 export default function StudentMyClassView({
   data,
   user,
   ownPlacement,
   openJoinModal,
   openExternalPlacement,
-  onViewStudent,
   onReachOut,
 }: StudentMyClassViewProps) {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PLACED' | 'PENDING'>('ALL');
+  const [page, setPage] = useState(1);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // 1. Identify enrolled class or fallback
   const myClass = data.classes.find(c => c.id === ownPlacement?.classId) ?? data.classes[0];
-
-  // 2. Resolve Course & Department Details
-  const course = data.courses.find(co => co.id === myClass?.courseId);
-  const courseCode = course?.code || 'BSIT';
-  const courseName = course?.name || 'Bachelor of Science in Information Technology';
-  const department = data.departments.find(d => d.id === course?.departmentId);
-  const deptName = department?.name || 'College of Engineering & Information Technology';
-
-  // 3. Coordinator Details
-  const coordinatorUser = data.users.find(u => u.id === myClass?.coordinatorId);
-  const coordinatorName = String(coordinatorUser?.name ?? myClass?.coordinatorName ?? 'Assigned Practicum Coordinator');
-  const coordinatorEmail = coordinatorUser?.email ? String(coordinatorUser.email) : `${coordinatorName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@rtu.edu.ph`;
-
-  // 4. Resolve Peer Roster
-  interface ClassMemberItem {
-    studentId: string;
-    studentName: string;
-    studentEmail: string;
-    companyName: string | null;
-    placementStatus: string;
-    classId?: string;
-  }
+  const course = data.courses.find(item => item.id === myClass?.courseId);
+  const courseName = course?.name ? String(course.name) : '';
+  const department = data.departments.find(item => item.id === course?.departmentId);
+  const coordinatorUser = data.users.find(item => item.id === myClass?.coordinatorId);
+  const coordinatorName = String(coordinatorUser?.name ?? myClass?.coordinatorName ?? 'Assigned practicum coordinator');
+  const coordinatorEmail = coordinatorUser?.email ? String(coordinatorUser.email) : '';
 
   const classmates = useMemo<ClassMemberItem[]>(() => {
     if (!myClass) return [];
+
     if (data.classMembers && data.classMembers.length > 0) {
       return data.classMembers
-        .filter(m => !m.classId || String(m.classId) === String(myClass.id))
-        .map(m => {
-          const sName = String(m.studentName ?? 'Student');
-          return {
-            studentId: String(m.studentId ?? ''),
-            studentName: sName,
-            studentEmail: String(m.studentEmail ?? `${sName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@rtu.edu.ph`),
-            companyName: m.companyName ? String(m.companyName) : null,
-            placementStatus: String(m.placementStatus ?? 'ACTIVE'),
-            classId: String(myClass.id),
-          };
-        });
-    }
-    // Fallback: derive from data.placements
-    return data.placements
-      .filter(p => p.classId === myClass.id)
-      .map(p => {
-        const sName = String(p.studentName ?? 'Student');
-        return {
-          studentId: String(p.studentId ?? ''),
-          studentName: sName,
-          studentEmail: String(p.studentEmail ?? `${sName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@rtu.edu.ph`),
-          companyName: p.companyName ? String(p.companyName) : null,
-          placementStatus: String(p.status ?? 'ACTIVE'),
+        .filter(member => !member.classId || String(member.classId) === String(myClass.id))
+        .map(member => ({
+          studentId: String(member.studentId ?? ''),
+          studentName: String(member.studentName ?? 'Student'),
+          studentEmail: member.studentEmail ? String(member.studentEmail) : '',
+          yearLevel: member.yearLevel ? Number(member.yearLevel) : null,
           classId: String(myClass.id),
-        };
-      });
+        }));
+    }
+
+    return data.placements
+      .filter(placement => placement.classId === myClass.id)
+      .map(placement => ({
+        studentId: String(placement.studentId ?? ''),
+        studentName: String(placement.studentName ?? 'Student'),
+        studentEmail: placement.studentEmail ? String(placement.studentEmail) : '',
+        yearLevel: placement.yearLevel ? Number(placement.yearLevel) : null,
+        classId: String(myClass.id),
+      }));
   }, [data.classMembers, data.placements, myClass]);
 
-  // 5. Leadership Students
   const classRepId = myClass ? String(myClass.classRepId ?? '') : '';
   const viceClassRepId = myClass ? String(myClass.viceClassRepId ?? '') : '';
-  const classRepName = myClass ? String(myClass.classRepName ?? 'Not assigned') : 'Not assigned';
-  const viceClassRepName = myClass ? String(myClass.viceClassRepName ?? 'None (Unassigned)') : 'None (Unassigned)';
+  const classRepPeer = classmates.find(member => member.studentId === classRepId);
+  const viceRepPeer = classmates.find(member => member.studentId === viceClassRepId);
+  const classRepName = classRepPeer?.studentName ?? (myClass?.classRepName ? String(myClass.classRepName) : 'Not assigned');
+  const viceClassRepName = viceRepPeer?.studentName ?? (myClass?.viceClassRepName ? String(myClass.viceClassRepName) : 'Not assigned');
 
-  const classRepPeer = classmates.find(c => c.studentId === classRepId);
-  const viceRepPeer = classmates.find(c => c.studentId === viceClassRepId);
-
-  // 6. Filtered Classmates
   const filteredClassmates = useMemo(() => {
-    return classmates.filter(c => {
-      const name = String(c.studentName ?? '').toLowerCase();
-      const comp = String(c.companyName ?? '').toLowerCase();
-      const query = search.toLowerCase().trim();
-      const matchesSearch = !query || name.includes(query) || comp.includes(query);
+    const query = search.trim().toLocaleLowerCase();
 
-      const isPlaced = Boolean(c.companyName);
-      if (statusFilter === 'PLACED') return matchesSearch && isPlaced;
-      if (statusFilter === 'PENDING') return matchesSearch && !isPlaced;
-      return matchesSearch;
-    });
-  }, [classmates, search, statusFilter]);
+    return classmates.filter(member => !query || member.studentName.toLocaleLowerCase().includes(query));
+  }, [classmates, search]);
 
-  const placedCount = useMemo(() => classmates.filter(c => Boolean(c.companyName)).length, [classmates]);
-  const pendingCount = classmates.length - placedCount;
-
-  // Helper for 2-letter uppercase initials
+  const pageSize = 5;
+  const pageCount = Math.max(1, Math.ceil(filteredClassmates.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const pageStart = (currentPage - 1) * pageSize;
+  const visibleClassmates = filteredClassmates.slice(pageStart, pageStart + pageSize);
+  const pageNumbers = Array.from({ length: pageCount }, (_, index) => index + 1)
+    .filter(number => pageCount <= 5 || number === 1 || number === pageCount || Math.abs(number - currentPage) <= 1);
+  const hasSearch = Boolean(search.trim());
   const initials = (name?: string | null) => {
     if (!name) return 'PS';
     const parts = name.trim().split(/\s+/);
@@ -141,462 +121,267 @@ export default function StudentMyClassView({
 
   const copyCode = async () => {
     if (!myClass?.codeLabel) return;
+
     try {
       await navigator.clipboard.writeText(String(myClass.codeLabel));
       setCopiedCode(true);
-      toast.success(`Copied enrollment code: ${myClass.codeLabel}`);
-      setTimeout(() => setCopiedCode(false), 2000);
+      toast.success('Enrollment code copied.');
+      window.setTimeout(() => setCopiedCode(false), 2000);
     } catch {
-      toast.error('Unable to copy code to clipboard.');
+      toast.error('Unable to copy the enrollment code.');
     }
   };
 
+  if (!myClass) {
+    return (
+      <div className={styles.emptyClass}>
+        <div className={styles.emptyIcon} aria-hidden="true"><GraduationCap size={23} /></div>
+        <h2>Join Your Practicum Class</h2>
+        <button type="button" className={`primary ${styles.primaryAction}`} onClick={openJoinModal}>
+          <Plus size={15} aria-hidden="true" />
+          Join a class
+        </button>
+      </div>
+    );
+  }
+
+  const sectionName = String(myClass.section || 'Your Section');
+  const isExternalPlacement = Number(ownPlacement?.isExternal || 0) === 1;
+  const needsExternalPlacement = (!ownPlacement || ownPlacement.status !== 'ACTIVE') && openExternalPlacement;
+
   return (
-    <div className="student-classroom-container">
-      {/* Main Classroom View */}
-      {myClass ? (
-        <div className="myclass-layout-wrap">
-          {/* 1. Header Card with Balanced Grid */}
-          <section className="myclass-header-card">
-            <div className="myclass-header-hero">
-              <div className="myclass-hero-left">
-                <div className="myclass-tag-row">
-                  <span className="chip green myclass-status-chip">
-                    <CheckCircle2 size={13} /> Enrolled Section
-                  </span>
-                  <span className="myclass-dept-badge">{deptName}</span>
-                </div>
-                <h1 className="myclass-section-title">{String(myClass.section || 'Your Section')}</h1>
-                <p className="myclass-course-sub">
-                  {courseName} ({courseCode}) · {String(myClass.name || 'Practicum')}
-                </p>
-              </div>
-
-              <div className="myclass-hero-actions">
-                {(!ownPlacement || ownPlacement.status !== 'ACTIVE') && openExternalPlacement && (
-                  <button
-                    type="button"
-                    className="primary myclass-switch-btn"
-                    onClick={openExternalPlacement}
-                    title="Register an external host company that doesn't have a PractiSync profile"
-                  >
-                    <Building2 size={14} />
-                    Add external company
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="secondary myclass-switch-btn"
-                  onClick={openJoinModal}
-                  title="Switch to another section with enrollment code"
-                >
-                  <Plus size={14} />
-                  Switch or enter code
-                </button>
-              </div>
+    <div className={styles.view}>
+      <section className={styles.overview} aria-labelledby="student-class-title">
+        <div className={styles.overviewHeader}>
+          <div className={styles.classIdentity}>
+            <span className={styles.classIcon} aria-hidden="true"><GraduationCap size={22} /></span>
+            <div className={styles.identityText}>
+              <div className={styles.enrollmentState}>Enrolled Section</div>
+              <h2 id="student-class-title">{sectionName}</h2>
+              <p>{[courseName, String(myClass.name || 'Practicum')].filter(Boolean).join(' · ')}</p>
             </div>
-
-            {/* Header Balanced Grid: Academic Info & Coordinator Consultation Details */}
-            <div className="myclass-header-grid">
-              {/* Academic & Section Information */}
-              <div className="myclass-meta-column">
-                <div className="myclass-meta-header">
-                  <span className="eyebrow">Academic Term & Details</span>
-                </div>
-                <div className="myclass-meta-row">
-                  <CalendarDays size={16} className="myclass-meta-icon" />
-                  <div>
-                    <span className="myclass-meta-label">Academic Period</span>
-                    <strong className="myclass-meta-value">
-                      {String(myClass.period || 'A.Y. 2026–2027 · 1st Semester')}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="myclass-meta-row">
-                  <Users size={16} className="myclass-meta-icon" />
-                  <div>
-                    <span className="myclass-meta-label">Class Size</span>
-                    <strong className="myclass-meta-value">{classmates.length} Enrolled Classmates</strong>
-                  </div>
-                </div>
-
-                {myClass.codeLabel && (
-                  <div className="myclass-meta-row">
-                    <Copy size={16} className="myclass-meta-icon" />
-                    <div>
-                      <span className="myclass-meta-label">Section Enrollment Code</span>
-                      <div className="myclass-code-copy-wrap">
-                        <code className="myclass-code-badge">{String(myClass.codeLabel)}</code>
-                        <button
-                          type="button"
-                          className="myclass-code-copy-btn"
-                          onClick={copyCode}
-                          title="Copy enrollment code"
-                        >
-                          {copiedCode ? <Check size={12} color="#166b42" /> : <Copy size={12} />}
-                          <span>{copiedCode ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Coordinator Consultation & Office Details */}
-              <div className="myclass-coordinator-column">
-                <div className="myclass-meta-header">
-                  <span className="eyebrow">Assigned OJT Coordinator</span>
-                </div>
-                <div className="myclass-coordinator-card">
-                  <div className="myclass-coordinator-top">
-                    <div className="myclass-coord-avatar">
-                      <GraduationCap size={18} />
-                    </div>
-                    <div>
-                      <strong className="myclass-coord-name">{coordinatorName}</strong>
-                      <span className="myclass-coord-role">Practicum Faculty Coordinator</span>
-                    </div>
-                  </div>
-
-                  <div className="myclass-coordinator-details">
-                    <div className="myclass-coord-detail-item" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Mail size={13} className="myclass-coord-icon" />
-                        <a href={`mailto:${coordinatorEmail}`} className="myclass-coord-link">
-                          {coordinatorEmail}
-                        </a>
-                      </div>
-                      {onReachOut && (
-                        <button
-                          type="button"
-                          className="secondary"
-                          style={{ fontSize: 11, padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                          onClick={onReachOut}
-                          title="Open verified email reach out dialog"
-                        >
-                          <Mail size={11} />
-                          <span>Email coordinator</span>
-                        </button>
-                      )}
-                    </div>
-                    <div className="myclass-coord-detail-item">
-                      <Building size={13} className="myclass-coord-icon" />
-                      <span>CEIT Faculty Center · Rm 304, Boni Campus</span>
-                    </div>
-                    <div className="myclass-coord-detail-item">
-                      <Clock size={13} className="myclass-coord-icon" />
-                      <span>Mon & Wed 1:00 PM – 4:30 PM (Consultation)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Placement Status Card */}
-          {ownPlacement ? (
-            <section className={`myclass-placement-banner ${Number(ownPlacement.isExternal || 0) === 1 ? 'is-external' : ''}`}>
-              <div className="myclass-placement-banner-left">
-                <div className="myclass-placement-badge-row">
-                  <span className="chip green">
-                    <CheckCircle2 size={12} /> Active Training Placement
-                  </span>
-                  {Number(ownPlacement.isExternal || 0) === 1 && (
-                    <span className="chip purple">
-                      <Building2 size={12} /> Offline / Opt-Out Industry Partner Track
-                    </span>
-                  )}
-                </div>
-                <h3 className="myclass-placement-company">{String(ownPlacement.companyName)}</h3>
-                <p className="myclass-placement-sub">
-                  {String(ownPlacement.externalCompanyLocation || ownPlacement.location || 'Company Office')} · Immediate Supervisor: <strong>{String(ownPlacement.externalSupervisorName || 'Assigned Supervisor')}</strong>
-                  {ownPlacement.externalSupervisorEmail ? ` (${ownPlacement.externalSupervisorEmail})` : ''}
-                </p>
-              </div>
-            </section>
-          ) : (
-            <section className="myclass-placement-banner is-empty">
-              <div className="myclass-placement-banner-left">
-                <div className="myclass-placement-badge-row">
-                  <span className="chip orange">
-                    <Clock size={12} /> No Placement Linked Yet
-                  </span>
-                </div>
-                <h3 className="myclass-placement-company">Internship at a Company Without a PractiSync Account?</h3>
-
-              </div>
-              {openExternalPlacement && (
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={openExternalPlacement}
-                >
-                  <Building2 size={14} />
-                  Register external company
-                </button>
-              )}
-            </section>
-          )}
-
-          {/* 2. Class Leadership Section */}
-          <section className="myclass-section myclass-leadership-section">
-            <div className="myclass-section-head">
-              <div>
-                <span className="eyebrow">Student Governance & Liaison</span>
-                <h2 className="myclass-section-title-sm">
-                  <Star size={18} fill="#d7aa3e" color="#d7aa3e" style={{ marginRight: 6 }} />
-                  Class Section Leadership
-                </h2>
-
-              </div>
-            </div>
-
-            <div className="myclass-leadership-grid">
-              {/* Class Representative Card */}
-              <div className="myclass-leader-card rep-card">
-                <div className="myclass-leader-top">
-                  <span className="avatar tan myclass-leader-avatar">{initials(classRepName)}</span>
-                  <div className="myclass-leader-title-wrap">
-                    <div className="myclass-leader-name-row">
-                      <strong className="myclass-leader-name">{classRepName}</strong>
-                      {classRepId === user.id && <span className="chip blue myclass-you-chip">You</span>}
-                    </div>
-                    <span className="badge-class-rep" title="Class Representative">
-                      <Star size={11} fill="#d7aa3e" color="#d7aa3e" style={{ marginRight: 4 }} />
-                      Class Representative
-                    </span>
-                  </div>
-                </div>
-
-
-
-                <div className="myclass-leader-footer">
-                  {classRepPeer?.studentEmail ? (
-                    <a href={`mailto:${classRepPeer.studentEmail}`} className="myclass-peer-email-link">
-                      <Mail size={13} />
-                      <span>Email class representative</span>
-                    </a>
-                  ) : (
-                    <span className="small muted">Official Class Liaison</span>
-                  )}
-                  {classRepPeer?.companyName && (
-                    <span className="chip green myclass-placement-tag">
-                      <Building2 size={12} />
-                      Placed: {classRepPeer.companyName}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Vice Class Representative Card */}
-              <div className="myclass-leader-card vice-card">
-                <div className="myclass-leader-top">
-                  <span className="avatar myclass-leader-avatar">{initials(viceClassRepName)}</span>
-                  <div className="myclass-leader-title-wrap">
-                    <div className="myclass-leader-name-row">
-                      <strong className="myclass-leader-name">{viceClassRepName}</strong>
-                      {viceClassRepId === user.id && <span className="chip blue myclass-you-chip">You</span>}
-                    </div>
-                    <span className="badge-vice-rep" title="Vice Class Representative">
-                      <ShieldCheck size={11} color="#12437b" style={{ marginRight: 4 }} />
-                      Vice Class Representative
-                    </span>
-                  </div>
-                </div>
-
-
-
-                <div className="myclass-leader-footer">
-                  {viceRepPeer?.studentEmail ? (
-                    <a href={`mailto:${viceRepPeer.studentEmail}`} className="myclass-peer-email-link">
-                      <Mail size={13} />
-                      <span>Email vice representative</span>
-                    </a>
-                  ) : (
-                    <span className="small muted">Peer Support Lead</span>
-                  )}
-                  {viceRepPeer?.companyName && (
-                    <span className="chip green myclass-placement-tag">
-                      <Building2 size={12} />
-                      Placed: {viceRepPeer.companyName}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* 3. Classmate Directory */}
-          <section className="myclass-section myclass-directory-section">
-            <div className="myclass-directory-header-row">
-              <div>
-                <span className="eyebrow">Peer Directory</span>
-                <h2 className="myclass-section-title-sm">
-                  <Users size={18} style={{ marginRight: 6 }} />
-                  Classmate Directory
-                </h2>
-
-              </div>
-
-              <div className="myclass-directory-count-badge">
-                <UserCheck size={14} />
-                <span>{classmates.length} Total Enrolled</span>
-              </div>
-            </div>
-
-            {/* Filter and Search Bar */}
-            <div className="myclass-directory-toolbar">
-              <div className="myclass-search-wrap">
-                <Search size={15} className="myclass-search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search classmate by name or company..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="myclass-search-input"
-                />
-              </div>
-
-              <div className="myclass-filter-pills">
-                <button
-                  type="button"
-                  className={`myclass-filter-pill ${statusFilter === 'ALL' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('ALL')}
-                >
-                  All ({classmates.length})
-                </button>
-                <button
-                  type="button"
-                  className={`myclass-filter-pill ${statusFilter === 'PLACED' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('PLACED')}
-                >
-                  Placed ({placedCount})
-                </button>
-                <button
-                  type="button"
-                  className={`myclass-filter-pill ${statusFilter === 'PENDING' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('PENDING')}
-                >
-                  Pending ({pendingCount})
-                </button>
-              </div>
-            </div>
-
-            {/* Responsive Multi-Column Peer Grid (grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6) */}
-            {filteredClassmates.length > 0 ? (
-              <div className="myclass-peer-grid">
-                {filteredClassmates.map(peer => {
-                  const isRep = peer.studentId === classRepId;
-                  const isVice = peer.studentId === viceClassRepId;
-                  const isSelf = peer.studentId === user.id;
-                  const isPlaced = Boolean(peer.companyName);
-
-                  return (
-                    <article key={peer.studentId} className={`myclass-peer-card ${isSelf ? 'is-self' : ''}`}>
-                      <div className="myclass-peer-card-top">
-                        <span className={`avatar ${isRep ? 'tan' : isVice ? 'blue' : ''} myclass-peer-avatar`}>
-                          {initials(peer.studentName)}
-                        </span>
-                        <div className="myclass-peer-info">
-                          <div className="myclass-peer-name-wrap">
-                            <strong className="myclass-peer-name">{peer.studentName}</strong>
-                            {isSelf && <span className="chip blue myclass-you-tag">You</span>}
-                          </div>
-                          {isRep && (
-                            <span className="badge-class-rep mt-1" title="Class Representative">
-                              <Star size={10} fill="#d7aa3e" color="#d7aa3e" style={{ marginRight: 3 }} />
-                              Class Rep
-                            </span>
-                          )}
-                          {isVice && (
-                            <span className="badge-vice-rep mt-1" title="Vice Class Representative">
-                              <ShieldCheck size={10} color="#12437b" style={{ marginRight: 3 }} />
-                              Vice Rep
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Placement Status Box */}
-                      <div className={`myclass-placement-box ${isPlaced ? 'placed' : 'pending'}`}>
-                        <div className="myclass-placement-box-head">
-                          {isPlaced ? (
-                            <>
-                              <Building2 size={13} className="text-blue-700" />
-                              <span className="myclass-placement-status-label">Industry Partner</span>
-                            </>
-                          ) : (
-                            <>
-                              <Clock size={13} className="text-amber-700" />
-                              <span className="myclass-placement-status-label">Placement Status</span>
-                            </>
-                          )}
-                        </div>
-                        <strong className="myclass-placement-company-name">
-                          {isPlaced ? peer.companyName : 'Pending Endorsement / Matching'}
-                        </strong>
-                      </div>
-
-                      {/* Contact & Profile Action */}
-                      <div className="myclass-peer-card-bottom">
-                        <a
-                          href={`mailto:${peer.studentEmail}`}
-                          className="myclass-peer-email-link"
-                          title={`Email ${peer.studentName}`}
-                        >
-                          <Mail size={12} />
-                          <span className="truncate">Email classmate</span>
-                        </a>
-
-                        {onViewStudent && data.placements.some(placement => placement.studentId === peer.studentId) && (
-                          <button
-                            type="button"
-                            className="textbutton myclass-view-profile-btn"
-                            onClick={() => onViewStudent(peer.studentId)}
-                          >
-                            <span>Profile</span>
-                            <ArrowUpRight size={12} />
-                          </button>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="myclass-directory-empty">
-                <Users size={32} className="myclass-empty-icon" />
-                <h3>No classmates found</h3>
-                <p>No peers match your search filter &ldquo;{search}&rdquo;.</p>
-                <button
-                  type="button"
-                  className="secondary mt-2"
-                  onClick={() => {
-                    setSearch('');
-                    setStatusFilter('ALL');
-                  }}
-                >
-                  Clear filters
-                </button>
-              </div>
-            )}
-          </section>
-        </div>
-      ) : (
-        /* Empty State: Not Yet Enrolled in Any Class */
-        <div className="classroom-join-empty">
-          <div className="classroom-join-empty-icon">
-            <BookOpen size={28} />
           </div>
-          <h3>Join your Practicum Class</h3>
-          <p>You are not currently enrolled in an active practicum section.</p>
-          <button className="primary" onClick={openJoinModal}>
-            <Plus size={15} />
-            Join a class
-          </button>
+
+          {needsExternalPlacement && (
+            <div className={styles.headerActions}>
+              <button type="button" className={`primary ${styles.primaryAction}`} onClick={openExternalPlacement}>
+                <Building2 size={15} aria-hidden="true" />
+                Register External Company
+              </button>
+            </div>
+          )}
         </div>
-      )}
+
+        <dl className={styles.classDetails}>
+          <div className={styles.detailItem}>
+            <dt><CalendarDays size={14} aria-hidden="true" /> Academic Period</dt>
+            <dd>{String(myClass.period || 'Not set')}</dd>
+          </div>
+          {department?.name && (
+            <div className={styles.detailItem}>
+              <dt><Building2 size={14} aria-hidden="true" /> Department</dt>
+              <dd>{String(department.name)}</dd>
+            </div>
+          )}
+          {myClass.codeLabel && (
+            <div className={styles.detailItem}>
+              <dt><Copy size={14} aria-hidden="true" /> Enrollment Code</dt>
+              <dd className={styles.codeValue}>
+                <code>{String(myClass.codeLabel)}</code>
+                <button type="button" className={styles.copyButton} onClick={copyCode} aria-label={copiedCode ? 'Enrollment code copied' : 'Copy enrollment code'}>
+                  {copiedCode ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+                  <span>{copiedCode ? 'Copied' : 'Copy'}</span>
+                </button>
+              </dd>
+            </div>
+          )}
+        </dl>
+      </section>
+
+      <section className={`${styles.placement} ${!ownPlacement || ownPlacement.status === 'PLANNED' ? styles.placementEmpty : ownPlacement.status !== 'ACTIVE' && ownPlacement.status !== 'COMPLETED' ? styles.placementNeutral : ''}`} aria-label="Training placement">
+        <span className={styles.placementIcon} aria-hidden="true">
+          {ownPlacement ? <Building2 size={18} /> : <Clock size={18} />}
+        </span>
+        {ownPlacement ? (
+          <div className={styles.placementInfo}>
+            <span className={styles.placementLabel}>
+              {placementLabel(String(ownPlacement.status ?? ''))} Placement
+              {isExternalPlacement && <span className={styles.externalTag}>External</span>}
+            </span>
+            <strong>{String(ownPlacement.companyName || 'Company not listed')}</strong>
+            <span className={styles.placementMeta}>
+              {[ownPlacement.externalCompanyLocation || ownPlacement.location, ownPlacement.externalSupervisorName && `Supervisor: ${ownPlacement.externalSupervisorName}`].filter(Boolean).map(String).join(' · ')}
+            </span>
+          </div>
+        ) : (
+          <div className={styles.placementInfo}>
+            <span className={styles.placementLabel}>Training placement</span>
+            <strong>No placement linked</strong>
+          </div>
+        )}
+      </section>
+
+      <div className={styles.classContent}>
+        <section className={styles.roster} aria-labelledby="classmates-heading">
+          <header className={styles.sectionHeader}>
+            <h2 id="classmates-heading">Classmates</h2>
+            <span className={styles.rosterCount} role="status">{hasSearch ? `${filteredClassmates.length} of ${classmates.length} Students` : `${classmates.length} Students`}</span>
+          </header>
+
+          <div className={styles.rosterToolbar}>
+            <label className={styles.searchBox}>
+              <Search size={16} aria-hidden="true" />
+              <span className={styles.srOnly}>Search classmates by name</span>
+              <input
+                type="search"
+                name="classmate-search"
+                placeholder="Search classmates…"
+                value={search}
+                onChange={event => { setSearch(event.target.value); setPage(1); }}
+              />
+            </label>
+          </div>
+
+          {filteredClassmates.length > 0 ? (
+            <ul id="classmates-list" className={styles.rosterList} aria-live="polite">
+              {visibleClassmates.map(member => {
+                const isRep = member.studentId === classRepId;
+                const isVice = member.studentId === viceClassRepId;
+                const isSelf = member.studentId === user.id;
+
+                return (
+                  <li className={styles.studentRow} key={member.studentId || member.studentName}>
+                    <div className={styles.studentIdentity}>
+                      <span className={styles.studentAvatar} aria-hidden="true">{initials(member.studentName)}</span>
+                      <div className={styles.studentNameBlock}>
+                        <div className={styles.nameLine}>
+                          <strong>{member.studentName}</strong>
+                          {isSelf && <span className={styles.youTag}>You</span>}
+                        </div>
+                        <span className={styles.studentYear}>{yearLabel(member.yearLevel)}</span>
+                        <div className={styles.roles}>
+                          {isRep && <span><Star size={12} aria-hidden="true" /> Class representative</span>}
+                          {isVice && <span><ShieldCheck size={12} aria-hidden="true" /> Vice representative</span>}
+                        </div>
+                      </div>
+                    </div>
+                    {!isSelf && member.studentEmail && (
+                      <a className={styles.emailAction} href={`mailto:${member.studentEmail}`} aria-label={`Email ${member.studentName}`}>
+                        <Mail size={15} aria-hidden="true" /> Email
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : classmates.length === 0 ? (
+            <div className={styles.rosterEmpty}>
+              <Users size={20} aria-hidden="true" />
+              <strong>No classmates listed yet</strong>
+            </div>
+          ) : (
+            <div className={styles.rosterEmpty} role="status">
+              <strong>No classmates match your search</strong>
+              <button type="button" className={styles.clearSearch} onClick={() => { setSearch(''); setPage(1); }}>
+                Clear search
+              </button>
+            </div>
+          )}
+          {filteredClassmates.length > 0 && (
+            <footer className={styles.directoryFooter}>
+              <span className={styles.pageSummary} role="status">
+                {filteredClassmates.length === 1 ? '1 Student' : `${pageStart + 1}–${Math.min(pageStart + pageSize, filteredClassmates.length)} of ${filteredClassmates.length} Students`}
+              </span>
+              {pageCount > 1 && (
+                <nav className={styles.pagination} aria-label="Classmates pages">
+                  <button type="button" className={styles.pageButton} aria-label="Previous page" aria-controls="classmates-list" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>
+                    <ChevronLeft size={16} aria-hidden="true" />
+                  </button>
+                  <span className={styles.pageNumbers}>
+                  {pageNumbers.map((number, index) => (
+                    <React.Fragment key={number}>
+                      {index > 0 && number - pageNumbers[index - 1]! > 1 && <span className={styles.pageGap} aria-hidden="true">…</span>}
+                      <button type="button" className={styles.pageButton} aria-label={`Page ${number}`} aria-current={number === currentPage ? 'page' : undefined} aria-controls="classmates-list" onClick={() => setPage(number)}>{number}</button>
+                    </React.Fragment>
+                  ))}
+                  </span>
+                  <span className={styles.mobilePageLabel}>Page {currentPage} of {pageCount}</span>
+                  <button type="button" className={styles.pageButton} aria-label="Next page" aria-controls="classmates-list" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>
+                    <ChevronRight size={16} aria-hidden="true" />
+                  </button>
+                </nav>
+              )}
+            </footer>
+          )}
+        </section>
+
+        <aside className={styles.contacts} aria-labelledby="class-contacts-heading">
+          <header className={styles.sectionHeader}>
+            <h2 id="class-contacts-heading">Class Contacts</h2>
+          </header>
+          <ul className={styles.contactList}>
+            <ContactRow
+              label="Practicum coordinator"
+              name={coordinatorName}
+              email={coordinatorEmail}
+              icon={<GraduationCap size={16} aria-hidden="true" />}
+              onReachOut={onReachOut}
+            />
+            <ContactRow
+              label="Class representative"
+              name={classRepName}
+              email={classRepPeer?.studentEmail}
+              icon={<Star size={15} aria-hidden="true" />}
+              isYou={Boolean(classRepId) && classRepId === user.id}
+            />
+            <ContactRow
+              label="Vice representative"
+              name={viceClassRepName}
+              email={viceRepPeer?.studentEmail}
+              icon={<ShieldCheck size={15} aria-hidden="true" />}
+              isYou={Boolean(viceClassRepId) && viceClassRepId === user.id}
+            />
+          </ul>
+        </aside>
+      </div>
     </div>
+  );
+}
+
+function ContactRow({
+  label,
+  name,
+  email,
+  icon,
+  isYou = false,
+  onReachOut,
+}: {
+  label: string;
+  name: string;
+  email?: string | null;
+  icon: React.ReactNode;
+  isYou?: boolean;
+  onReachOut?: () => void;
+}) {
+  return (
+    <li className={styles.contactRow}>
+      <span className={styles.contactIcon} aria-hidden="true">{icon}</span>
+      <div className={styles.contactIdentity}>
+        <span>{label}</span>
+        <strong>{name}</strong>
+      </div>
+      {isYou && <span className={styles.youTag}>You</span>}
+      {!isYou && (email || onReachOut) && (
+        onReachOut ? (
+          <button type="button" className={styles.contactAction} aria-label={`Email ${label.toLowerCase()}`} onClick={onReachOut}>
+            <Mail size={15} aria-hidden="true" />
+          </button>
+        ) : (
+          <a className={styles.contactAction} href={`mailto:${email}`} aria-label={`Email ${label.toLowerCase()}`}>
+            <Mail size={15} aria-hidden="true" />
+          </a>
+        )
+      )}
+    </li>
   );
 }

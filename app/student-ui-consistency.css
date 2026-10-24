@@ -1,0 +1,110 @@
+.student-workspace {
+  --student-surface-radius: var(--radius-card, 12px);
+  --student-surface-shadow: var(--shadow-md);
+  --student-card-padding: 20px;
+  --student-card-content-gap: 16px;
+  --student-section-gap: 20px;
+}
+
+.student-workspace :is(
+  .role-metric,
+  .role-card,
+  .panel,
+  .item-card,
+  .attendance-chart-card,
+  .goal-hero-card,
+  .goal-info-card,
+  .goal-activity-card,
+  .goal-status-card,
+  .goal-forecast-card,
+  .hte-card,
+  .hte-student-final-card,
+  .hte-document-card,
+  .recruitment-result,
+  .recruitment-details
+) {
+  border-color: var(--border);
+  border-radius: var(--student-surface-radius);
+  box-shadow: var(--student-surface-shadow);
+}
+
+.student-workspace :is(.role-card-heading, .panel-head) {
+  padding: var(--student-card-padding);
+}
+
+.student-workspace :is(.role-metric, .attendance-chart-card) {
+  padding: var(--student-card-padding);
+}
+
+.student-workspace .role-card-body,
+.student-workspace .panel-body {
+  padding: 0 var(--student-card-padding) var(--student-card-padding);
+}
+
+.student-workspace .panel {
+  margin-bottom: var(--student-section-gap);
+}
+
+.student-workspace :is(
+  .role-dashboard,
+  .role-columns,
+  .role-stack,
+  .cards-grid,
+  .hte-document-grid,
+  .recruitment-layout
+) {
+  gap: var(--student-section-gap);
+}
+
+.student-workspace :is(.item-card, .hte-document-card, .recruitment-result) {
+  gap: var(--student-card-content-gap);
+  padding: var(--student-card-padding);
+}
+
+.student-workspace .hte-student-final-card {
+  gap: var(--student-section-gap);
+  margin-bottom: var(--student-section-gap);
+  padding: var(--student-card-padding);
+}
+
+.student-workspace .recruitment-details {
+  padding: var(--student-card-padding);
+}
+
+.student-workspace .hte-document-card-heading {
+  min-height: 92px;
+}
+
+.student-workspace .role-metric:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.student-workspace .goal-status-card.reached {
+  border-color: #d8eadf;
+}
+
+.student-workspace .goal-forecast-card.completed {
+  border-color: var(--success-border);
+}
+
+.student-workspace .recruitment-result.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .student-workspace .recruitment-result:hover {
+    box-shadow: var(--shadow-hover);
+  }
+}
+
+@media (max-width: 760px) {
+  .student-workspace {
+    --student-card-padding: 16px;
+    --student-section-gap: 16px;
+  }
+
+  .student-workspace .hte-document-card-heading {
+    min-height: 0;
+  }
+}

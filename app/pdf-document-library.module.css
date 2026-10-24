@@ -4,7 +4,7 @@
 .uploadButton:focus-within { outline: 3px solid var(--rtu-gold); outline-offset: 3px; }
 .error { color: var(--destructive); font-size: 13px; }
 .list { display: grid; gap: 10px; }
-.item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; background: #fff; }
+.item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); }
 .item > svg { color: var(--rtu-blue); }
 .item > a { flex: none; text-decoration: none; }
 .details { min-width: 0; flex: 1; display: grid; gap: 2px; }

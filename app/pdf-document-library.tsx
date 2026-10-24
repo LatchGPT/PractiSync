@@ -16,6 +16,7 @@ type PdfTemplate = {
 };
 
 const endpoint = '/api/pdf-templates';
+
 const maxSize = 4 * 1024 * 1024;
 
 async function fetchTemplates(signal?: AbortSignal): Promise<PdfTemplate[]> {
@@ -76,7 +77,7 @@ export default function PdfDocumentLibrary({ data }: { data: Snapshot }) {
     <header className="panel-head">
       <div>
         <span className="chip blue">Original PDF documents</span>
-        <h2>PDF templates</h2>
+        <h2>PDF Templates</h2>
       </div>
       <FileText size={22}/>
     </header>

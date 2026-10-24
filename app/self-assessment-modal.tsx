@@ -5,12 +5,9 @@ import {
   X,
   ShieldAlert,
   CheckCircle2,
-  AlertCircle,
-  Clock,
   Sparkles,
   Info,
   Check,
-  ChevronRight,
   Loader2,
   Lock,
 } from 'lucide-react';

@@ -1,11 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { BookOpen, Building2, GraduationCap, Pencil, Plus, Search, X } from 'lucide-react';
+import { BookOpen, Building2, Pencil, Plus, Search, X } from 'lucide-react';
 import type { Row, Snapshot } from '../packages/validation/contracts';
 import styles from './university-structure-panel.module.css';
-
-type StructureKind = 'DEPARTMENT' | 'COURSE';
 
 type UniversityStructurePanelProps = {
   data: Snapshot;

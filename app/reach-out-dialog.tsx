@@ -6,17 +6,10 @@ import {
   Mail,
   Copy,
   Check,
-  Building2,
-  AlertCircle,
-  ExternalLink,
   ShieldCheck,
-  UserCheck,
-  Clock,
-  Send,
-  MessageSquareOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Row, Snapshot, Identity } from '@/packages/validation/contracts';
+import type { Snapshot, Identity } from '@/packages/validation/contracts';
 
 interface ReachOutDialogProps {
   data: Snapshot;

@@ -2,6 +2,7 @@ import { runtimeTenantId } from '../auth/runtime';
 import { writeTenant } from './tenant-context';
 import { prisma } from './client';
 import { openLocalDemoDatabase } from './local-demo';
+import { seedDemoClassmates } from './demo-classmates';
 import { rtuCourses, rtuDepartments } from './rtu-university-structure';
 import { TENANT, DomainError, demoAllowed } from '../domain/policies';
 import { demoAccounts } from '../test-utils/fixtures';
@@ -196,7 +197,21 @@ export async function seed() {
   const existingSeed = await db.prepare("SELECT value FROM seed_state WHERE key='seed-v9'").first();
   const ensureSchedules = () => db.prepare("INSERT OR IGNORE INTO assessment_schedules (id,tenant_id,created_at,course_id,cadence,updated_at,version) SELECT 'schedule-' || id,tenant_id,datetime('now'),id,'WEEKLY',datetime('now'),1 FROM courses").run();
   if (existingSeed) {
+    await db.prepare("UPDATE companies SET name=?,location=?,description=? WHERE tenant_id=? AND id=?")
+      .bind('Microgenesis Business Systems', 'Not specified', 'Technology partner supporting internship placements.', TENANT, 'company-northstar').run();
+    await db.prepare("UPDATE classes SET section=?,name=? WHERE tenant_id=? AND id=?").bind('CEIT-37-701A', 'Internship Practicum', TENANT, 'class-it').run();
+    await db.prepare("UPDATE placements SET company_id=? WHERE tenant_id=? AND id=? AND student_id=?").bind('company-northstar', TENANT, 'placement-1', 'demo-student').run();
+    await db.prepare("DELETE FROM companies WHERE tenant_id=? AND id=?").bind(TENANT, 'company-microgenesis').run();
+    await db.prepare("UPDATE notifications SET title=?,message=? WHERE tenant_id=? AND id=? AND user_id=?")
+      .bind('Welcome to CEIT-37-701A', 'You are enrolled in Internship Practicum · CEIT-37-701A with coordinator Andrea Santos.', TENANT, 'notif-3', 'demo-student').run();
+    await db.prepare("UPDATE notifications SET message=? WHERE tenant_id=? AND id=?")
+      .bind('Luca Tan requested to join practicum section CEIT-37-701A.', TENANT, 'notif-5').run();
+    await db.prepare("UPDATE notifications SET message=? WHERE tenant_id=? AND id=?")
+      .bind('A fictional document metadata record was submitted in CEIT-37-701A.', TENANT, 'notif-7').run();
+    await db.prepare("UPDATE join_requests SET note=? WHERE tenant_id=? AND id=?")
+      .bind('Requesting to join section CEIT-37-701A', TENANT, 'req-1').run();
     await ensureSchedules();
+    await seedDemoClassmates(db);
     return;
   }
   const now = '2026-10-01T00:00:00Z';
@@ -239,10 +254,10 @@ export async function seed() {
   for (const course of rtuCourses) {
     statements.push(db.prepare('UPDATE courses SET department_id=?,name=?,code=? WHERE tenant_id=? AND id=?').bind(course.departmentId, course.name, course.code, TENANT, course.id));
   }
-  for (const [id, name, section, course, coordinator, code, expires, revoked, rep, vice] of [['class-it', 'OJT Practicum', 'BSIT 4-A', 'course-it', 'demo-coordinator', 'SYNC4A', null, 0, 'demo-student', 'student-5'], ['class-it-b', 'OJT Practicum', 'BSIT 4-B', 'course-it', 'demo-coordinator', 'SYNC4B', null, 0, 'student-3', null], ['class-business', 'Business Practicum', 'BSBA 4-A', 'course-business', 'demo-coordinator', 'BIZ4A', null, 0, 'student-2', null], ['class-ed', 'Teaching Internship', 'BSED 4-A', 'course-education', 'coordinator-other', 'EDUC4A', null, 0, 'student-4', null], ['class-expired', 'Archived Practicum', 'BSIT 3-X', 'course-it', 'demo-coordinator', 'EXPIRED', '2026-01-01', 0, null, null], ['class-revoked', 'Archived Practicum', 'BSIT 3-Y', 'course-it', 'demo-coordinator', 'REVOKED', null, 1, null, null]] as const) {
+  for (const [id, name, section, course, coordinator, code, expires, revoked, rep, vice] of [['class-it', 'Internship Practicum', 'CEIT-37-701A', 'course-it', 'demo-coordinator', 'SYNC4A', null, 0, 'demo-student', 'student-5'], ['class-it-b', 'OJT Practicum', 'BSIT 4-B', 'course-it', 'demo-coordinator', 'SYNC4B', null, 0, 'student-3', null], ['class-business', 'Business Practicum', 'BSBA 4-A', 'course-business', 'demo-coordinator', 'BIZ4A', null, 0, 'student-2', null], ['class-ed', 'Teaching Internship', 'BSED 4-A', 'course-education', 'coordinator-other', 'EDUC4A', null, 0, 'student-4', null], ['class-expired', 'Archived Practicum', 'BSIT 3-X', 'course-it', 'demo-coordinator', 'EXPIRED', '2026-01-01', 0, null, null], ['class-revoked', 'Archived Practicum', 'BSIT 3-Y', 'course-it', 'demo-coordinator', 'REVOKED', null, 1, null, null]] as const) {
     add('classes', id, { name, section, course_id: course, coordinator_id: coordinator, period: '2026–2027 · First semester', code_hash: await digest(code), code_label: code, expires_at: expires, revoked, class_rep_id: rep, vice_class_rep_id: vice });
   }
-  for (const [id, name, industry, location, status, post, description] of [['company-northstar', 'Northstar Digital', 'Technology', 'Mandaluyong', 'APPROVED', 1, 'A fictional product studio building accessible digital experiences.'], ['company-brightside', 'Brightside Learning', 'Education', 'Pasig', 'APPROVED', 1, 'A fictional learning center offering supervised teaching placements.'], ['company-pending', 'Meridian Ventures', 'Business', 'Makati', 'PENDING', 0, 'Fictional company awaiting university verification.']]) add('companies', String(id), { name, industry, location, status, can_post: post, description });
+  for (const [id, name, industry, location, status, post, description] of [['company-northstar', 'Microgenesis Business Systems', 'Technology', 'Not specified', 'APPROVED', 1, 'Technology partner supporting internship placements.'], ['company-brightside', 'Brightside Learning', 'Education', 'Pasig', 'APPROVED', 1, 'A fictional learning center offering supervised teaching placements.'], ['company-pending', 'Meridian Ventures', 'Business', 'Makati', 'PENDING', 0, 'Fictional company awaiting university verification.']]) add('companies', String(id), { name, industry, location, status, can_post: post, description });
   add('users', 'demo-supervisor', { name: 'Morgan Lee', username: 'demo.supervisor', email: 'demo.supervisor@example.invalid', role: 'SUPERVISOR', password_hash: hash, is_demo: 1, company_id: 'company-northstar', supervisor_verified: 1, can_post: 1 });
   for (const [course, minutes] of [['course-it', 28800], ['course-business', 24000], ['course-education', 24000]] as const) add('policies', `policy-${course}`, { course_id: course, period: '2026–2027 · First semester', required_minutes: minutes, version: 1, author_id: 'demo-admin' });
   const placements = [
@@ -288,15 +303,15 @@ export async function seed() {
   add('calendar_events', 'calendar-orientation-2026', { updated_at: now, event_type: 'APPOINTMENT', title: 'OJT orientation', description: 'Sample: Bring your questions about attendance records and office support.', start_date: '2026-10-20', end_date: '2026-10-20', start_time: '10:00', end_time: '11:00', all_day: 0, location: 'COE Office · Room 204', meeting_url: null, audience: 'CLASS', class_id: 'class-it', created_by: 'demo-coordinator' });
   add('calendar_events', 'calendar-foundation-2026', { updated_at: now, event_type: 'HOLIDAY', title: 'University Foundation Day', description: 'Sample: Campus offices are closed for the university holiday.', start_date: '2026-10-27', end_date: '2026-10-27', start_time: null, end_time: null, all_day: 1, location: null, meeting_url: null, audience: 'UNIVERSITY', class_id: null, created_by: 'demo-admin' });
   add('reviews', 'review-1', { company_id: 'company-northstar', student_id: 'student-completed', placement_id: 'placement-completed', rating: 4, body: 'Sample: Thoughtful mentoring, practical project experience, and a welcoming team.', status: 'APPROVED' });
-  add('join_requests', 'req-1', { class_id: 'class-it', student_id: 'student-5', status: 'PENDING', note: 'Requesting to join section BSIT 4-A' });
+  add('join_requests', 'req-1', { class_id: 'class-it', student_id: 'student-5', status: 'PENDING', note: 'Requesting to join section CEIT-37-701A' });
   for (const [id, userId, title, message, type, resourceType, resourceId, linkPage, readAt] of [
     ['notif-1', 'demo-student', 'Attendance Confirmed', 'Coordinator Andrea Santos verified and confirmed your attendance record.', 'DTR', 'entry', 'entry-placement-1-14', 'attendance', null],
     ['notif-2', 'demo-student', 'Sample Document Record Approved', 'Your fictional document metadata record has been marked as approved.', 'DOCUMENT', 'document', 'doc-placement-1-1', 'documents', null],
-    ['notif-3', 'demo-student', 'Welcome to BSIT 4-A', 'You are enrolled in OJT Practicum · BSIT 4-A with coordinator Andrea Santos.', 'CLASS', 'class', 'class-it', 'classes', '2026-10-02T08:00:00Z'],
+    ['notif-3', 'demo-student', 'Welcome to CEIT-37-701A', 'You are enrolled in Internship Practicum · CEIT-37-701A with coordinator Andrea Santos.', 'CLASS', 'class', 'class-it', 'classes', '2026-10-02T08:00:00Z'],
     ['notif-4', 'demo-student', 'Class Announcement', 'Your October check-in is scheduled for Friday. Bring your latest narratives.', 'ANNOUNCEMENT', 'announcement', 'announcement-1', 'announcements', null],
-    ['notif-5', 'demo-coordinator', 'New Class Join Request', 'Luca Tan requested to join practicum section BSIT 4-A.', 'CLASS', 'join_request', 'req-1', 'classes', null],
+    ['notif-5', 'demo-coordinator', 'New Class Join Request', 'Luca Tan requested to join practicum section CEIT-37-701A.', 'CLASS', 'join_request', 'req-1', 'classes', null],
     ['notif-6', 'demo-coordinator', 'Confidential Support Inquiry', 'Jamie Reyes submitted a request for coordinator guidance.', 'SUPPORT', 'incident', 'case-1', 'incidents', null],
-    ['notif-7', 'demo-coordinator', 'Sample Document Record Awaiting Review', 'A fictional document metadata record was submitted in BSIT 4-A.', 'DOCUMENT', 'document', 'doc-placement-1-2', 'documents', '2026-10-02T08:00:00Z'],
+    ['notif-7', 'demo-coordinator', 'Sample Document Record Awaiting Review', 'A fictional document metadata record was submitted in CEIT-37-701A.', 'DOCUMENT', 'document', 'doc-placement-1-2', 'documents', '2026-10-02T08:00:00Z'],
     ['notif-8', 'demo-admin', 'Policy Baseline Active', 'Course policy v1 active for Computing & Technology (480 required hours).', 'POLICY', 'policy', 'policy-course-it', 'policies', '2026-10-01T00:00:00Z'],
   ] as const) add('notifications', id, { user_id: userId, title, message, type, resource_type: resourceType, resource_id: resourceId, link_page: linkPage, read_at: readAt });
   add('outcome_decisions', 'outcome-dec-1', { placement_id: 'placement-completed', coordinator_id: 'demo-coordinator', decision: 'EXEMPLARY', rationale: 'Demonstrated exemplary technical mastery and consistent communication across all evaluation periods.', rubric_version: 1, calculated_score: 4.25, calculated_status: 'ACHIEVED' });
@@ -309,4 +324,5 @@ export async function seed() {
   statements.push(db.prepare("INSERT OR REPLACE INTO seed_state (key,value) VALUES ('seed-v9','20261021')"));
   for (let index = 0; index < statements.length; index += 80) await db.batch(statements.slice(index, index + 80));
   await ensureSchedules();
+  await seedDemoClassmates(db);
 }

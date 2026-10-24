@@ -2327,6 +2327,11 @@ model DemoFinalDtrs {
   totalMinutes Int @map("total_minutes")
   status String
   submittedBy String @map("submitted_by")
+  attachmentFilename String? @map("attachment_filename")
+  attachmentBase64 String? @map("attachment_base64")
+  cocFilename String? @map("coc_filename")
+  cocBase64 String? @map("coc_base64")
+  verificationMethod String @default("DIRECT_SUPERVISOR") @map("verification_method")
   reviewedBy String? @map("reviewed_by")
   reviewedAt String? @map("reviewed_at")
   note String?

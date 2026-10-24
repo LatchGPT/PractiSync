@@ -441,7 +441,7 @@ export default function PracticumMilestoneStepper({
             <Compass size={13} className="stepper-eyebrow-icon" />
             <span>PRACTICUM LIFECYCLE &amp; KEY METRICS</span>
           </div>
-          <h2 className="stepper-title">{isStudent ? 'Your practicum phases' : 'Areas in your practicum workspace'}</h2>
+          <h2 className="stepper-title">{isStudent ? 'Your Practicum Phases' : 'Areas in your practicum workspace'}</h2>
         </div>
         <div className="stepper-badge">
           <Sparkles size={12} className="stepper-badge-icon" />

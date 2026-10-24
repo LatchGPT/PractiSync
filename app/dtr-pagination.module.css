@@ -50,11 +50,15 @@
   background: var(--dtr-soft) !important;
   color: var(--dtr-muted) !important;
   border-bottom-color: var(--dtr-border) !important;
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
 .card :global(td) {
   color: var(--dtr-text) !important;
   border-bottom-color: var(--dtr-border) !important;
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
 .card :global(td strong) {
@@ -64,14 +68,22 @@
 .card :global(th:first-child),
 .card :global(td:first-child) {
   width: 56px;
-  padding-left: 24px !important;
+  padding-inline: 12px !important;
   color: var(--dtr-muted) !important;
   font-variant-numeric: tabular-nums;
 }
 
 .card :global(th:last-child),
 .card :global(td:last-child) {
-  padding-right: 24px !important;
+  padding-inline: 24px !important;
+}
+
+.card :global(.table-actions) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+  gap: 6px !important;
 }
 
 .card :global(.table-actions .textbutton) {
@@ -79,6 +91,93 @@
   border-radius: var(--radius-btn);
   font-size: 12px !important;
   color: var(--dtr-link) !important;
+}
+
+.actionIconBtnView,
+.actionIconBtnEdit,
+.actionIconBtnCopy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: var(--radius-btn, 8px);
+  border: 1px solid var(--dtr-border, var(--border, #dbe5f2));
+  background: var(--dtr-surface, #ffffff);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.actionIconBtnView {
+  color: var(--rtu-blue, #124c91);
+}
+
+.actionIconBtnEdit {
+  color: var(--rtu-gold-deep, #966916);
+}
+
+.actionIconBtnCopy {
+  color: #0d7454;
+}
+
+.actionIconBtnView:focus-visible {
+  outline: 2px solid var(--rtu-blue, #124c91);
+  outline-offset: 2px;
+}
+
+.actionIconBtnEdit:focus-visible {
+  outline: 2px solid var(--rtu-gold, #d7aa3e);
+  outline-offset: 2px;
+}
+
+.actionIconBtnCopy:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.actionIconBtnView:active,
+.actionIconBtnEdit:active,
+.actionIconBtnCopy:active {
+  transform: scale(0.94);
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .actionIconBtnView:hover {
+    background: var(--rtu-ice, #edf4fd);
+    border-color: rgba(18, 76, 145, 0.35);
+    color: var(--rtu-blue, #124c91);
+    box-shadow: 0 2px 6px rgba(18, 76, 145, 0.12);
+    transform: translateY(-1px);
+  }
+
+  .actionIconBtnEdit:hover {
+    background: #fef8eb;
+    border-color: rgba(215, 170, 62, 0.5);
+    color: #7c5309;
+    box-shadow: 0 2px 6px rgba(150, 105, 22, 0.12);
+    transform: translateY(-1px);
+  }
+
+  .actionIconBtnCopy:hover {
+    background: #f0fdf4;
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #047857;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actionIconBtnView,
+  .actionIconBtnEdit,
+  .actionIconBtnCopy {
+    transition: none;
+    transform: none !important;
+  }
 }
 
 .footer {
@@ -299,12 +398,12 @@
 
   .card :global(th:first-child),
   .card :global(td:first-child) {
-    padding-left: 16px !important;
+    padding-inline: 16px !important;
   }
 
   .card :global(th:last-child),
   .card :global(td:last-child) {
-    padding-right: 16px !important;
+    padding-inline: 16px !important;
   }
 
   .recordCount {

@@ -42,13 +42,13 @@ export default function StudentGoalProgress({entries,requiredMinutes,calendarEve
      <strong>{goal.target?hours(goal.target):'Not set'}</strong>
     </div>
     <div className="goal-info-card days-card">
-     <div className="goal-info-label"><CalendarDays size={15}/> Days on record</div>
+     <div className="goal-info-label"><CalendarDays size={15}/> Days on Record</div>
      <strong>{goal.daysOnRecord}</strong>
     </div>
    </div>
 
    <section className="goal-activity-card" aria-label="DTR activity summary">
-    <div className="goal-section-heading"><div><span className="goal-card-eyebrow">Attendance summary</span><h3>DTR activity</h3></div><ClipboardList size={18}/></div>
+    <div className="goal-section-heading"><div><span className="goal-card-eyebrow">Attendance Summary</span><h3>DTR Activity</h3></div><ClipboardList size={18}/></div>
     <div className="goal-activity-metrics">
      <div className="goal-activity-metric"><strong>{entries.length}</strong><span>Submitted entries</span></div>
      <div className="goal-activity-metric waiting"><strong>{hours(pendingMinutes)}</strong><span>Hours awaiting final Industry Partner verification</span></div>

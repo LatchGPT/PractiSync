@@ -162,31 +162,35 @@ export async function mutateHte(user: Identity, action: Action, payload: unknown
   const entries = await list('SELECT e.id,e.date,e.version,i.starts_at,i.ends_at,i.break_minutes,i.minutes FROM entries e JOIN intervals i ON i.entry_id=e.id AND i.tenant_id=e.tenant_id WHERE e.tenant_id=? AND e.placement_id=? ORDER BY e.date,i.starts_at,e.id', user.tenantId, p.id);
   const total = entries.reduce((sum, e) => sum + num(e, 'minutes'), 0);
   if (!num(p, 'requiredMinutes') || total < num(p, 'requiredMinutes')) throw new DomainError('Reach the required hours before submitting the final DTR.', 409);
-  const isExternal = num(p, 'isExternal') === 1 || Boolean(d.attachmentBase64);
-  if (num(p, 'isExternal') === 1 && !d.attachmentBase64) throw new DomainError('Upload a company-signed copy of your DTR or Certificate of Completion before submitting.', 400);
-  const method = isExternal ? 'SIGNED_DOCUMENT' : 'DIRECT_SUPERVISOR';
+  const isExternal = num(p, 'isExternal') === 1;
+  if (!d.cocFilename || !d.cocBase64) throw new DomainError('Upload your Certificate of Completion before submitting.', 400);
+  if (!d.attachmentFilename || !d.attachmentBase64) throw new DomainError('Upload your supervisor-signed DTR or Certificate of Hours before submitting.', 400);
+  const method = 'SIGNED_DOCUMENT';
   const id = current?.id ?? crypto.randomUUID();
   const tx = [attendanceGuard(user, p, true)];
-  if (current) tx.push(archiveDtr(user, current), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='REVISION_REQUESTED' THEN version+1 ELSE NULL END,snapshot_json=?,attendance_revision=?,total_minutes=?,status='SUBMITTED',submitted_by=?,reviewed_by=NULL,reviewed_at=NULL,note=NULL,attachment_filename=?,attachment_base64=?,verification_method=? WHERE tenant_id=? AND id=?", d.version, JSON.stringify(entries), num(p, 'dtrRevision') + 1, total, user.id, d.attachmentFilename || null, d.attachmentBase64 || null, method, user.tenantId, id));
-  else tx.push(insert('final_dtrs', { tenant_id: user.tenantId, placement_id: p.id, attendance_revision: num(p, 'dtrRevision') + 1, snapshot_json: JSON.stringify(entries), total_minutes: total, status: 'SUBMITTED', submitted_by: user.id, attachment_filename: d.attachmentFilename || null, attachment_base64: d.attachmentBase64 || null, verification_method: method }, id));
+  if (current) tx.push(archiveDtr(user, current), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='REVISION_REQUESTED' THEN version+1 ELSE NULL END,snapshot_json=?,attendance_revision=?,total_minutes=?,status='SUBMITTED',submitted_by=?,reviewed_by=NULL,reviewed_at=NULL,note=NULL,attachment_filename=?,attachment_base64=?,coc_filename=?,coc_base64=?,verification_method=? WHERE tenant_id=? AND id=?", d.version, JSON.stringify(entries), num(p, 'dtrRevision') + 1, total, user.id, d.attachmentFilename || null, d.attachmentBase64 || null, d.cocFilename || null, d.cocBase64 || null, method, user.tenantId, id));
+  else tx.push(insert('final_dtrs', { tenant_id: user.tenantId, placement_id: p.id, attendance_revision: num(p, 'dtrRevision') + 1, snapshot_json: JSON.stringify(entries), total_minutes: total, status: 'SUBMITTED', submitted_by: user.id, attachment_filename: d.attachmentFilename || null, attachment_base64: d.attachmentBase64 || null, coc_filename: d.cocFilename || null, coc_base64: d.cocBase64 || null, verification_method: method }, id));
   if (isExternal) {
    const cls = await one('SELECT coordinator_id FROM classes WHERE tenant_id=? AND id=?', user.tenantId, p.classId);
-   if (cls?.coordinatorId) tx.push(notify(user, str(cls, 'coordinatorId'), 'Final DTR awaiting coordinator verification', `${user.name} submitted attendance with an attached signed company DTR.`, 'attendance'));
+   if (cls?.coordinatorId) tx.push(notify(user, str(cls, 'coordinatorId'), 'Final DTR awaiting coordinator verification', `${user.name} submitted the required completion certificate and signed company DTR.`, 'attendance'));
   } else {
    const supervisors = await list("SELECT u.id FROM assignments a JOIN users u ON u.id=a.supervisor_id AND u.tenant_id=a.tenant_id JOIN companies c ON c.id=u.company_id AND c.tenant_id=u.tenant_id WHERE a.tenant_id=? AND a.placement_id=? AND a.active=1 AND u.status='ACTIVE' AND u.role='SUPERVISOR' AND u.supervisor_verified=1 AND c.id=? AND c.status='APPROVED'", user.tenantId, p.id, p.companyId);
    if (!supervisors.length) throw new DomainError('Your coordinator must assign an approved Industry Partner supervisor before you submit the final DTR.', 409);
-   tx.push(...supervisors.map(s => notify(user, s.id, 'Final DTR awaiting verification', `${user.name} submitted their complete attendance for review.`, 'attendance')));
+   tx.push(...supervisors.map(s => notify(user, s.id, 'Final DTR awaiting verification', `${user.name} submitted the required completion certificate and supervisor-signed DTR for review.`, 'attendance')));
   }
-  return commit(user, 'FINAL_DTR_SUBMITTED', id, tx, isExternal ? 'Final DTR and signed timesheet submitted for coordinator verification.' : 'Final DTR submitted. Attendance is locked while the Industry Partner reviews it.');
+  return commit(user, 'FINAL_DTR_SUBMITTED', id, tx, isExternal ? 'Final DTR, completion certificate, and signed timesheet submitted for coordinator verification.' : 'Final DTR, completion certificate, and signed DTR submitted. Attendance is locked while the Industry Partner reviews it.');
  }
  if (action === 'finalDtrReview') {
   const d = inputs.finalDtrReview.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.version);
-  const isSignedDoc = str(f, 'verificationMethod') === 'SIGNED_DOCUMENT' || num(p, 'isExternal') === 1;
-  if (isSignedDoc) requireRole(user, 'COORDINATOR');
+  const requiresCoordinatorReview = num(p, 'isExternal') === 1;
+  if (requiresCoordinatorReview) requireRole(user, 'COORDINATOR');
   else requireRole(user, 'SUPERVISOR', 'COORDINATOR');
   if (p.status !== 'ACTIVE' || f.status !== 'SUBMITTED' || num(f, 'attendanceRevision') !== num(p, 'dtrRevision')) throw conflict();
+  if (d.decision === 'VERIFY' && (!str(f, 'cocFilename') || !str(f, 'cocBase64') || !str(f, 'attachmentFilename') || !str(f, 'attachmentBase64'))) {
+   throw new DomainError('Both required documents must be attached before final DTR verification.', 409);
+  }
   if (d.decision === 'REJECT' && !d.note) throw new DomainError('Explain which dates or times need correction.');
-  return commit(user, 'FINAL_DTR_REVIEWED', f.id, [attendanceGuard(user, p), archiveDtr(user, f), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,attendance_revision=?,note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", d.version, d.decision === 'VERIFY' ? 'VERIFIED' : 'REVISION_REQUESTED', num(p, 'dtrRevision') + 1, d.note, user.id, now(), user.tenantId, f.id), notify(user, str(p, 'studentId'), d.decision === 'VERIFY' ? 'Final DTR verified' : 'Final DTR needs correction', d.note || (isSignedDoc ? 'Coordinator verified your signed DTR.' : 'Your Industry Partner verified the complete attendance record.'), 'attendance')], d.decision === 'VERIFY' ? 'Complete DTR verified. The school evaluation is the next step.' : 'DTR returned to the student for correction and resubmission.');
+  return commit(user, 'FINAL_DTR_REVIEWED', f.id, [attendanceGuard(user, p), archiveDtr(user, f), statement("UPDATE final_dtrs SET version=CASE WHEN version=? AND status='SUBMITTED' THEN version+1 ELSE NULL END,status=?,attendance_revision=?,note=?,reviewed_by=?,reviewed_at=? WHERE tenant_id=? AND id=?", d.version, d.decision === 'VERIFY' ? 'VERIFIED' : 'REVISION_REQUESTED', num(p, 'dtrRevision') + 1, d.note, user.id, now(), user.tenantId, f.id), notify(user, str(p, 'studentId'), d.decision === 'VERIFY' ? 'Final DTR verified' : 'Final DTR needs correction', d.note || (requiresCoordinatorReview ? 'Coordinator verified your signed DTR.' : 'Your Industry Partner verified the signed DTR and attendance.'), 'attendance')], d.decision === 'VERIFY' ? 'Complete DTR verified. The school evaluation is the next step.' : 'DTR returned to the student for correction and resubmission.');
  }
  if (action === 'finalDtrReopen') {
   requireRole(user, 'STUDENT'); const d = inputs.finalDtrReopen.parse(payload), p = await placement(user, d.placementId), f = await finalDtr(user, p.id, d.version);

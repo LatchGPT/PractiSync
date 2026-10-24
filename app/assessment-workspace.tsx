@@ -21,7 +21,6 @@ import {
   Sparkles,
   GraduationCap,
   Lock,
-  Eye,
 } from 'lucide-react';
 import { EmployerFeedbackLedger } from './employer-feedback';
 import SelfAssessmentModal from './self-assessment-modal';
@@ -81,7 +80,7 @@ function PeriodDtr({ entries, start, end }: { entries: Row[]; start: string; end
     .reduce((sum, entry) => sum + number(entry, 'minutes'), 0);
   return (
     <section className="assessment-context" aria-label="Daily attendance context">
-      <h3>Daily training context</h3>
+      <h3>Daily Training Context</h3>
 
       <div className="assessment-context-totals">
         <strong>{periodEntries.length} entries</strong>
@@ -929,7 +928,7 @@ export default function AssessmentWorkspace({
             <section className="panel">
               <div className="panel-head">
                 <div>
-                  <h2>My competency assessment</h2>
+                  <h2>My Competency Assessment</h2>
                 </div>
               </div>
               <div className="panel-body">
@@ -1146,7 +1145,7 @@ export default function AssessmentWorkspace({
           <section className="panel">
             <div className="panel-head">
               <div>
-                <h2>Approved assessment trend</h2>
+                <h2>Approved Assessment Trend</h2>
               </div>
             </div>
             <div className="panel-body">
@@ -1178,7 +1177,7 @@ export default function AssessmentWorkspace({
           <section className="panel">
             <div className="panel-head">
               <div>
-                <h2>Period assessment history</h2>
+                <h2>Period Assessment History</h2>
               </div>
             </div>
             <div className="panel-body">
@@ -1206,7 +1205,7 @@ export default function AssessmentWorkspace({
             <section className="panel">
               <div className="panel-head">
                 <div>
-                  <h2>Earlier assessment records</h2>
+                  <h2>Earlier Assessment Records</h2>
                 </div>
               </div>
               <div className="panel-body">

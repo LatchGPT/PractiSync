@@ -15,7 +15,7 @@ export async function recommendationReferenceFields(bytes:Uint8Array):Promise<Na
   add('letter_date','Letter date',[find(/\(Date\)/)],{type:'date',maxLength:40});
   add('representative_name','Company representative name',[find(/Name of Company Representative/),{...find(/Last name of the representative/),display:'surname',suffix:','}],{helpText:'Include the title, for example Ms. Marinella N. San Antonio. The greeting uses the same name.'});
   add('representative_position','Representative position',[{...find(/Position of the Representative/),lineBefore:true}],{helpText:'Appears on a new line below the company representative name.'});
-  add('company_name','Company / organization',[find(/\(Company\)/)],{defaultValue:'Northstar Digital'});
+  add('company_name','Company / organization',[find(/\(Company\)/)],{defaultValue:'Microgenesis Business Systems'});
   add('company_address','Company address',[find(/Address of the Company/)],{type:'textarea',maxLength:500});
   add('student_full_name','Student full name',[find(/Name of the student/),{...find(/^Ms\. Dela Cruz$/),display:'surname'}],{helpText:'Use the name on your school records. All mentions update together.'});
   add('pronoun','Pronoun',[{...find(/^on her$/),prefix:'on '}],{type:'dropdown',options:['his','her','their'],defaultValue:'their',maxLength:40});
