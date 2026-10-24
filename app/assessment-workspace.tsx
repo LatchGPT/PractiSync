@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import './student-weekly-reports.css';
+import WeeklyReportForm, { WeeklyReportContent } from './weekly-report-form';
 import {
   CartesianGrid,
   Line,
@@ -62,13 +64,10 @@ const dateLabel = (date: string) =>
 const periodLabel = (row: Row) =>
   `${dateLabel(text(row, 'periodStart'))} – ${dateLabel(text(row, 'periodEnd'))}`;
 
-type Ratings = Record<(typeof dimensions)[number][1], number>;
-const defaultRatings = (): Ratings => ({
-  technical: 3,
-  problemSolving: 3,
-  communication: 3,
-  professionalism: 3,
-});
+function reportParagraph(row?: Row): string {
+  if (!row?.evidenceJson) return '';
+  try { const evidence = JSON.parse(String(row.evidenceJson)); return typeof evidence?.reportText === 'string' ? evidence.reportText : ''; } catch { return ''; }
+}
 
 function PeriodDtr({ entries, start, end }: { entries: Row[]; start: string; end: string }) {
   const periodEntries = entries
@@ -108,11 +107,13 @@ function AssessmentHistory({
   scores,
   placements,
   onRevise,
+  compact = false,
 }: {
   rows: Row[];
   scores: Row[];
   placements: Row[];
   onRevise?: (row: Row) => void;
+  compact?: boolean;
 }) {
   return (
     <div className="assessment-history">
@@ -123,15 +124,14 @@ function AssessmentHistory({
             <article key={row.id} className="assessment-history-row">
               <div>
                 <strong>
-                  {placement ? text(placement, 'studentName') : 'Student'} ·{' '}
-                  {kindLabel(text(row, 'kind'))}
+                  {!compact && <>{placement ? text(placement, 'studentName') : 'Student'} · </>}{kindLabel(text(row, 'kind'))}{compact ? ' Report' : ''}
                 </strong>
                 <span>
                   {periodLabel(row)} · Version {row.version}
                 </span>
               </div>
-              <div className="assessment-history-scores">
-                {dimensions.map(([label]) => (
+              <details className="weekly-history-details" open={compact ? undefined : true}><summary hidden={!compact}>{reportParagraph(row) ? 'Read Report' : 'View Ratings'}</summary>{reportParagraph(row) && <WeeklyReportContent row={row}/>}<div className="assessment-history-scores">
+                {dimensions.filter(([label]) => scores.some(score => score.evaluationId === row.id && score.dimension === label)).map(([label]) => (
                   <span key={label}>
                     {label}:{' '}
                     {scores.find(
@@ -140,7 +140,7 @@ function AssessmentHistory({
                     /5
                   </span>
                 ))}
-              </div>
+              </div></details>
               <span
                 className={`chip ${
                   row.status === 'APPROVED'
@@ -157,7 +157,7 @@ function AssessmentHistory({
               )}
               {onRevise && row.status === 'REVISION_REQUESTED' && (
                 <button className="secondary" onClick={() => onRevise(row)}>
-                  Revise this assessment
+                  {compact ? 'Revise Report' : 'Revise this assessment'}
                 </button>
               )}
             </article>
@@ -178,6 +178,7 @@ export default function AssessmentWorkspace({
   onAction?: (action: Action, values: Record<string, unknown>) => Promise<unknown>;
 }) {
   const { user } = data;
+  const studentView = Boolean(user.role === 'STUDENT');
   const ownedClasses = data.classes.filter((item) => item.coordinatorId === user.id);
   const ownedCourses = [...new Set(ownedClasses.map((item) => text(item, 'courseId')))];
   const [courseId, setCourseId] = useState(ownedCourses[0] ?? '');
@@ -187,13 +188,12 @@ export default function AssessmentWorkspace({
   } | null>(null);
   const [requestedKind, setRequestedKind] = useState<AssessmentKind>('WEEKLY');
   const [date, setDate] = useState(manilaToday);
-  const [ratingsDraft, setRatingsDraft] = useState<{ key: string; values: Ratings } | null>(null);
   const [reviewId, setReviewId] = useState('');
   const [reviewNote, setReviewNote] = useState('');
   const [busy, setBusy] = useState(false);
 
   // Tab state: 'outcome' | 'periods' | 'industry'
-  const [activeTab, setActiveTab] = useState<'outcome' | 'periods' | 'industry'>('outcome');
+  const [activeTab, setActiveTab] = useState<'outcome' | 'periods' | 'industry'>(user.role === 'STUDENT' ? 'periods' : 'outcome');
   const [selectedPlacementId, setSelectedPlacementId] = useState<string>('');
   const [decisionChoice, setDecisionChoice] = useState<
     'EXEMPLARY' | 'SATISFACTORY' | 'NEEDS_REINFORCEMENT' | 'UNSATISFACTORY'
@@ -239,19 +239,6 @@ export default function AssessmentWorkspace({
   const assessmentKey = existing
     ? `${existing.id}:${existing.version}`
     : `${kind}:${period?.start ?? date}`;
-  const storedRatings = existing
-    ? (Object.fromEntries(
-        dimensions.map(([label, key]) => [
-          key,
-          Number(
-            data.scores.find(
-              (score) => score.evaluationId === existing.id && score.dimension === label
-            )?.score ?? 3
-          ),
-        ])
-      ) as Ratings)
-    : defaultRatings();
-  const ratings = ratingsDraft?.key === assessmentKey ? ratingsDraft.values : storedRatings;
 
   const visiblePlacements =
     user.role === 'STUDENT'
@@ -322,7 +309,7 @@ export default function AssessmentWorkspace({
       )
     : [];
 
-  async function run(action: Action, values: Record<string, string | number>) {
+  async function run(action: Action, values: Record<string, unknown>) {
     setBusy(true);
     try {
       if (onAction) await onAction(action, values);
@@ -364,9 +351,9 @@ export default function AssessmentWorkspace({
 
 
   return (
-    <div className="assessment-workspace">
+    <div className={user.role === 'STUDENT' ? 'assessment-workspace student-weekly-reports' : 'assessment-workspace'}>
       {/* Workspace Sub-Navigation Tabs */}
-      <div className="outcome-tabs-bar" role="tablist">
+      {!studentView && <div className="outcome-tabs-bar" role="tablist">
         <button
           type="button"
           role="tab"
@@ -375,7 +362,7 @@ export default function AssessmentWorkspace({
           onClick={() => setActiveTab('outcome')}
         >
           <Scale size={16} />
-          <span>Outcome Framework &amp; Competency Mapping</span>
+          <span>{user.role === 'STUDENT' ? 'My Progress' : 'Outcome Framework & Competency Mapping'}</span>
         </button>
         <button
           type="button"
@@ -385,7 +372,7 @@ export default function AssessmentWorkspace({
           onClick={() => setActiveTab('periods')}
         >
           <Calculator size={16} />
-          <span>Period Assessments & Reviews</span>
+          <span>{user.role === 'STUDENT' ? 'My Reports' : 'Period Assessments & Reviews'}</span>
         </button>
         <button
           type="button"
@@ -395,11 +382,11 @@ export default function AssessmentWorkspace({
           onClick={() => setActiveTab('industry')}
         >
           <GraduationCap size={16} />
-          <span>Industry Supervisor Competency Evaluations</span>
+          <span>{user.role === 'STUDENT' ? 'Supervisor Feedback' : 'Industry Supervisor Competency Evaluations'}</span>
         </button>
-      </div>
+      </div>}
 
-      {activeTab === 'outcome' && (
+      {!studentView && activeTab === 'outcome' && (
         <div className="outcome-evaluation-section">
           {/* Decision Support Disclaimer Notice (Coordinators and Administrators only) */}
           {user.role !== 'STUDENT' && (
@@ -866,12 +853,12 @@ export default function AssessmentWorkspace({
 
       {activeTab === 'periods' && (
         <div className="period-assessments-section">
-          <div className="notice">
+          {user.role !== 'STUDENT' && <div className="notice">
             <span>
               Period competency assessments use the fictional 1–5 rubric. Weekly and monthly periods
               follow Philippine calendar dates. Older baseline/final records remain in history.
             </span>
-          </div>
+          </div>}
 
           {user.role === 'COORDINATOR' && (
             <section className="panel">
@@ -928,7 +915,7 @@ export default function AssessmentWorkspace({
             <section className="panel">
               <div className="panel-head">
                 <div>
-                  <h2>My Competency Assessment</h2>
+                  <h2>{date === manilaToday() ? (kind === 'WEEKLY' ? 'This Week’s Report' : 'This Month’s Report') : 'Report for Selected Period'}</h2>
                 </div>
               </div>
               <div className="panel-body">
@@ -937,7 +924,7 @@ export default function AssessmentWorkspace({
                     <div className="assessment-form">
                       <div className="assessment-controls">
                         <label>
-                          Assessment type
+                          Report Type
                           <select
                             value={kind}
                             onChange={(event) => setRequestedKind(event.target.value as AssessmentKind)}
@@ -950,7 +937,7 @@ export default function AssessmentWorkspace({
                           </select>
                         </label>
                         <label>
-                          Date in assessment period
+                          Reporting Date
                           <input
                             type="date"
                             min={text(placement, 'startsAt')}
@@ -964,70 +951,29 @@ export default function AssessmentWorkspace({
                           />
                         </label>
                       </div>
-                      {period && (
-                        <p className="small muted">
-                          Period: {dateLabel(period.start)} – {dateLabel(period.end)} ·{' '}
-                          {existing
-                            ? `Status: ${text(existing, 'status').replaceAll('_', ' ').toLowerCase()}`
-                            : 'Not submitted'}
-                        </p>
-                      )}
+                      {period && <div className="weekly-period-summary">
+                        <div><span className="weekly-meta-label">Reporting Period</span><strong>{dateLabel(period.start)} – {dateLabel(period.end)}</strong></div>
+                        <span className={`chip ${existing?.status === 'APPROVED' ? 'green' : existing?.status === 'REVISION_REQUESTED' ? 'orange' : 'blue'}`}>
+                          {existing?.status === 'APPROVED' ? 'Approved' : existing?.status === 'REVISION_REQUESTED' ? 'Needs Revision' : existing ? 'Submitted' : 'Not Submitted'}
+                        </span>
+                      </div>}
                       {existing?.reviewNote && (
                         <div className="notice">Coordinator feedback: {text(existing, 'reviewNote')}</div>
                       )}
-                      {dimensions.map(([label, key]) => (
-                        <label className="assessment-rating" key={key}>
-                          {label}
-                          <select
-                            value={ratings[key]}
-                            disabled={!!existing && existing.status !== 'REVISION_REQUESTED'}
-                            onChange={(event) =>
-                              setRatingsDraft({
-                                key: assessmentKey,
-                                values: { ...ratings, [key]: Number(event.target.value) },
-                              })
-                            }
-                          >
-                            {[1, 2, 3, 4, 5].map((value) => (
-                              <option key={value} value={value}>
-                                {value} / 5
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ))}
-                      <button
-                        className="primary"
-                        disabled={
-                          busy ||
-                          !period ||
-                          !date ||
-                          date < text(placement, 'startsAt') ||
-                          date > text(placement, 'endsAt') ||
-                          date > manilaToday() ||
-                          (!!existing && existing.status !== 'REVISION_REQUESTED')
-                        }
-                        onClick={() =>
-                          run('evaluation', {
-                            placementId: placement.id,
-                            kind,
-                            date,
-                            ...(existing ? { version: number(existing, 'version') } : {}),
-                            ...ratings,
-                          })
-                        }
-                      >
-                        {existing?.status === 'REVISION_REQUESTED'
-                          ? 'Resubmit assessment'
-                          : 'Submit assessment'}
-                      </button>
+                      <WeeklyReportForm key={assessmentKey} existing={existing} courseId={selectedCourse}
+                        courseCode={String(data.courses.find(course => course.id === selectedCourse)?.code || placement.courseCode || '')}
+                        course={String(data.courses.find(course => course.id === selectedCourse)?.name || placement.courseCode || '')}
+                        busy={busy} scores={data.scores}
+                        canSubmit={Boolean(period && date && date >= text(placement, 'startsAt') && date <= text(placement, 'endsAt') && date <= manilaToday())}
+                        onSubmit={async values => { await run('evaluation', { placementId: placement.id, kind, date, ...(existing ? { version: number(existing, 'version') } : {}), ...values }); }}/>
+
                     </div>
                     {period && (
-                      <PeriodDtr
+                      <details className="weekly-attendance-details"><summary>Attendance for This Period</summary><PeriodDtr
                         entries={data.entries.filter((item) => item.placementId === placement.id)}
                         start={period.start}
                         end={period.end}
-                      />
+                      /></details>
                     )}
                   </div>
                 ) : (
@@ -1076,6 +1022,7 @@ export default function AssessmentWorkspace({
                             ))}
                         </select>
                       </label>
+                      {reportParagraph(selectedReview) && <div className="weekly-review-paragraph"><h3>Student Report</h3><WeeklyReportContent row={selectedReview}/></div>}
                       <div className="assessment-review-ratings">
                         {dimensions.map(([label]) => (
                           <div key={label}>
@@ -1142,7 +1089,7 @@ export default function AssessmentWorkspace({
             </section>
           )}
 
-          <section className="panel">
+          <section className="panel weekly-report-trend">
             <div className="panel-head">
               <div>
                 <h2>Approved Assessment Trend</h2>
@@ -1174,15 +1121,16 @@ export default function AssessmentWorkspace({
             </div>
           </section>
 
-          <section className="panel">
+          <section className="panel weekly-report-history">
             <div className="panel-head">
               <div>
-                <h2>Period Assessment History</h2>
+                <h2>{user.role === 'STUDENT' ? 'Previous Reports' : 'Period Assessment History'}</h2>
               </div>
             </div>
             <div className="panel-body">
               <AssessmentHistory
-                rows={visible}
+                compact={user.role === 'STUDENT'}
+                rows={user.role === 'STUDENT' ? visible.filter(row => row.id !== existing?.id) : visible}
                 scores={data.scores}
                 placements={visiblePlacements}
                 onRevise={
@@ -1202,7 +1150,7 @@ export default function AssessmentWorkspace({
           </section>
 
           {legacy.length > 0 && (
-            <section className="panel">
+            <section className="panel weekly-report-legacy">
               <div className="panel-head">
                 <div>
                   <h2>Earlier Assessment Records</h2>
@@ -1227,7 +1175,7 @@ export default function AssessmentWorkspace({
         </div>
       )}
 
-      {activeTab === 'industry' && (
+      {!studentView && activeTab === 'industry' && (
         <div className="industry-analytics-section">
           {/* Header & Main Actions */}
           <div className="industry-section-header">

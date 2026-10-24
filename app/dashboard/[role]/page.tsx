@@ -52,7 +52,7 @@ export default async function DashboardPage({params,searchParams}:{params:Promis
   initial=await snapshot(user);
  }catch(error){
   console.error('Workspace data load failed',error instanceof Error?error.message:'Unknown data error');
-  initialError=error instanceof Error?error.message:'PractiSync could not load your workspace.';
+  initialError=error instanceof Error?error.message:'RTU PractiSync could not load your workspace.';
  }
  return <PractiSync initial={initial} initialError={initialError} demo={demoAllowed(cfg.DEPLOYMENT_MODE,cfg.DEMO_ENABLED)} authConfigured={!!cfg.AUTH_SECRET}/>;
 }

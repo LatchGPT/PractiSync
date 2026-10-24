@@ -10,7 +10,7 @@ import './student-verification.css';
 import './backlog-workflows.css';
 import './recruitment.css';
 import './student-ui-consistency.css';
-export const metadata:Metadata={title:'PractiSync — RTU-inspired practicum demo',description:'A fictional cooperative education workspace with a blue-and-gold design inspired by Rizal Technological University.',icons:{icon:'/favicon.svg?v=rtu',shortcut:'/favicon.svg?v=rtu'}};
+export const metadata:Metadata={title:'RTU PractiSync — RTU-inspired practicum demo',description:'A fictional cooperative education workspace with a blue-and-gold design inspired by Rizal Technological University.',icons:{icon:'/favicon.svg?v=rtu',shortcut:'/favicon.svg?v=rtu'}};
 export default function RootLayout({children}:{children:React.ReactNode}){
   return (
     <html lang="en">

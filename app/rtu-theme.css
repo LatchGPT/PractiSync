@@ -684,7 +684,46 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 
 .sidebar-brand {
   border-bottom: 1px solid #eef3f9;
-  padding: 24px 22px 18px;
+  padding: 24px 16px 18px;
+}
+
+/* Keep the full university-prefixed name readable in the existing sidebar. */
+.sidebar-brand .brand {
+  gap: 10px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.sidebar-brand .brand-icon {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.sidebar-brand .brand-text {
+  min-width: 0;
+  max-width: 180px;
+  letter-spacing: -0.04em;
+}
+
+.ps-landing-brand,
+.ps-footer-branding,
+.account-access-brand,
+.verification-brand {
+  min-width: 0;
+}
+
+.ps-brand-name {
+  white-space: nowrap;
+}
+
+@media (max-width: 540px) {
+  .ps-landing-brand { gap: 8px; }
+  .ps-landing-brand .ps-brand-name { font-size: 18px; }
+  .account-access-brand,
+  .verification-brand { font-size: 22px; gap: 8px; }
+  .hte-header .brand { font-size: 18px; gap: 8px; }
+  .guest-evaluation-card > .brand { font-size: 20px; }
 }
 
 .sidebar-university {

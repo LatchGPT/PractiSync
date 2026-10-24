@@ -1,3 +1,5 @@
+import { recruitmentCompanyProfiles } from './recruitment-company-profiles';
+import { seedDemoRecruitmentCompanies } from './demo-recruitment-companies';
 import { runtimeTenantId } from '../auth/runtime';
 import { writeTenant } from './tenant-context';
 import { prisma } from './client';
@@ -197,8 +199,8 @@ export async function seed() {
   const existingSeed = await db.prepare("SELECT value FROM seed_state WHERE key='seed-v9'").first();
   const ensureSchedules = () => db.prepare("INSERT OR IGNORE INTO assessment_schedules (id,tenant_id,created_at,course_id,cadence,updated_at,version) SELECT 'schedule-' || id,tenant_id,datetime('now'),id,'WEEKLY',datetime('now'),1 FROM courses").run();
   if (existingSeed) {
-    await db.prepare("UPDATE companies SET name=?,location=?,description=? WHERE tenant_id=? AND id=?")
-      .bind('Microgenesis Business Systems', 'Not specified', 'Technology partner supporting internship placements.', TENANT, 'company-northstar').run();
+    await db.prepare("UPDATE companies SET name=? WHERE tenant_id=? AND id=?")
+      .bind('Microgenesis Business Systems', TENANT, 'company-northstar').run();
     await db.prepare("UPDATE classes SET section=?,name=? WHERE tenant_id=? AND id=?").bind('CEIT-37-701A', 'Internship Practicum', TENANT, 'class-it').run();
     await db.prepare("UPDATE placements SET company_id=? WHERE tenant_id=? AND id=? AND student_id=?").bind('company-northstar', TENANT, 'placement-1', 'demo-student').run();
     await db.prepare("DELETE FROM companies WHERE tenant_id=? AND id=?").bind(TENANT, 'company-microgenesis').run();
@@ -212,6 +214,7 @@ export async function seed() {
       .bind('Requesting to join section CEIT-37-701A', TENANT, 'req-1').run();
     await ensureSchedules();
     await seedDemoClassmates(db);
+    await seedDemoRecruitmentCompanies(db);
     return;
   }
   const now = '2026-10-01T00:00:00Z';
@@ -257,7 +260,7 @@ export async function seed() {
   for (const [id, name, section, course, coordinator, code, expires, revoked, rep, vice] of [['class-it', 'Internship Practicum', 'CEIT-37-701A', 'course-it', 'demo-coordinator', 'SYNC4A', null, 0, 'demo-student', 'student-5'], ['class-it-b', 'OJT Practicum', 'BSIT 4-B', 'course-it', 'demo-coordinator', 'SYNC4B', null, 0, 'student-3', null], ['class-business', 'Business Practicum', 'BSBA 4-A', 'course-business', 'demo-coordinator', 'BIZ4A', null, 0, 'student-2', null], ['class-ed', 'Teaching Internship', 'BSED 4-A', 'course-education', 'coordinator-other', 'EDUC4A', null, 0, 'student-4', null], ['class-expired', 'Archived Practicum', 'BSIT 3-X', 'course-it', 'demo-coordinator', 'EXPIRED', '2026-01-01', 0, null, null], ['class-revoked', 'Archived Practicum', 'BSIT 3-Y', 'course-it', 'demo-coordinator', 'REVOKED', null, 1, null, null]] as const) {
     add('classes', id, { name, section, course_id: course, coordinator_id: coordinator, period: '2026–2027 · First semester', code_hash: await digest(code), code_label: code, expires_at: expires, revoked, class_rep_id: rep, vice_class_rep_id: vice });
   }
-  for (const [id, name, industry, location, status, post, description] of [['company-northstar', 'Microgenesis Business Systems', 'Technology', 'Not specified', 'APPROVED', 1, 'Technology partner supporting internship placements.'], ['company-brightside', 'Brightside Learning', 'Education', 'Pasig', 'APPROVED', 1, 'A fictional learning center offering supervised teaching placements.'], ['company-pending', 'Meridian Ventures', 'Business', 'Makati', 'PENDING', 0, 'Fictional company awaiting university verification.']]) add('companies', String(id), { name, industry, location, status, can_post: post, description });
+  for (const [id, name, industry, location, status, post, description] of [['company-northstar', 'Microgenesis Business Systems', 'Technology', 'Not specified', 'APPROVED', 1, 'Technology partner supporting internship placements.'], ['company-brightside', 'Brightside Learning', 'Education', 'Pasig', 'APPROVED', 1, 'A fictional learning center offering supervised teaching placements.'], ['company-pending', 'Meridian Ventures', 'Business', 'Makati', 'PENDING', 0, 'Fictional company awaiting university verification.']]){ const profile=recruitmentCompanyProfiles.find(profile=>profile.id===id); add('companies', String(id), profile?{name:profile.name,industry:profile.industry,location:profile.location,status,can_post:post,description:profile.description,website:profile.website,contact_email:profile.contactEmail,contact_phone:profile.contactPhone,contact_position:'General company contact'}:{ name, industry, location, status, can_post: post, description }); }
   add('users', 'demo-supervisor', { name: 'Morgan Lee', username: 'demo.supervisor', email: 'demo.supervisor@example.invalid', role: 'SUPERVISOR', password_hash: hash, is_demo: 1, company_id: 'company-northstar', supervisor_verified: 1, can_post: 1 });
   for (const [course, minutes] of [['course-it', 28800], ['course-business', 24000], ['course-education', 24000]] as const) add('policies', `policy-${course}`, { course_id: course, period: '2026–2027 · First semester', required_minutes: minutes, version: 1, author_id: 'demo-admin' });
   const placements = [
@@ -325,4 +328,5 @@ export async function seed() {
   for (let index = 0; index < statements.length; index += 80) await db.batch(statements.slice(index, index + 80));
   await ensureSchedules();
   await seedDemoClassmates(db);
+  await seedDemoRecruitmentCompanies(db);
 }

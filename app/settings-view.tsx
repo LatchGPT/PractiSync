@@ -251,7 +251,7 @@ export default function SettingsView({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `PractiSync-Data-${user.username}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `RTU PractiSync-Data-${user.username}-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
     toast.success('Account data exported as JSON.');
@@ -962,7 +962,7 @@ export default function SettingsView({
           <div className="settings-panel-card">
             <div className="settings-card-header">
               <div>
-                <h3>PractiSync System Architecture</h3>
+                <h3>RTU PractiSync System Architecture</h3>
 
               </div>
               <button
@@ -988,7 +988,7 @@ export default function SettingsView({
                 <div>
                   <strong>Platform Edition</strong>
                 </div>
-                <span className="settings-value-pill">PractiSync v2.4.0 (RTU-Inspired)</span>
+                <span className="settings-value-pill">RTU PractiSync v2.4.0 (RTU-Inspired)</span>
               </div>
 
               <div className="settings-item-row">

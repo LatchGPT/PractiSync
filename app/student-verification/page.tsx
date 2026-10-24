@@ -9,7 +9,7 @@ import {demoAllowed} from '@/packages/domain/policies';
 import type {StudentVerificationContext} from '@/packages/validation/student-verification';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Student registration · PractiSync' };
+export const metadata = { title: 'Student registration · RTU PractiSync' };
 export default async function StudentVerificationPage() {
  let user;
  try { user = await pageIdentity(true); }

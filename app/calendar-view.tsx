@@ -881,7 +881,7 @@ export default function CalendarView({
     const lines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//PractiSync//Training Calendar//EN',
+      'PRODID:-//RTU PractiSync//Training Calendar//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
     ];
@@ -1643,7 +1643,7 @@ export default function CalendarView({
             {value(event, 'createdByName')
               ? `Organized by ${value(event, 'createdByName')}`
               : isMilestone
-              ? 'PractiSync Dynamic Milestone'
+              ? 'RTU PractiSync Dynamic Milestone'
               : 'Scheduled by Rizal Technological University COE Office'}
           </small>
 
@@ -2330,7 +2330,7 @@ export default function CalendarView({
         {user.role === 'SUPER_ADMIN' && CoeAdminTopCardsDeck}
 
         {/* Main Calendar Card (Full Width) */}
-          <section className={styles.calendarCard} aria-label="PractiSync calendar">
+          <section className={styles.calendarCard} aria-label="RTU PractiSync calendar">
             {/* Top Toolbar */}
             <div className={styles.toolbar}>
               {/* View Switcher Tabs */}
@@ -2941,7 +2941,7 @@ export default function CalendarView({
               <DialogDescription>
                 {value(viewingSchedule, 'createdByName')
                   ? `Organized by ${value(viewingSchedule, 'createdByName')}`
-                  : 'Scheduled in PractiSync calendar'}
+                  : 'Scheduled in RTU PractiSync calendar'}
               </DialogDescription>
             </DialogHeader>
 

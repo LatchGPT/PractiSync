@@ -40,7 +40,7 @@ export default function GuestEvaluationForm({ token }: { token: string }) {
     finally { setBusy(false); }
   }
 
-  return <main className="guest-evaluation-page"><section className="guest-evaluation-card"><div className="brand"><span className="brand-icon"><RtuSeal /></span><span>PractiSync<span style={{ color: '#d7aa3e' }}>.</span></span></div>{done ? <div className="guest-done"><CheckCircle2 size={42} /><h1>Evaluation submitted</h1><p>Your responses were sent to the university coordinator for review. The student cannot see them until they are reviewed.</p></div> : <>
+  return <main className="guest-evaluation-page"><section className="guest-evaluation-card"><div className="brand"><span className="brand-icon"><RtuSeal /></span><span>RTU PractiSync<span style={{ color: '#d7aa3e' }}>.</span></span></div>{done ? <div className="guest-done"><CheckCircle2 size={42} /><h1>Evaluation submitted</h1><p>Your responses were sent to the university coordinator for review. The student cannot see them until they are reviewed.</p></div> : <>
     <span className="chip blue"><ShieldCheck size={13} />One-time Industry Partner evaluation</span><h1>Final competency evaluation</h1>
     {context && <div className="guest-context"><strong>{context.studentName}</strong><span>{context.companyName} · {context.courseCode}</span><span>{context.period}</span><small>Expires {new Date(context.expiresAt).toLocaleString()}</small></div>}
     {error && <div className="alert" role="alert">{error}</div>}

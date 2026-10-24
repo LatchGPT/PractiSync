@@ -119,7 +119,7 @@ export default function StudentVerificationGate({ initial }: { initial: StudentV
  const fieldError = (name: keyof Details) => errors[name] ? <p className="verification-field-error" id={'student-' + name + '-error'}>{errors[name]}</p> : null;
 
  return <main className="verification-canvas">
-  <div className="verification-brand"><RtuSeal size={32}/><span>PractiSync<span className="verification-brand-dot">.</span></span></div>
+  <div className="verification-brand"><RtuSeal size={32}/><span>RTU PractiSync<span className="verification-brand-dot">.</span></span></div>
   <Dialog open onOpenChange={() => {}}>
    <DialogContent aria-describedby={(forbidden || unavailable) ? 'student-verification-description' : undefined} showCloseButton={false} className={'verification-dialog ' + (statusScreen ? 'verification-dialog-status' : 'verification-dialog-form')} onEscapeKeyDown={event => event.preventDefault()} onPointerDownOutside={event => event.preventDefault()} onInteractOutside={event => event.preventDefault()}>
     <div className="verification-symbol">{statusScreen ? <AlertCircle size={26}/> : <FilePenLine size={26}/>}</div>

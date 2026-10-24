@@ -18,7 +18,7 @@ export default async function Page(){
   if(error instanceof StudentVerificationRequired)redirect('/student-verification');
   console.error('Page error:',error);
   if(error instanceof DomainError&&error.status===403)denied=true;
-  else if(!(error instanceof DomainError&&(error.status===401||error.status===503)))initialError='PractiSync could not load your workspace. Check your connection and try again.';
+  else if(!(error instanceof DomainError&&(error.status===401||error.status===503)))initialError='RTU PractiSync could not load your workspace. Check your connection and try again.';
  }
  if(denied)forbidden();
  if(user)redirect(dashboardPathForRole(user.role));

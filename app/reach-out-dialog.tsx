@@ -49,9 +49,10 @@ export default function ReachOutDialog({
 
   // Fallback if coordinator is missing
   const fallbackEmail = 'ojt.coe@rtu.edu.ph';
-  const resolvedEmail = String(coordinator?.email ?? fallbackEmail);
-  const coordinatorName = String(coordinator?.name ?? 'COE Practicum Office');
-  const isFallbackOffice = !coordinator?.email;
+  const officeContact = user.role === 'STUDENT';
+  const resolvedEmail = officeContact ? fallbackEmail : String(coordinator?.email ?? fallbackEmail);
+  const coordinatorName = officeContact ? 'COE Office' : String(coordinator?.name ?? 'COE Practicum Office');
+  const isFallbackOffice = officeContact || !coordinator?.email;
 
   const studentName = user.name;
   const studentCourse = String(
@@ -68,11 +69,11 @@ export default function ReachOutDialog({
     INCIDENT: 'Urgent Workplace Concern / Safety Report',
   }[inquiryTopic];
 
-  const emailSubject = `[PractiSync] ${topicLabel} — ${studentName} (${studentSection})`;
+  const emailSubject = `[RTU PractiSync] ${topicLabel} — ${studentName} (${studentSection})`;
 
   const emailBody = useMemo(() => {
     const lines = [
-      `Dear ${isFallbackOffice ? 'COE Practicum Coordinator / Office' : `Prof. ${coordinatorName}`},`,
+      `Dear ${isFallbackOffice ? 'COE Office' : `Prof. ${coordinatorName}`},`,
       '',
       `I am reaching out regarding my OJT practicum placement with ${companyName}.`,
       '',
@@ -86,7 +87,7 @@ export default function ReachOutDialog({
       `Section: ${studentSection}`,
       `Host Company: ${companyName}`,
       `Placement Reference: ${placement?.id ?? 'N/A'}`,
-      'Sent via PractiSync Academic Workspace',
+      'Sent via RTU PractiSync Academic Workspace',
     ];
     return lines.join('\n');
   }, [isFallbackOffice, coordinatorName, companyName, customNote, studentName, studentCourse, studentSection, placement]);
@@ -202,7 +203,7 @@ export default function ReachOutDialog({
                 letterSpacing: '-0.01em',
               }}
             >
-              Contact Your Practicum Coordinator
+              {officeContact ? 'Email COE Office' : 'Contact Your Practicum Coordinator'}
             </h2>
           </div>
 
@@ -280,7 +281,7 @@ export default function ReachOutDialog({
                         fontWeight: 600,
                       }}
                     >
-                      General Office Fallback
+                      {officeContact ? 'COE Office' : 'General Office Fallback'}
                     </span>
                   ) : (
                     <span
@@ -361,8 +362,8 @@ export default function ReachOutDialog({
           >
             <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#16a34a' }} />
             <div>
-              <strong>Academic Privacy Standard:</strong> PractiSync launches your native email client directly.
-              To preserve student safety and confidentiality, PractiSync does not store internal chat logs or
+              <strong>Academic Privacy Standard:</strong> RTU PractiSync launches your native email client directly.
+              To preserve student safety and confidentiality, RTU PractiSync does not store internal chat logs or
               claim false delivery confirmation.
             </div>
           </div>

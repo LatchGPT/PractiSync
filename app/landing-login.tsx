@@ -107,7 +107,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
             </span>
             <div className="ps-brand-titles">
               <div className="ps-brand-name">
-                PractiSync<span className="ps-gold-dot">.</span>
+                RTU PractiSync<span className="ps-gold-dot">.</span>
               </div>
             </div>
           </div>
@@ -166,7 +166,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
           <section className="ps-login-col" ref={loginSectionRef}>
             <div className="ps-login-card">
               <div className="ps-login-card-header">
-                <h2 className="ps-login-title">Welcome to PractiSync</h2>
+                <h2 className="ps-login-title">Welcome to RTU PractiSync</h2>
               </div>
 
               {/* General / Server Error Alert */}
@@ -308,7 +308,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
                     ) : (
                       <>
                         <LockKeyhole size={16} />
-                        <span>Sign In to PractiSync</span>
+                        <span>Sign In to RTU PractiSync</span>
                       </>
                     )}
                   </button>
@@ -405,7 +405,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
             <RtuSeal size={40} />
             <div className="ps-brand-titles">
               <div className="ps-brand-name">
-                PractiSync<span className="ps-gold-dot">.</span>
+                RTU PractiSync<span className="ps-gold-dot">.</span>
               </div>
             </div>
           </div>
@@ -426,7 +426,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
           </div>
         </div>
         <div className="ps-footer-bottom">
-          <span>&copy; {new Date().getFullYear()} Rizal Technological University · PractiSync Workspace</span>
+          <span>&copy; {new Date().getFullYear()} Rizal Technological University · RTU PractiSync Workspace</span>
           <span>Privacy &amp; Data Governance · Academic Integrity</span>
         </div>
       </footer>
@@ -438,7 +438,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
             <div className="ps-help-modal-header">
               <div className="ps-help-modal-title-row">
                 <HelpCircle size={20} className="ps-help-icon" />
-                <h3>PractiSync Account Help</h3>
+                <h3>RTU PractiSync Account Help</h3>
               </div>
               <button
                 type="button"
@@ -504,7 +504,7 @@ export default function LandingLoginView({ configured, google=false, initialAuth
             </div>
             <div className="ps-help-modal-body">
               <p>
-                <strong>New to PractiSync? Here is how to activate or register your account:</strong>
+                <strong>New to RTU PractiSync? Here is how to activate or register your account:</strong>
               </p>
               <ul>
                 <li>
